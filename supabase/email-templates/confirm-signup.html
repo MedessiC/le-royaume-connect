@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Confirmez votre inscription</title>
+    <style>
+      :root{--bg:#071020;--card:#0f1724;--muted:#9aa7b8;--gold:#caa34a;--white:#f8fafc}
+      body{margin:0;padding:0;background:linear-gradient(180deg,#06121d 0%,#071020 100%);font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;color:var(--white)}
+      .wrap{max-width:680px;margin:28px auto;padding:20px}
+      .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:28px}
+      .brand{display:flex;gap:12px;align-items:center}
+      .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(180deg,var(--gold),#b48e38);display:flex;align-items:center;justify-content:center;font-weight:800;color:#071020;font-size:22px}
+      h2{margin:16px 0 8px 0;font-size:22px}
+      p{color:var(--muted);line-height:1.5;margin:8px 0}
+      .cta{display:inline-block;margin-top:18px;padding:12px 20px;border-radius:10px;background:linear-gradient(90deg,var(--gold),#b88f3f);color:#071020;text-decoration:none;font-weight:700}
+      .muted{font-size:13px;color:var(--muted);margin-top:14px}
+      .footer{margin-top:20px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.03);font-size:13px;color:var(--muted)}
+      .scopes{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+      .scope{background:rgba(255,255,255,0.02);padding:6px 8px;border-radius:8px;font-size:13px;color:var(--muted)}
+      @media (max-width:480px){.wrap{padding:12px}.card{padding:18px}.logo{width:48px;height:48px}}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card" role="article" aria-label="Confirmation d'inscription">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">M</div>
+          <div>
+            <div style="font-weight:800;color:var(--gold);font-size:16px">Le Règne Millénaire</div>
+            <div style="font-size:13px;color:var(--muted)">Bienvenue dans la communauté</div>
+          </div>
+        </div>
+
+        <h2>Confirmez votre adresse e‑mail</h2>
+
+        <p>Bonjour,</p>
+        <p>Merci d'avoir créé un compte sur <strong>Le Règne Millénaire</strong>. Pour finaliser votre inscription et activer votre compte, veuillez cliquer sur le bouton ci‑dessous :</p>
+
+        <a class="cta" href="{{ .ConfirmationURL }}" target="_blank" rel="noopener noreferrer">Confirmer mon adresse e‑mail</a>
+
+        <p class="muted">Si le bouton ne fonctionne pas, copiez‑collez ce lien dans votre navigateur :</p>
+        <p style="word-break:break-all;color:var(--gold);font-size:13px;margin:4px 0 0 0"><a href="{{ .ConfirmationURL }}" style="color:inherit">{{ .ConfirmationURL }}</a></p>
+
+        <div class="footer">
+          <p>Si vous n’avez pas demandé cette inscription, vous pouvez ignorer cet e‑mail.</p>
+          <p>Site : <a href="https://leregnemillenaire.com" style="color:var(--gold)">leregnemillenaire.com</a> — Contact : contact@leregnemillenaire.com</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

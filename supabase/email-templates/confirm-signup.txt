@@ -1,0 +1,12 @@
+Confirmation de votre inscription — Le Règne Millénaire
+
+Bonjour,
+
+Merci d'avoir créé un compte sur Le Règne Millénaire. Pour activer votre compte, cliquez sur le lien suivant :
+
+{{ .ConfirmationURL }}
+
+Si vous n'avez pas demandé cette inscription, ignorez ce message.
+
+Site : https://leregnemillenaire.com
+Contact : contact@leregnemillenaire.com
