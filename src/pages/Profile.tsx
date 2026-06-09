@@ -121,46 +121,64 @@ const Profile = () => {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          <Card className="border-gold/20 p-6">
-            <CardHeader>
-              <CardTitle className="text-2xl font-display text-foreground">Profil public</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <Card className="border-gold/20 bg-gradient-to-b from-gold/5 to-background overflow-hidden">
+            <CardContent className="space-y-6 pt-6">
+              {/* Avatar Section */}
               <div className="flex flex-col items-center text-center gap-4">
-                <UserAvatar src={profile.avatar_url} name={profile.full_name || "Membre"} className="h-28 w-28" />
-                <div>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gold/20 to-royal/20 rounded-full blur-2xl -z-10" />
+                  <UserAvatar
+                    src={profile.avatar_url}
+                    name={profile.full_name || "Membre"}
+                    className="h-32 w-32 border-4 border-gold/30 shadow-lg"
+                  />
+                </div>
+
+                {/* Profile Info */}
+                <div className="space-y-3 w-full">
                   <div className="flex items-center justify-center gap-2">
                     <h1 className="text-2xl font-semibold text-foreground">{profile.full_name || "Membre"}</h1>
                     <GoldBadge hasGoldBadge={profile.has_gold_badge ?? false} />
                   </div>
+
                   {profile.country && (
-                    <p className="text-sm text-muted-foreground flex items-center justify-center gap-2 mt-1">
-                      <MapPin className="w-4 h-4" /> {profile.country}
+                    <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                      <MapPin className="w-4 h-4 text-gold" /> {profile.country}
                     </p>
                   )}
+
                   {profile.phone && (
-                    <p className="text-sm text-muted-foreground flex items-center justify-center gap-2 mt-1">
+                    <p className="text-sm text-muted-foreground">
                       <span className="font-medium">Téléphone :</span> {profile.phone}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Profil public sur MILLENIUM</p>
-                <p className="text-xs text-muted-foreground">Membre depuis {profile.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "Date inconnue"}</p>
+              {/* Divider */}
+              <div className="h-px bg-gradient-to-r from-gold/0 via-gold/30 to-gold/0" />
+
+              {/* Bio Section */}
+              <div className="space-y-3">
+                {profile.bio ? (
+                  <div className="rounded-xl border border-gold/20 bg-gold/5 p-4 space-y-2">
+                    <h2 className="font-semibold text-sm text-foreground">À propos</h2>
+                    <p className="leading-relaxed text-sm text-foreground">{profile.bio}</p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-border bg-muted/50 p-4 text-sm text-muted-foreground italic">
+                    Cette personne n'a pas encore ajouté de biographie publique.
+                  </div>
+                )}
               </div>
 
-              {profile.bio ? (
-                <div className="rounded-3xl border border-border bg-secondary p-4 text-sm text-foreground">
-                  <h2 className="font-semibold mb-2">À propos</h2>
-                  <p className="leading-relaxed">{profile.bio}</p>
-                </div>
-              ) : (
-                <div className="rounded-3xl border border-border bg-muted p-4 text-sm text-muted-foreground">
-                  Cette personne n'a pas encore ajouté de biographie publique.
-                </div>
-              )}
+              {/* Meta Info */}
+              <div className="text-center space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-widest">Profil public</p>
+                <p className="text-xs text-muted-foreground">
+                  Membre depuis {profile.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "Date inconnue"}
+                </p>
+              </div>
             </CardContent>
           </Card>
 

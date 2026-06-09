@@ -5,6 +5,7 @@ import UserAvatar from "@/components/UserAvatar";
 import GoldBadge from "@/components/GoldBadge";
 import ShareButton from "@/components/ShareButton";
 import SaveButton from "@/components/SaveButton";
+import TTSButton from "@/components/TTSButton";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null; has_gold_badge?: boolean };
 
@@ -268,6 +269,7 @@ export const TeachingCard = ({
               }}
               className="flex items-center gap-1"
             >
+              <TTSButton text={(excerpt || title || "").concat(". Pour écouter l'intégralité, ouvrez la fiche.")} size="sm" />
               <SaveButton
                 teachingId={id}
                 teachingTitle={title}

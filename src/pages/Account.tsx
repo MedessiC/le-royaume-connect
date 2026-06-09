@@ -10,13 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import UserAvatar from "@/components/UserAvatar";
+import AvatarUpload from "@/components/AvatarUpload";
 import CountrySelect from "@/components/CountrySelect";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User, Lock, Shield, LogOut, MailCheck, MailWarning, Upload, Trash2 } from "lucide-react";
+import { User, Lock, Shield, LogOut, MailCheck, MailWarning } from "lucide-react";
 
 const Account = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -30,7 +30,6 @@ const Account = () => {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [emailEdit, setEmailEdit] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -123,24 +122,30 @@ const Account = () => {
   };
 
   // Avatar upload
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !e.target.files?.[0]) return;
-    setUploadingAvatar(true);
-    const file = e.target.files[0];
-    const ext = file.name.split('.').pop();
-    const filePath = `avatars/${user.id}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
-    if (uploadError) {
-      toast({ title: t("auth.authError"), description: uploadError.message, variant: "destructive" });
-      setUploadingAvatar(false);
-      return;
+  const handleAvatarUpdate = async (newUrl: string) => {
+    try {
+      const { error } = await supabase.from('profiles').update({ avatar_url: newUrl }).eq('id', user.id);
+      if (error) {
+        toast({ title: "Erreur", description: "Photo uploadée mais erreur de sauvegarde", variant: "destructive" });
+        return;
+      }
+      setAvatarUrl(newUrl);
+    } catch (error: any) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     }
-    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    setAvatarUrl(data.publicUrl);
-    // Update profile
-    await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', user.id);
-    setUploadingAvatar(false);
-    toast({ title: "Avatar mis à jour" });
+  };
+
+  const handleAvatarDelete = async () => {
+    try {
+      const { error } = await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
+      if (error) {
+        toast({ title: "Erreur", description: "Impossible de supprimer la photo", variant: "destructive" });
+        return;
+      }
+      setAvatarUrl(null);
+    } catch (error: any) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    }
   };
 
   // Email update
@@ -219,22 +224,19 @@ const Account = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div>
-              <Label className="mb-2">{t("account.avatar")}</Label>
-              <div className="flex items-center gap-4">
-                <UserAvatar src={avatarUrl} name={fullName || user.email || "Utilisateur"} className="w-16 h-16" />
-                <Label htmlFor="avatar-upload" className="cursor-pointer">
-                  <Button type="button" variant="outline" asChild>
-                    <span>
-                      <Upload className="w-4 h-4" /> {t("account.upload")}
-                    </span>
-                  </Button>
-                  <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarChange} disabled={uploadingAvatar} hidden />
-                </Label>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to={`/profile/${user.id}`}>{t("account.viewPublicProfile")}</Link>
-                </Button>
-              </div>
+            <AvatarUpload
+              currentAvatarUrl={avatarUrl}
+              userName={fullName || user.email || "Utilisateur"}
+              userId={user.id}
+              onAvatarChange={handleAvatarUpdate}
+              onAvatarDelete={handleAvatarDelete}
+            />
+
+            {/* View Public Profile Button */}
+            <div className="flex justify-center">
+              <Button asChild variant="secondary" size="sm">
+                <Link to={`/profile/${user.id}`}>{t("account.viewPublicProfile")} →</Link>
+              </Button>
             </div>
 
             <div>

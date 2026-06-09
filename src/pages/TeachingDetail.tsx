@@ -14,6 +14,7 @@ import GoldBadge from "@/components/GoldBadge";
 import TeachingSEO from "@/components/TeachingSEO";
 import ShareButton from "@/components/ShareButton";
 import SaveButton from "@/components/SaveButton";
+import TTSButton from "@/components/TTSButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Calendar, MapPin, ArrowLeft, BookOpen, Heart, MessageSquare, Sparkles, Bookmark, Plus, Check } from "lucide-react";
@@ -618,6 +619,11 @@ const TeachingDetail = () => {
               </PopoverContent>
             </Popover>
 
+            <TTSButton
+              text={teaching.content}
+              lang={"fr-FR"}
+              size="md"
+            />
             <ShareButton
               title={teaching.title}
               description={teaching.excerpt || teaching.content.substring(0, 160)}
@@ -761,25 +767,49 @@ const TeachingDetail = () => {
 
         {/* Related Teachings */}
         {related.length > 0 && (
-          <section className="bg-gradient-to-b from-gold/5 to-gold/10 border-t border-gold/10 py-16">
-            <div className="container mx-auto px-4 max-w-6xl">
+          <section className="relative bg-gradient-to-b from-background via-gold/3 to-gold/8 py-20 border-t border-gold/20 overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute inset-0 opacity-30 pointer-events-none">
+              <div className="absolute top-10 left-5% w-72 h-72 bg-gold/5 rounded-full blur-3xl" />
+              <div className="absolute bottom-10 right-5% w-96 h-96 bg-royal/5 rounded-full blur-3xl" />
+            </div>
+
+            <div className="container mx-auto px-4 max-w-6xl relative z-10">
               {/* Section Header */}
-              <div className="mb-12 text-center">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Sparkles className="w-5 h-5 text-gold" />
-                  <span className="text-sm font-semibold text-gold uppercase tracking-wider">Continuer votre lecture</span>
-                  <Sparkles className="w-5 h-5 text-gold" />
+              <div className="mb-16 text-center">
+                {/* Top Label */}
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div className="h-px w-8 md:w-12 bg-gradient-to-r from-gold/0 to-gold/60" />
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-gold animate-pulse" />
+                    <span className="text-xs md:text-sm font-semibold text-gold uppercase tracking-widest letter-spacing-2">
+                      Continuer votre lecture
+                    </span>
+                    <Sparkles className="w-5 h-5 text-gold animate-pulse" />
+                  </div>
+                  <div className="h-px w-8 md:w-12 bg-gradient-to-l from-gold/0 to-gold/60" />
                 </div>
-                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">
+
+                {/* Main Title */}
+                <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
                   À lire également
                 </h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
+
+                {/* Subtitle */}
+                <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                   Découvrez d'autres enseignements pour approfondir votre compréhension spirituelle
                 </p>
+
+                {/* Decorative line below subtitle */}
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <div className="h-px w-6 bg-gold/30" />
+                  <BookOpen className="w-4 h-4 text-gold/50" />
+                  <div className="h-px w-6 bg-gold/30" />
+                </div>
               </div>
 
               {/* Related Cards Grid */}
-              <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+              <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16">
                 {related.map((teaching) => (
                   <RelatedTeachingCard
                     key={teaching.id}
@@ -797,12 +827,14 @@ const TeachingDetail = () => {
                 ))}
               </div>
 
-              {/* CTA Button */}
+              {/* CTA Section */}
               <div className="mt-12 text-center">
+                <p className="text-sm text-muted-foreground mb-6">Vous cherchez plus d'enseignements inspirants ?</p>
                 <Link
                   to="/feed"
-                  className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-gold hover:bg-gold/90 text-background font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-gold to-gold/80 hover:from-gold/95 hover:to-gold/70 text-background font-semibold transition-all duration-300 hover:shadow-xl hover:shadow-gold/40 hover:scale-105 active:scale-95"
                 >
+                  <BookOpen className="w-5 h-5" />
                   Voir tous les enseignements
                   <ArrowLeft className="w-4 h-4 rotate-180" />
                 </Link>
