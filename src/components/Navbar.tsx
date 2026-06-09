@@ -191,16 +191,16 @@ const Navbar = () => {
           </Link>
 
           <div className="flex items-center gap-2 md:hidden ml-auto">
+            <button
+              type="button"
+              onClick={toggle}
+              aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkMode")}
+              className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-gold/30 bg-card/90 text-foreground transition hover:border-gold hover:text-gold"
+            >
+              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+
             {user && (<> 
-              <button
-                type="button"
-                onClick={toggle}
-                aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkMode")}
-                className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-gold/30 bg-card/90 text-foreground transition hover:border-gold hover:text-gold"
-              >
-                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
-              
               <Popover onOpenChange={(open) => {
                 setNotificationOpen(open);
                 if (open) markAllRead();
