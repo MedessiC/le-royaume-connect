@@ -1,5 +1,6 @@
 import { Share2, Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { FaWhatsapp, FaFacebookF, FaTwitter, FaEnvelope, FaLink } from "react-icons/fa";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +29,7 @@ export const ShareButton = ({
   const shareOptions = [
     {
       name: "WhatsApp",
-      icon: "💬",
+      icon: <FaWhatsapp className="w-5 h-5" />,
       action: () => {
         const text = `${title}\n\n${shareText}\n\n${fullUrl}`;
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -37,7 +38,7 @@ export const ShareButton = ({
     },
     {
       name: "Facebook",
-      icon: "f",
+      icon: <FaFacebookF className="w-5 h-5" />,
       action: () => {
         const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fullUrl)}&quote=${encodeURIComponent(title)}`;
         window.open(fbUrl, "_blank", "width=600,height=400");
@@ -45,7 +46,7 @@ export const ShareButton = ({
     },
     {
       name: "Twitter/X",
-      icon: "𝕏",
+      icon: <FaTwitter className="w-5 h-5" />,
       action: () => {
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(fullUrl)}`;
         window.open(twitterUrl, "_blank", "width=600,height=300");
@@ -53,7 +54,7 @@ export const ShareButton = ({
     },
     {
       name: "Email",
-      icon: "✉️",
+      icon: <FaEnvelope className="w-5 h-5" />,
       action: () => {
         const subject = encodeURIComponent(title);
         const body = encodeURIComponent(`${shareText}\n\n${fullUrl}`);
@@ -62,7 +63,7 @@ export const ShareButton = ({
     },
     {
       name: "Copier",
-      icon: "📋",
+      icon: <FaLink className="w-5 h-5" />,
       action: () => {
         navigator.clipboard.writeText(fullUrl);
         setCopied(true);
@@ -110,7 +111,9 @@ export const ShareButton = ({
               onClick={option.action}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm text-foreground"
             >
-              <span className="text-base">{option.icon}</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-foreground">
+                {option.icon}
+              </span>
               <span className="flex-1 text-left">
                 {option.name === "Copier" && copied ? "✓ Copié!" : option.name}
               </span>

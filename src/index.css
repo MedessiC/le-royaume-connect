@@ -82,6 +82,27 @@
 }
 
 @layer base {
+  .dark .prose,
+  .dark .prose p,
+  .dark .prose li,
+  .dark .prose blockquote,
+  .dark .prose strong,
+  .dark .prose em,
+  .dark .prose code,
+  .dark .prose pre,
+  .dark .prose td,
+  .dark .prose th,
+  .dark .prose figcaption,
+  .dark .prose dd,
+  .dark .prose dt,
+  .dark .prose small {
+    color: hsl(var(--foreground));
+  }
+
+  .dark .prose a {
+    color: hsl(var(--accent));
+  }
+
   * {
     @apply border-border;
   }

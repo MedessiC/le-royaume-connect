@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Heart, MessageSquare } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import UserAvatar from "@/components/UserAvatar";
@@ -82,7 +83,13 @@ export const CommentItem = ({
           <div className="bg-muted/50 hover:bg-muted/70 rounded-2xl px-4 py-2 transition-colors">
             <div className="flex items-baseline justify-between gap-2 mb-1">
               <div className="flex items-center gap-1">
-                <span className="font-semibold text-sm text-foreground">{authorName}</span>
+                {comment.author?.id ? (
+                  <Link to={`/profile/${comment.author.id}`} className="font-semibold text-sm text-foreground hover:text-gold transition-colors">
+                    {authorName}
+                  </Link>
+                ) : (
+                  <span className="font-semibold text-sm text-foreground">{authorName}</span>
+                )}
                 <GoldBadge hasGoldBadge={comment.author?.has_gold_badge ?? false} />
               </div>
               <span className="text-xs text-muted-foreground">{formatDate(comment.created_at)}</span>
@@ -180,9 +187,13 @@ export const CommentItem = ({
                       <div className="bg-muted/30 hover:bg-muted/50 rounded-2xl px-3 py-1.5 transition-colors">
                         <div className="flex items-baseline justify-between gap-2 mb-0.5">
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-xs text-foreground">
-                              {reply.author?.full_name ?? "Membre"}
-                            </span>
+                            {reply.author?.id ? (
+                              <Link to={`/profile/${reply.author.id}`} className="font-semibold text-xs text-foreground hover:text-gold transition-colors">
+                                {reply.author?.full_name ?? "Membre"}
+                              </Link>
+                            ) : (
+                              <span className="font-semibold text-xs text-foreground">{reply.author?.full_name ?? "Membre"}</span>
+                            )}
                             <GoldBadge hasGoldBadge={reply.author?.has_gold_badge ?? false} className="w-3 h-3" />
                           </div>
                           <span className="text-xs text-muted-foreground">

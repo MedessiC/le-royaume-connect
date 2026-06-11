@@ -657,7 +657,7 @@ const TeachingDetail = () => {
 
           {teaching.cover_image_url ? (
             <>
-              <div className="prose prose-lg max-w-none text-foreground font-body leading-relaxed mb-6">
+              <div className="prose prose-lg max-w-none text-foreground font-body leading-relaxed prose-headings:text-foreground prose-p:text-foreground prose-a:text-foreground prose-strong:text-foreground prose-ul:list-disc prose-li:text-foreground mb-6">
                 {renderTeachingContent(teaching.content)}
               </div>
 
@@ -720,13 +720,13 @@ const TeachingDetail = () => {
                 </div>
               )}
 
-              <div className="prose prose-lg max-w-none text-foreground font-body leading-relaxed mb-6">
+              <div className="prose prose-lg max-w-none text-foreground dark:text-white dark:prose-invert font-body leading-relaxed prose-headings:text-foreground prose-p:text-foreground prose-a:text-foreground prose-strong:text-foreground prose-li:text-foreground mb-6">
                 {renderTeachingContent(teaching.content)}
               </div>
             </>
           ) : (
             <div className="space-y-4">
-              <div className={`prose prose-lg max-w-none text-foreground font-body leading-relaxed ${!showFullContent ? "line-clamp-6" : ""}`}>
+              <div className={`prose prose-lg max-w-none text-foreground dark:text-white dark:prose-invert font-body leading-relaxed prose-headings:text-foreground prose-p:text-foreground prose-a:text-foreground prose-strong:text-foreground prose-li:text-foreground ${!showFullContent ? "line-clamp-6" : ""}`}>
                 {renderTeachingContent(teaching.content)}
               </div>
               {!showFullContent && (
