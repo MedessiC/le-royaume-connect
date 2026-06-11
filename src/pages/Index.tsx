@@ -58,7 +58,7 @@ const Index = () => {
           <div className="marquee py-3 text-sm md:text-base text-midnight">
             <div
               className="marquee-content inline-flex items-center gap-6"
-              style={{ animationDuration: `${Math.max(8, Math.min(homeSettings.marquee_speed ?? 22, 60))}s` }}
+              style={{ animationDuration: `${Math.max(8, Math.min(homeSettings.marquee_speed ?? 45, 60))}s` }}
             >
               <span className="font-semibold flex-shrink-0">COMMUNIQUÉ :</span>
               <span>{homeSettings.marquee_text}</span>

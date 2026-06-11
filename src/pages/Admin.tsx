@@ -95,7 +95,7 @@ const Admin = () => {
     live_enabled: false,
     live_url: "",
     marquee_text: "",
-    marquee_speed: 22,
+    marquee_speed: 45,
     carousel_images: [],
   });
   const [publicationQuery, setPublicationQuery] = useState("");
@@ -149,7 +149,7 @@ const Admin = () => {
         live_enabled: settings.data.live_enabled ?? false,
         live_url: settings.data.live_url ?? "",
         marquee_text: settings.data.marquee_text ?? "",
-        marquee_speed: settings.data.marquee_speed ?? 22,
+        marquee_speed: settings.data.marquee_speed ?? 45,
         carousel_images: settings.data.carousel_images ?? [],
       });
     }
@@ -511,8 +511,8 @@ const Admin = () => {
                             max={60}
                             step={1}
                             value={homeForm.marquee_speed}
-                            onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 22 })}
-                            placeholder="22"
+                            onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
+                            placeholder="45"
                             className="w-20"
                           />
                           <span className="text-sm text-muted-foreground">secondes</span>
@@ -524,7 +524,7 @@ const Admin = () => {
                           max={60}
                           step={1}
                           value={homeForm.marquee_speed}
-                          onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 22 })}
+                          onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
                           className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-gold"
                         />
                         <p className="text-xs text-muted-foreground">
