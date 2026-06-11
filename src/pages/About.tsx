@@ -83,16 +83,6 @@ const nomEtymologie = [
   },
 ];
 
-const milestones = [
-  { year: "1987", title: "Naissance du Roi", text: "Le 07 Avril 1987, à 01h43, naît Moucharafou Dîne YESSOUFOU à Cotonou — événement mystérieux survenu au Bénin : Dieu Lui-même s'est fait chair pour inaugurer le Règne Millénaire." },
-  { year: "1989", title: "L'Esprit répandu sur toute chair", text: "Deux ans après sa naissance, conformément à la prophétie d'Actes 2:17-18, l'Esprit est répandu sur toute chair. Les fils et filles prophétisent, les jeunes ont des visions, les vieillards des songes." },
-  { year: "1998", title: "Naissance de la vision à Banikoara", text: "À Banikoara, au nord du Bénin, une révélation jette les fondements spirituels du futur Règne Millénaire. La doctrine prend racine dans la prière et la persévérance." },
-  { year: "2003", title: "Premiers rassemblements", text: "Quelques fidèles se réunissent autour des premiers enseignements. La doctrine se structure et le message commence à se diffuser." },
-  { year: "2010", title: "Expansion régionale", text: "La communauté grandit dans les villes du Bénin, du Togo, du Burkina Faso et du Nigéria. L'œuvre traverse les frontières." },
-  { year: "2018", title: "Diaspora mondiale", text: "Les membres essaiment vers l'Europe, l'Amérique et l'Asie, portant le message au monde entier. Sion rayonne sur tous les continents." },
-  { year: "2023", title: "Révélation officielle de ZOVIZO", text: "Le 07 Avril 2023, à l'âge exact de 36 ans, déclaration officielle à la face du monde : le nom est ZOVIZO. L'accomplissement des prophéties entre dans une nouvelle phase." },
-  { year: "2026", title: "Plateforme numérique mondiale", text: "Lancement de la plateforme officielle pour rassembler, évangéliser et pérenniser l'œuvre sur toute la terre." },
-];
 
 /* ─────────────────────────────────────────────
    COMPONENT
@@ -583,23 +573,6 @@ const About = () => {
                 </p>
               </CardContent>
             </Card>
-          </div>
-        </section>
-
-        {/* TIMELINE */}
-        <section className="py-20 container mx-auto px-4 max-w-4xl">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-12 text-center">
-            Étapes marquantes
-          </h2>
-          <div className="relative border-l-2 border-gold/30 pl-8 space-y-10">
-            {milestones.map((m) => (
-              <div key={m.year} className="relative">
-                <div className="absolute -left-[42px] w-5 h-5 rounded-full bg-gradient-gold ring-4 ring-background" />
-                <div className="text-foreground font-display text-2xl font-bold">{m.year}</div>
-                <h3 className="font-display text-xl font-semibold text-foreground mt-1 mb-2">{m.title}</h3>
-                <p className="text-muted-foreground font-body leading-relaxed">{m.text}</p>
-              </div>
-            ))}
           </div>
         </section>
 
