@@ -8,10 +8,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/i18n";
 import BottomNav from "@/components/BottomNav";
+import NotificationBell from "@/components/NotificationBell";
+import SearchBar from "@/components/SearchBar";
+import UserAvatar from "@/components/UserAvatar";
 import useTheme from "@/hooks/useTheme";
 
 const Navbar = () => {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, profile, isAdmin, signOut } = useAuth();
   const { t, locale, setLocale } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,7 +33,7 @@ const Navbar = () => {
   const [notifReply, setNotifReply] = useState(false);
   const unreadCount = useMemo(() => notifications.filter((notification) => !notification.read).length, [notifications]);
 
-  const { theme, toggle } = useTheme();
+  const { theme, resolvedTheme, toggle } = useTheme();
 
   const notificationStorageKey = user ? `millenium-notifications-${user.id}` : "millenium-notifications";
 
@@ -185,19 +188,19 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 relative bg-popover/95 backdrop-blur-xl border-b border-border shadow-2xl">
         {pageLoading && <div className="absolute inset-x-0 top-0 h-1 bg-gold animate-pulse" />}
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Link to="/" onClick={handleNavClick} className="flex items-center gap-2">
-            <span className="font-display text-lg font-bold tracking-[0.18em] text-gold">MILLENIUM</span>
+        <div className="w-full flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 md:px-6">
+          <Link to="/" onClick={handleNavClick} className="flex items-center gap-2 flex-shrink-0">
+            <span className="font-display text-base sm:text-lg font-bold tracking-[0.18em] text-gold">MILLENIUM</span>
           </Link>
 
-          <div className="flex items-center gap-2 md:hidden ml-auto">
+          <div className="flex items-center gap-1 sm:gap-2 md:hidden ml-auto">
             <button
               type="button"
               onClick={toggle}
-              aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkMode")}
+              aria-label={resolvedTheme === "dark" ? t("common.lightMode") : t("common.darkMode")}
               className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-gold/30 bg-card/90 text-foreground transition hover:border-gold hover:text-gold"
             >
-              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {resolvedTheme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {user && (<> 
@@ -206,16 +209,16 @@ const Navbar = () => {
                 if (open) markAllRead();
               }}>
                 <PopoverTrigger asChild>
-                  <button type="button" className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 bg-card/90 text-foreground transition hover:border-gold hover:text-gold">
-                    <Bell className="w-5 h-5" />
+                  <button type="button" className="relative inline-flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-gold/30 bg-card/90 text-foreground transition hover:border-gold hover:text-gold flex-shrink-0">
+                    <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gold px-1.5 text-[10px] font-semibold text-slate-950">
+                      <span className="absolute -right-1 -top-1 inline-flex h-4 sm:h-5 min-w-[1rem] sm:min-w-[1.25rem] items-center justify-center rounded-full bg-gold px-1 sm:px-1.5 text-[8px] sm:text-[10px] font-semibold text-slate-950">
                         {unreadCount}
                       </span>
                     )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72">
+                <PopoverContent className="w-64 sm:w-72">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">Notifications</p>
@@ -245,24 +248,24 @@ const Navbar = () => {
               </>
             )}
             {!user && (
-              <Link to="/auth" onClick={handleNavClick} className="rounded-full border border-gold/30 bg-gold/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-gold transition hover:bg-gold/20">
+              <Link to="/auth" onClick={handleNavClick} className="rounded-full border border-gold/30 bg-gold/10 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-gold transition hover:bg-gold/20 flex-shrink-0">
                 {t("nav.login")}
               </Link>
             )}
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setLanguageOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-card/90 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-foreground transition hover:border-gold hover:text-gold"
+                className="inline-flex items-center gap-1 sm:gap-2 rounded-full border border-gold/30 bg-card/90 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-foreground transition hover:border-gold hover:text-gold"
                 aria-expanded={languageOpen}
                 aria-label={t("common.changeLanguage")}
               >
-                <ReactCountryFlag svg countryCode={languages.find((lang) => lang.code === locale)?.countryCode || "FR"} style={{ width: "18px", height: "18px" }} />
-                <span>{locale.toUpperCase()}</span>
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ReactCountryFlag svg countryCode={languages.find((lang) => lang.code === locale)?.countryCode || "FR"} style={{ width: "14px", height: "14px" }} />
+                <span className="hidden xs:inline">{locale.toUpperCase()}</span>
+                <ChevronDown className="w-3 h-3" />
               </button>
               {languageOpen && (
-              <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-3xl border border-border bg-popover/95 shadow-2xl backdrop-blur-xl">
+              <div className="absolute right-0 mt-2 w-40 z-10 overflow-hidden rounded-3xl border border-border bg-popover/95 shadow-2xl backdrop-blur-xl">
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
@@ -270,9 +273,9 @@ const Navbar = () => {
                       onClick={() => {
                         translatePage(lang.code);
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition hover:bg-gold/10"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs sm:text-sm text-foreground transition hover:bg-gold/10"
                     >
-                      <ReactCountryFlag svg countryCode={lang.countryCode} style={{ width: "18px", height: "18px" }} />
+                      <ReactCountryFlag svg countryCode={lang.countryCode} style={{ width: "16px", height: "16px" }} />
                       <span>{lang.name}</span>
                     </button>
                   ))}
@@ -287,10 +290,10 @@ const Navbar = () => {
             <button
               type="button"
               onClick={toggle}
-              aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkMode")}
+              aria-label={resolvedTheme === "dark" ? t("common.lightMode") : t("common.darkMode")}
               className="inline-flex items-center justify-center h-10 w-10 rounded-full border border-gold/30 bg-card/90 text-foreground transition hover:border-gold hover:text-gold"
             >
-              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {resolvedTheme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
             <div className="relative">
               <button
@@ -305,7 +308,7 @@ const Navbar = () => {
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
               {languageOpen && (
-                <div className="absolute right-0 mt-2 w-40 overflow-hidden rounded-3xl border border-border bg-popover/95 shadow-2xl backdrop-blur-xl">
+                <div className="absolute right-0 mt-2 w-40 z-10 overflow-hidden rounded-3xl border border-border bg-popover/95 shadow-2xl backdrop-blur-xl">
                   {languages.map((lang) => (
                     <button
                       key={lang.code}
@@ -313,9 +316,9 @@ const Navbar = () => {
                       onClick={() => {
                         translatePage(lang.code);
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition hover:bg-gold/10"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs sm:text-sm text-foreground transition hover:bg-gold/10"
                     >
-                      <ReactCountryFlag svg countryCode={lang.countryCode} style={{ width: "18px", height: "18px" }} />
+                      <ReactCountryFlag svg countryCode={lang.countryCode} style={{ width: "16px", height: "16px" }} />
                       <span>{lang.name}</span>
                     </button>
                   ))}
@@ -329,8 +332,8 @@ const Navbar = () => {
                   if (open) markAllRead();
                 }}>
                   <PopoverTrigger asChild>
-                    <button type="button" className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-gold/30 bg-card/90 text-foreground transition hover:border-gold hover:text-gold">
-                      <Bell className="w-5 h-5" />
+                    <button type="button" className="relative inline-flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-gold/30 bg-card/90 text-foreground transition hover:border-gold hover:text-gold">
+                      <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                       {unreadCount > 0 && (
                         <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gold px-1.5 text-[10px] font-semibold text-slate-950">
                           {unreadCount}
@@ -338,8 +341,8 @@ const Navbar = () => {
                       )}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-3">
+                  <PopoverContent className="w-72 sm:w-80">
+                    <div className="space-y-2 sm:space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold">Notifications</p>
                         <button type="button" onClick={markAllRead} className="text-xs text-muted-foreground hover:text-foreground">Tout lire</button>
@@ -377,8 +380,17 @@ const Navbar = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Link to="/account" onClick={handleNavClick}>
-                    <Button variant="hero-outline" size="sm">
-                      <UserIcon className="w-4 h-4" /> {t("nav.account")}
+                    <Button variant="hero-outline" size="sm" className="inline-flex items-center gap-2">
+                      {profile?.avatar_url ? (
+                        <UserAvatar
+                          src={profile.avatar_url}
+                          name={profile.full_name || user?.email || "Utilisateur"}
+                          className="w-4 h-4"
+                        />
+                      ) : (
+                        <UserIcon className="w-4 h-4" />
+                      )}
+                      {t("nav.account")}
                     </Button>
                   </Link>
                   <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label={t("nav.logout")} className="text-foreground/80 hover:text-gold">

@@ -2,9 +2,15 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+type ProfileInfo = {
+  full_name: string | null;
+  avatar_url: string | null;
+};
+
 type AuthCtx = {
   user: User | null;
   session: Session | null;
+  profile: ProfileInfo | null;
   isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -13,6 +19,7 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx>({
   user: null,
   session: null,
+  profile: null,
   isAdmin: false,
   loading: true,
   signOut: async () => {},
@@ -21,14 +28,26 @@ const Ctx = createContext<AuthCtx>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<ProfileInfo | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadProfile = async (userId: string) => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", userId)
+        .maybeSingle();
+      setProfile(data ?? null);
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
+      setProfile(null);
       if (s?.user) {
+        loadProfile(s.user.id);
         setTimeout(() => {
           supabase
             .from("user_roles")
@@ -46,7 +65,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
+      setProfile(null);
       if (s?.user) {
+        loadProfile(s.user.id);
         supabase
           .from("user_roles")
           .select("role")
@@ -66,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <Ctx.Provider value={{ user, session, isAdmin, loading, signOut }}>
+    <Ctx.Provider value={{ user, session, profile, isAdmin, loading, signOut }}>
       {children}
     </Ctx.Provider>
   );

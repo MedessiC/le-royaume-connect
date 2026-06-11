@@ -3,9 +3,10 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Home, Users, Info, User as UserIcon, BookOpen, Settings, Shield, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/i18n";
+import UserAvatar from "@/components/UserAvatar";
 
 const BottomNav = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const location = useLocation();
   const [pageLoading, setPageLoading] = useState(false);
 
@@ -98,7 +99,15 @@ const BottomNav = () => {
               }`
             }
           >
-            <Settings className="w-4.5 h-4.5" />
+            {profile?.avatar_url ? (
+              <UserAvatar
+                src={profile.avatar_url}
+                name={profile.full_name || user?.email || "Utilisateur"}
+                className="w-4.5 h-4.5"
+              />
+            ) : (
+              <Settings className="w-4.5 h-4.5" />
+            )}
             <span className="whitespace-nowrap">{t("bottomNav.settings")}</span>
           </NavLink>
 

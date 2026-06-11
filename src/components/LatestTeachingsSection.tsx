@@ -45,7 +45,7 @@ const LatestTeachingsSection = () => {
       if (authorIds.length) {
         const { data: profiles } = await supabase
           .from("profiles")
-          .select("id, full_name, has_gold_badge")
+          .select("id, full_name, avatar_url, has_gold_badge")
           .in("id", authorIds);
         if (profiles) {
           profileMap = Object.fromEntries(profiles.map((p) => [p.id, p]));

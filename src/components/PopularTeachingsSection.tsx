@@ -89,17 +89,17 @@ const PopularTeachingsSection = () => {
   return (
     <section className="py-24 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <p className="text-gold-dark font-body text-sm tracking-[0.2em] uppercase mb-3">Tendances</p>
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
+        <div className="text-center mb-12 sm:mb-16 px-3 sm:px-0">
+          <p className="text-gold-dark font-body text-xs sm:text-sm tracking-[0.2em] uppercase mb-2 sm:mb-3">Tendances</p>
+          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4">
             Enseignements populaires
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto px-2 sm:px-0">
             Les contenus les plus engageants de notre communauté
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-3 sm:px-0">
           {teachings.map((teaching, index) => (
             <Link key={teaching.id} to={`/teaching/${teaching.id}`}>
               <div className="group h-full rounded-2xl overflow-hidden border border-border hover:border-gold/50 transition-all hover:shadow-royal bg-card">

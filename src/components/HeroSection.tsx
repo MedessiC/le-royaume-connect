@@ -60,12 +60,12 @@ const HeroSection = ({ slides }: HeroSectionProps) => {
 
       {/* Text Content */}
       <div className="relative z-10 container mx-auto px-4 flex items-center justify-center h-full">
-        <div className="w-full max-w-4xl rounded-[2rem] bg-slate-950/5 border border-white/10 p-8 md:p-12 backdrop-blur-sm shadow-2xl">
+        <div className="w-full max-w-4xl rounded-[2rem] bg-slate-950/5 border border-white/10 p-8 md:p-12 shadow-2xl">
           <div className="text-center">
             <p className="text-gold font-body text-sm tracking-[0.35em] uppercase mb-4 animate-fade-in-up">
               Mouvement mondial
             </p>
-            <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-bold text-primary-foreground leading-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+            <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-bold text-[#FFD700] leading-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
               MILLENIUM
             </h1>
             <p className="text-primary-foreground/90 font-body text-base sm:text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>

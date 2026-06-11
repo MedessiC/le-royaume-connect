@@ -15,11 +15,12 @@ import TeachingSEO from "@/components/TeachingSEO";
 import ShareButton from "@/components/ShareButton";
 import SaveButton from "@/components/SaveButton";
 import TTSButton from "@/components/TTSButton";
+import UserAvatar from "@/components/UserAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Calendar, MapPin, ArrowLeft, BookOpen, Heart, MessageSquare, Sparkles, Bookmark, Plus, Check } from "lucide-react";
 
-type Profile = { id: string; full_name: string | null; has_gold_badge?: boolean };
+type Profile = { id: string; full_name: string | null; avatar_url?: string | null; has_gold_badge?: boolean };
 
 type TeachingComment = {
   id: string;
@@ -80,7 +81,7 @@ const getYoutubeEmbedUrl = (url: string) => {
 const TeachingDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [teaching, setTeaching] = useState<Teaching | null>(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<Array<{
@@ -129,7 +130,7 @@ const TeachingDetail = () => {
 
         const [authorRes, roleRes, commentsRes, likesRes] = await Promise.all([
           data.author_id
-            ? supabase.from("profiles").select("id, full_name, has_gold_badge").eq("id", data.author_id).maybeSingle()
+            ? supabase.from("profiles").select("id, full_name, avatar_url, has_gold_badge").eq("id", data.author_id).maybeSingle()
             : Promise.resolve({ data: null }),
           data.author_id
             ? supabase.from("user_roles").select("user_id").eq("role", "admin").eq("user_id", data.author_id).maybeSingle()
@@ -155,7 +156,7 @@ const TeachingDetail = () => {
         const commentAuthors: Record<string, Profile> = {};
         if (commentsRes.data?.length) {
           const authorIds = Array.from(new Set(commentsRes.data.map((comment) => comment.user_id)));
-          const profilesRes = await supabase.from("profiles").select("id, full_name, has_gold_badge").in("id", authorIds);
+          const profilesRes = await supabase.from("profiles").select("id, full_name, avatar_url, has_gold_badge").in("id", authorIds);
           if (profilesRes.data) {
             profilesRes.data.forEach((profile) => {
               commentAuthors[profile.id] = profile;
@@ -222,7 +223,7 @@ const TeachingDetail = () => {
             
             if (authorIds.length) {
               const [profilesRes, rolesRes] = await Promise.all([
-                supabase.from("profiles").select("id, full_name").in("id", authorIds),
+                supabase.from("profiles").select("id, full_name, avatar_url").in("id", authorIds),
                 supabase.from("user_roles").select("user_id").eq("role", "admin").in("user_id", authorIds),
               ]);
               
@@ -384,7 +385,11 @@ const TeachingDetail = () => {
         ...current,
         {
           ...data,
-          author: { id: user.id, full_name: user.user_metadata?.full_name ?? null },
+          author: {
+            id: user.id,
+            full_name: profile?.full_name ?? user.user_metadata?.full_name ?? null,
+            avatar_url: profile?.avatar_url ?? null,
+          },
           likes_count: 0,
           liked_by_me: false,
         },
@@ -414,7 +419,11 @@ const TeachingDetail = () => {
         ...current,
         {
           ...data,
-          author: { id: user.id, full_name: user.user_metadata?.full_name ?? null },
+          author: {
+            id: user.id,
+            full_name: profile?.full_name ?? user.user_metadata?.full_name ?? null,
+            avatar_url: profile?.avatar_url ?? null,
+          },
           likes_count: 0,
           liked_by_me: false,
         },
@@ -534,21 +543,24 @@ const TeachingDetail = () => {
             </div>
 
             <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Publié par{' '}
-                  {teaching.author?.id ? (
-                    <Link to={`/profile/${teaching.author.id}`} className="text-foreground font-medium hover:text-gold transition-colors flex items-center gap-1 inline-flex">
-                      {teaching.isAuthorAdmin ? "@leregnemillenaire" : teaching.author.full_name || "un membre"}
-                      <GoldBadge hasGoldBadge={teaching.author.has_gold_badge ?? false} />
-                    </Link>
-                  ) : (
-                    <span className="text-foreground font-medium flex items-center gap-1 inline-flex">{teaching.isAuthorAdmin ? "@leregnemillenaire" : teaching.author?.full_name ?? "un membre"}</span>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(teaching.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
-                </p>
+              <div className="flex items-center gap-3">
+                <UserAvatar src={teaching.author?.avatar_url} name={teaching.author?.full_name || "Auteur"} className="h-11 w-11 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Publié par{' '}
+                    {teaching.author?.id ? (
+                      <Link to={`/profile/${teaching.author.id}`} className="text-foreground font-medium hover:text-gold transition-colors flex items-center gap-1 inline-flex">
+                        {teaching.isAuthorAdmin ? "@leregnemillenaire" : teaching.author.full_name || "un membre"}
+                        <GoldBadge hasGoldBadge={teaching.author.has_gold_badge ?? false} />
+                      </Link>
+                    ) : (
+                      <span className="text-foreground font-medium flex items-center gap-1 inline-flex">{teaching.isAuthorAdmin ? "@leregnemillenaire" : teaching.author?.full_name ?? "un membre"}</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(teaching.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                  </p>
+                </div>
               </div>
               {teaching.isAuthorAdmin && (
                 <Badge variant="secondary" className="bg-blue-500 text-white">Admin</Badge>

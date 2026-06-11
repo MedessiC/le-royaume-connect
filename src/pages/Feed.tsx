@@ -132,7 +132,7 @@ const Feed = () => {
       let adminIds = new Set<string>();
       if (authorIds.length) {
         const [profilesRes, rolesRes] = await Promise.all([
-          supabase.from("profiles").select("id, full_name, has_gold_badge").in("id", authorIds),
+          supabase.from("profiles").select("id, full_name, avatar_url, has_gold_badge").in("id", authorIds),
           supabase.from("user_roles").select("user_id").eq("role", "admin").in("user_id", authorIds),
         ]);
         if (profilesRes.data) profileMap = Object.fromEntries(profilesRes.data.map((p) => [p.id, p]));
