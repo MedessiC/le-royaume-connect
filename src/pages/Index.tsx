@@ -31,6 +31,8 @@ type HomeSettings = {
   facebook_url: string | null;
   live_enabled: boolean;
   live_url: string | null;
+  marquee_text: string | null;
+  marquee_speed: number | null;
   carousel_images?: string[];
 };
 
@@ -51,6 +53,27 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
+      {homeSettings?.marquee_text ? (
+        <section className="overflow-hidden border-b border-gold/20 bg-gold/10">
+          <div className="marquee py-3 text-sm md:text-base text-midnight">
+            <div
+              className="marquee-content inline-flex items-center gap-6"
+              style={{ animationDuration: `${Math.max(8, Math.min(homeSettings.marquee_speed ?? 22, 60))}s` }}
+            >
+              <span className="font-semibold flex-shrink-0">COMMUNIQUÉ :</span>
+              <span>{homeSettings.marquee_text}</span>
+              <span className="font-semibold flex-shrink-0">·</span>
+              <span>{homeSettings.marquee_text}</span>
+              <span className="font-semibold flex-shrink-0">·</span>
+              <span>{homeSettings.marquee_text}</span>
+              <span className="font-semibold flex-shrink-0">COMMUNIQUÉ :</span>
+              <span>{homeSettings.marquee_text}</span>
+              <span className="font-semibold flex-shrink-0">·</span>
+              <span>{homeSettings.marquee_text}</span>
+            </div>
+          </div>
+        </section>
+      ) : null}
       <HeroSection
         slides={homeSettings?.carousel_images?.filter(Boolean).map((src, index) => ({
           src,

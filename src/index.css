@@ -127,6 +127,35 @@
     color: hsl(var(--gold-dark));
   }
 
+  .marquee {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 215, 0, 0.12);
+  }
+
+  .marquee-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 3rem;
+    min-width: 200%;
+    animation: marquee-scroll 22s linear infinite;
+    will-change: transform;
+  }
+
+  .marquee-content span {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  @keyframes marquee-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
   .font-display {
     font-family: var(--font-display);
   }

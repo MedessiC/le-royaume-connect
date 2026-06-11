@@ -5,7 +5,6 @@ const MapComponent = () => {
   const mapInstanceRef = useRef<any>(null);
 
   useEffect(() => {
-    // Load Leaflet CSS and JS dynamically
     if (!document.getElementById("leaflet-css")) {
       const link = document.createElement("link");
       link.id = "leaflet-css";
@@ -35,85 +34,64 @@ const MapComponent = () => {
   const initializeMap = () => {
     if (!mapRef.current || !((window as any).L)) return;
 
-    // Banikoara coordinates (Benin)
-    const banikoareLat = 10.27;
-    const banikoareLng = 1.88;
-
-    // Create map
-    const map = (window as any).L.map(mapRef.current).setView(
-      [banikoareLat, banikoareLng],
-      12
-    );
+    const banikoaraLat = 10.27;
+    const banikoaraLng = 1.88;
+    const map = (window as any).L.map(mapRef.current, {
+      zoomControl: false,
+      attributionControl: true,
+    }).setView([banikoaraLat, banikoaraLng], 11);
 
     mapInstanceRef.current = map;
 
-    // Add OpenStreetMap tiles
-    (window as any).L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-      }
-    ).addTo(map);
+    (window as any).L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map);
 
-    // Custom icon for marker
-    const goldIcon = (window as any).L.icon({
-      iconUrl:
-        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICAKICAGPHBHDGGGZMLSBD0iIzE5MTk3MCIgZD0iTTMyIDE2YzAgOC44MjctNy4xNzMgMTYtMTYgMTZTMCAyNC44MjcgMCAxNiA3LjE3MyAwIDE2IDAgMzIgNy4xNzMgMzIgMTZ6Ii8+CiAgCiAgPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTAiIGZpbGw9IiNmZmQ3MDAiLz4KICAKPC9zdmc+",
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32],
+    const markerIcon = (window as any).L.divIcon({
+      className: "banikoara-marker",
+      html: `
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div style="background:#FFD700;color:#0F172A;font-weight:700;border-radius:999px;padding:8px 14px;box-shadow:0 14px 30px rgba(0,0,0,0.18);font-size:14px;letter-spacing:0.02em;white-space:nowrap;">
+            Banikoara
+          </div>
+          <div style="width:18px;height:18px;background:#FFD700;border:4px solid #0F172A;border-radius:999px;margin-top:-6px;box-shadow:0 8px 18px rgba(0,0,0,0.2);"></div>
+        </div>
+      `,
+      iconSize: [140, 50],
+      iconAnchor: [70, 36],
     });
 
-    // Add marker
-    const marker = (window as any).L.marker(
-      [banikoareLat, banikoareLng],
-      { icon: goldIcon }
-    ).addTo(map);
+    const marker = (window as any).L.marker([banikoaraLat, banikoaraLng], {
+      icon: markerIcon,
+      interactive: false,
+    }).addTo(map);
 
-    // Popup content
+    (window as any).L.circle([banikoaraLat, banikoaraLng], {
+      radius: 1200,
+      color: "#FFD700",
+      fillColor: "#FFD700",
+      fillOpacity: 0.12,
+      weight: 2,
+    }).addTo(map);
+
     const popupHtml = `
-      <div style="font-family: 'Inter', sans-serif; padding: 8px; text-align: center;">
-        <h3 style="margin: 0 0 6px 0; font-weight: 600; font-size: 16px; color: #191970;">Sion</h3>
-        <p style="margin: 0 0 3px 0; font-size: 13px; color: #191970;">Banikoara, Bénin</p>
-        <p style="margin: 0; font-size: 11px; color: #666;">Cœur de MILLENIUM</p>
+      <div style="font-family: 'Inter', sans-serif; padding: 10px; text-align: center;">
+        <h3 style="margin: 0 0 6px 0; font-weight: 700; font-size: 16px; color: #0F172A;">Sion</h3>
+        <p style="margin: 0 0 3px 0; font-size: 13px; color: #0F172A;">Banikoara, Bénin</p>
+        <p style="margin: 0; font-size: 11px; color: #334155;">Cœur spirituel du Règne Millénaire</p>
       </div>
     `;
 
-    marker.bindPopup(popupHtml);
-    marker.openPopup();
-
-    // Add animated arrow from top-left to marker
-    const arrowStart = (window as any).L.latLng(
-      banikoareLat + 0.4,
-      banikoareLng - 0.3
-    );
-    const arrowEnd = (window as any).L.latLng(banikoareLat, banikoareLng);
-
-    const arrow = (window as any).L.polyline([arrowStart, arrowEnd], {
-      color: "#191970",
-      weight: 2,
-      opacity: 0.7,
-      dashArray: "5, 5",
-    }).addTo(map);
-
-    // Add arrowhead
-    const arrowHeadIcon = (window as any).L.icon({
-      iconUrl:
-        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij4KICAKICAGPHBVBHLNB24gZmlsbD0iIzE5MTk3MCIgcG9pbnRzPSIxMiwyIDE4LDIyIDEyLDE2IDYsMjIiIHN0cm9rZT0iIzE5MTk3MCIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgCjwvc3ZnPg==",
-      iconSize: [24, 24],
-      iconAnchor: [12, 24],
-    });
-
-    (window as any).L.marker(arrowStart, { icon: arrowHeadIcon }).addTo(map);
+    marker.bindPopup(popupHtml).openPopup();
   };
 
   return (
     <div
       ref={mapRef}
       className="w-full h-full rounded-lg"
-      style={{ minHeight: "400px" }}
+      style={{ minHeight: "420px" }}
     />
   );
 };

@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/RichTextEditor";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,6 +50,8 @@ type HomeSettingsForm = {
   facebook_url: string;
   live_enabled: boolean;
   live_url: string;
+  marquee_text: string;
+  marquee_speed: number;
   carousel_images: string[];
 };
 
@@ -91,6 +94,8 @@ const Admin = () => {
     facebook_url: "",
     live_enabled: false,
     live_url: "",
+    marquee_text: "",
+    marquee_speed: 22,
     carousel_images: [],
   });
   const [publicationQuery, setPublicationQuery] = useState("");
@@ -143,6 +148,8 @@ const Admin = () => {
         facebook_url: settings.data.facebook_url ?? "",
         live_enabled: settings.data.live_enabled ?? false,
         live_url: settings.data.live_url ?? "",
+        marquee_text: settings.data.marquee_text ?? "",
+        marquee_speed: settings.data.marquee_speed ?? 22,
         carousel_images: settings.data.carousel_images ?? [],
       });
     }
@@ -187,6 +194,8 @@ const Admin = () => {
       facebook_url: homeForm.facebook_url.trim() || null,
       live_enabled: homeForm.live_enabled,
       live_url: homeForm.live_url.trim() || null,
+      marquee_text: homeForm.marquee_text.trim() || null,
+      marquee_speed: homeForm.marquee_speed,
       carousel_images: homeForm.carousel_images.filter(Boolean),
     };
 
@@ -474,6 +483,54 @@ const Admin = () => {
                         onChange={(e) => setHomeForm({ ...homeForm, youtube_channel_url: e.target.value })}
                         placeholder="https://www.youtube.com/channel/..."
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
+                    <div>
+                      <Label>Communiqué défilant</Label>
+                      <Textarea
+                        value={homeForm.marquee_text}
+                        onChange={(e) => setHomeForm({ ...homeForm, marquee_text: e.target.value })}
+                        placeholder="Entrez le texte qui défilera en haut de l’accueil"
+                        rows={3}
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Le texte s’affichera en bandeau défilant en haut de la page d’accueil.
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="marquee-speed">Vitesse de défilement</Label>
+                      <div className="space-y-3 mt-2">
+                        <div className="flex items-center gap-3">
+                          <Input
+                            id="marquee-speed"
+                            type="number"
+                            min={8}
+                            max={60}
+                            step={1}
+                            value={homeForm.marquee_speed}
+                            onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 22 })}
+                            placeholder="22"
+                            className="w-20"
+                          />
+                          <span className="text-sm text-muted-foreground">secondes</span>
+                        </div>
+                        <input
+                          type="range"
+                          id="marquee-range"
+                          min={8}
+                          max={60}
+                          step={1}
+                          value={homeForm.marquee_speed}
+                          onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 22 })}
+                          className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-gold"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Plus bas = plus rapide. 8-30 sec recommandé.
+                        </p>
+                      </div>
                     </div>
                   </div>
 

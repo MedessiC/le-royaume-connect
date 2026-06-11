@@ -284,6 +284,8 @@ export type Database = {
           id: string
           live_enabled: boolean
           live_url: string | null
+          marquee_speed: number | null
+          marquee_text: string | null
           tiktok_url: string | null
           whatsapp_url: string | null
           youtube_channel_url: string | null
@@ -300,6 +302,8 @@ export type Database = {
           id?: string
           live_enabled?: boolean
           live_url?: string | null
+          marquee_speed?: number | null
+          marquee_text?: string | null
           tiktok_url?: string | null
           whatsapp_url?: string | null
           youtube_channel_url?: string | null
@@ -316,6 +320,8 @@ export type Database = {
           id?: string
           live_enabled?: boolean
           live_url?: string | null
+          marquee_speed?: number | null
+          marquee_text?: string | null
           tiktok_url?: string | null
           whatsapp_url?: string | null
           youtube_channel_url?: string | null
