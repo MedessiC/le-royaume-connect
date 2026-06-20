@@ -28,7 +28,8 @@ export default defineConfig(({ mode }) => ({
       }
     },
     // Invalider le cache
-    minify: 'terser',
+    // Use esbuild for minification to avoid requiring terser as a dependency
+    minify: 'esbuild',
     sourcemap: false,
   },
 }));
