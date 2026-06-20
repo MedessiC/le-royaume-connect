@@ -159,7 +159,7 @@ const Navbar = () => {
     navigate("/");
   };
 
-  const translatePage = (lang: "fr" | "en" | "es") => {
+  const translatePage = (lang: "fr" | "en" | "es" | "zh") => {
     setLocale(lang);
     setLanguageOpen(false);
   };
@@ -168,6 +168,7 @@ const Navbar = () => {
     { code: "fr", name: "Français", countryCode: "FR" },
     { code: "en", name: "English", countryCode: "GB" },
     { code: "es", name: "Español", countryCode: "ES" },
+    { code: "zh", name: "中文", countryCode: "CN" },
   ];
 
   const navLinks = (
