@@ -19,7 +19,7 @@ const defaultSlides: Slide[] = [
     pretitle: "Mouvement mondial",
     title: "MILLENIUM",
     description:
-      "Depuis Banikoara, Bénin, jusqu'aux quatre coins du monde — une communauté unie dans la foi, la prière et l'action.",
+      "Une ère nouvelle à nulle autre pareille\nUne Seule référence: L'Afrique de l'Ouest\nUn seul rassemblement, une seule fois\nUn seul peuple\nUne seule Communauté\nUne seule dynastie\n\nUn Seul Lieu de Convergence:\nLa Poubligea da Beni. La République du Bénin\nBANIKOARA: SION KonG.\n\nBienvenu à BANIKOARA: SION nouvelle",
   },
   {
     alt: "Hero image 2",
@@ -47,6 +47,8 @@ const HeroSection = ({ slides }: HeroSectionProps) => {
   const intervalRef = useRef<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const activeSlides = slides && slides.length ? slides : defaultSlides;
+  const currentSlide = activeSlides[activeIndex] || {};
+  const descriptionLines = (currentSlide.description || "").split('\n').filter(Boolean);
 
   useEffect(() => {
     if (!carouselApi) return;
@@ -144,13 +146,24 @@ const HeroSection = ({ slides }: HeroSectionProps) => {
                 >
                   {activeSlides[activeIndex].title ?? "MILLENIUM"}
                 </h1>
-                <p
-                  className="text-white/90 font-body text-base sm:text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in-up"
-                  style={{ animationDelay: "0.4s" }}
-                >
-                  {activeSlides[activeIndex].description ??
-                    "Depuis Banikoara, Bénin, jusqu'aux quatre coins du monde — une communauté unie dans la foi, la prière et l'action."}
-                </p>
+                <div className="text-white/90 font-body max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+                  {descriptionLines.length > 0 ? (
+                    descriptionLines.map((line, i) => (
+                      <p
+                        key={i}
+                        className={
+                          "mx-auto " + (i === 0 ? "text-lg sm:text-xl md:text-2xl font-semibold" : "text-base sm:text-lg md:text-xl")
+                        }
+                      >
+                        {line}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-base sm:text-lg md:text-xl">
+                      Depuis Banikoara, Bénin, jusqu'aux quatre coins du monde — une communauté unie dans la foi, la prière et l'action.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>

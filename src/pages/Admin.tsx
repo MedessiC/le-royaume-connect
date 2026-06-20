@@ -570,50 +570,7 @@ const Admin = () => {
                     </div>
                   </div>
 
-                  {/* Carousel slides editor */}
-                  <div>
-                    <Label>Carousel - images & textes</Label>
-                    <p className="text-xs text-muted-foreground mt-1 mb-2">Ajoutez ou modifiez les images et textes affichés dans le hero.</p>
-                    <div className="space-y-4">
-                      {(homeForm.carousel_images || []).map((img, idx) => (
-                        <div key={idx} className="p-3 border rounded-lg grid gap-2 md:grid-cols-3 items-start">
-                          <div>
-                            <Label>Image #{idx + 1}</Label>
-                            <MediaUpload
-                              onUpload={(url) => {
-                                setCarouselImage(idx, url);
-                                setCarouselSlideField(idx, 'image_url', url);
-                              }}
-                              currentUrl={img || undefined}
-                            />
-                          </div>
-                          <div className="md:col-span-2 grid gap-2">
-                            <div>
-                              <Label>Pré-titre</Label>
-                              <Input value={(homeForm.carousel_slides?.[idx]?.pretitle) || ''} onChange={(e) => setCarouselSlideField(idx, 'pretitle', e.target.value)} />
-                            </div>
-                            <div>
-                              <Label>Titre</Label>
-                              <Input value={(homeForm.carousel_slides?.[idx]?.title) || ''} onChange={(e) => setCarouselSlideField(idx, 'title', e.target.value)} />
-                            </div>
-                            <div>
-                              <Label>Description</Label>
-                              <Textarea rows={2} value={(homeForm.carousel_slides?.[idx]?.description) || ''} onChange={(e) => setCarouselSlideField(idx, 'description', e.target.value)} />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                      <div className="flex gap-2">
-                        <Button type="button" onClick={() => setHomeForm({ ...homeForm, carousel_images: [...(homeForm.carousel_images || []), ''] })}>
-                          Ajouter une image
-                        </Button>
-                        <Button type="button" variant="outline" onClick={() => setHomeForm({ ...homeForm, carousel_images: (homeForm.carousel_images || []).slice(0, -1), carousel_slides: (homeForm.carousel_slides || []).slice(0, -1) })}>
-                          Retirer la dernière
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Texte éditable pour chaque image du carrousel (inline) */}
 
                   <div className="border-t border-border pt-6">
                     <h3 className="font-semibold text-foreground mb-4">Bouton « En direct »</h3>
@@ -642,16 +599,49 @@ const Admin = () => {
                     <h3 className="font-semibold text-foreground mb-4">Carrousel d’images</h3>
                     <div className="space-y-4">
                       {homeForm.carousel_images.map((image, index) => (
-                        <div key={index} className="grid gap-4 md:grid-cols-[1fr,auto] items-end">
-                          <MediaUpload
-                            value={image}
-                            onChange={(url) => setCarouselImage(index, url)}
-                            accept="image"
-                            label={`Image ${index + 1}`}
-                          />
-                          <Button type="button" variant="destructive" size="sm" onClick={() => removeCarouselImage(index)} className="h-fit">
-                            <Trash2 className="w-4 h-4" /> Supprimer
-                          </Button>
+                        <div key={index} className="p-3 border rounded-lg grid gap-4 md:grid-cols-[1fr,auto] items-start">
+                          <div>
+                            <Label>Image {index + 1}</Label>
+                            <MediaUpload
+                              value={image}
+                              onChange={(url) => {
+                                setCarouselImage(index, url);
+                                setCarouselSlideField(index, 'image_url', url);
+                              }}
+                              accept="image"
+                            />
+
+                            <div className="mt-3 grid gap-2">
+                              <div>
+                                <Label>Pré-titre</Label>
+                                <Input
+                                  value={homeForm.carousel_slides?.[index]?.pretitle || ''}
+                                  onChange={(e) => setCarouselSlideField(index, 'pretitle', e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label>Titre</Label>
+                                <Input
+                                  value={homeForm.carousel_slides?.[index]?.title || ''}
+                                  onChange={(e) => setCarouselSlideField(index, 'title', e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label>Description</Label>
+                                <Textarea
+                                  rows={2}
+                                  value={homeForm.carousel_slides?.[index]?.description || ''}
+                                  onChange={(e) => setCarouselSlideField(index, 'description', e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-2">
+                            <Button type="button" variant="destructive" size="sm" onClick={() => removeCarouselImage(index)} className="h-fit">
+                              <Trash2 className="w-4 h-4" /> Supprimer
+                            </Button>
+                          </div>
                         </div>
                       ))}
                       <Button
