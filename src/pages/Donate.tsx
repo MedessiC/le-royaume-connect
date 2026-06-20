@@ -20,12 +20,19 @@ const Donate = () => {
 
   const quickAmounts = [5000, 10000, 20000, 50000, 100000];
 
-  // FeexPay Configuration - Récupère depuis les variables d'environnement
-  const feexpayShopId = import.meta.env.VITE_FEEXPAY_SHOP_ID || "Ayg9lkjkhurIvNp";
-  const feexpayToken =
-    import.meta.env.VITE_FEEXPAY_TOKEN ||
-    "fp_HHNoQGt9Vn8KpZoLaBkG3uEeKpLUYBaHUZIZXJE3Xgv0OKG2tK3A7PtlytctikrT";
-  const feexpayMode = import.meta.env.VITE_FEEXPAY_MODE || "SANDBOX";
+  // FeexPay Configuration
+  const SANDBOX_SHOP_ID = "Ayg9lkjkhurIvNp";
+  const SANDBOX_TOKEN = "fp_HHNoQGt9Vn8KpZoLaBkG3uEeKpLUYBaHUZIZXJE3Xgv0OKG2tK3A7PtlytctikrT";
+
+  const envShopId = import.meta.env.VITE_FEEXPAY_SHOP_ID ?? "";
+  const envToken = import.meta.env.VITE_FEEXPAY_TOKEN ?? "";
+  // If VITE_FEEXPAY_MODE is set use it, otherwise default to SANDBOX in dev and LIVE in prod
+  let feexpayMode = (import.meta.env.VITE_FEEXPAY_MODE || (import.meta.env.DEV ? "SANDBOX" : "LIVE")).toUpperCase();
+
+  const usingSandbox = feexpayMode === "SANDBOX" || import.meta.env.DEV;
+
+  const feexpayShopId = envShopId || (usingSandbox ? SANDBOX_SHOP_ID : "");
+  const feexpayToken = envToken || (usingSandbox ? SANDBOX_TOKEN : "");
 
   const handleQuickAmount = (value: number) => {
     setAmount(value);
@@ -290,24 +297,37 @@ const Donate = () => {
               </div>
 
               {/* FeexPay Button */}
-              <div className="flex justify-center pt-6">
-                <FeexPayButton
-                  amount={amount}
-                  description="Donation pour le Royaume"
-                  token={feexpayToken}
-                  id={feexpayShopId}
-                  customId={generateCustomId()}
-                  mode={feexpayMode}
-                  currency="XOF"
-                  callback={handlePaymentCallback}
-                  callback_info={{
-                    fullname: donorName || "Donateur",
-                    email: donorEmail || "donation@royaume.com",
-                    phone: donorPhone || "00000",
-                  }}
-                  buttonClass="bg-gold hover:bg-gold/90 text-white font-bold py-4 px-12 rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl text-lg"
-                  buttonText="🔐 Procéder au paiement FeexPay"
-                />
+              <div className="flex flex-col items-center pt-6">
+                {usingSandbox ? (
+                  <div className="mb-2 text-xs px-3 py-1 rounded-full bg-gold/10 text-gold">Mode SANDBOX (test)</div>
+                ) : null}
+
+                {feexpayShopId && feexpayToken ? (
+                  <FeexPayButton
+                    amount={amount}
+                    description="Donation pour le Royaume"
+                    token={feexpayToken}
+                    id={feexpayShopId}
+                    customId={generateCustomId()}
+                    mode={feexpayMode}
+                    currency="XOF"
+                    callback={handlePaymentCallback}
+                    callback_info={{
+                      fullname: donorName || "Donateur",
+                      email: donorEmail || "donation@royaume.com",
+                      phone: donorPhone || "00000",
+                    }}
+                    buttonClass="bg-gold hover:bg-gold/90 text-white font-bold py-4 px-12 rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl text-lg"
+                    buttonText="🔐 Procéder au paiement FeexPay"
+                  />
+                ) : (
+                  <div className="text-center">
+                    <button disabled className="bg-muted text-muted-foreground py-3 px-6 rounded-lg" title="FeexPay non configuré">
+                      FeexPay non configuré
+                    </button>
+                    <p className="text-xs text-muted-foreground mt-2">Contactez l'administrateur pour configurer les identifiants FeexPay.</p>
+                  </div>
+                )}
               </div>
 
               {/* Security Info */}
