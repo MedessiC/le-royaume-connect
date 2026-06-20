@@ -126,19 +126,19 @@ const Donate = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
-      <main className="flex-1 container max-w-5xl mx-auto px-4 py-12">
+      <main className="flex-1 container max-w-5xl mx-auto px-4 py-16">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="flex justify-center mb-6">
-            <Heart className="w-16 h-16 text-red-500" />
+            <Heart className="w-16 h-16 text-gold" />
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
+          <h1 className="text-5xl md:text-6xl font-display font-bold text-foreground mb-4">
             Soutenez le Royaume
           </h1>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-body">
             Votre générosité nous aide à propager les enseignements et à renforcer notre 
             communauté dans toute l'Afrique de l'Ouest. Chaque donation, même petite, 
             fait une grande différence.
@@ -146,26 +146,26 @@ const Donate = () => {
         </div>
 
         {/* Steps Section */}
-        <div className="grid md:grid-cols-4 gap-4 mb-16">
+        <div className="grid md:grid-cols-4 gap-6 mb-16">
           {steps.map((step) => (
-            <div key={step.number} className="text-center">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-lg mx-auto mb-4">
+            <div key={step.number} className="text-center p-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gold/20 border-2 border-gold text-gold font-bold text-lg mx-auto mb-4">
                 {step.number}
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">{step.title}</h3>
-              <p className="text-sm text-slate-600">{step.description}</p>
+              <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
+              <p className="text-sm text-muted-foreground">{step.description}</p>
             </div>
           ))}
         </div>
 
         {/* Main Donation Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-10 mb-16">
+        <div className="bg-card border border-gold/20 rounded-2xl shadow-lg p-10 mb-16">
           <FeexPayProvider>
             <div className="space-y-10">
               {/* Amount Selection */}
               <div>
-                <Label className="text-lg font-bold text-slate-900 mb-6 block">
-                  📊 Choisissez un montant de donation
+                <Label className="text-lg font-bold text-foreground mb-6 block">
+                  Choisissez un montant de donation
                 </Label>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                   {quickAmounts.map((value) => (
@@ -174,8 +174,8 @@ const Donate = () => {
                       onClick={() => handleQuickAmount(value)}
                       className={`p-4 rounded-xl font-bold transition-all transform duration-200 ${
                         amount === value && !showCustomAmount
-                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg scale-105 ring-2 ring-blue-300"
-                          : "bg-slate-100 text-slate-900 hover:bg-slate-200 hover:scale-105"
+                          ? "bg-gold text-white shadow-lg scale-105 ring-2 ring-gold/50"
+                          : "bg-secondary text-foreground hover:bg-secondary/80 hover:scale-105"
                       }`}
                     >
                       <div className="text-sm">{(value / 1000).toFixed(0)}K</div>
@@ -192,8 +192,8 @@ const Donate = () => {
                   }}
                   className={`w-full p-4 rounded-xl font-bold transition-all ${
                     showCustomAmount
-                      ? "bg-gradient-to-r from-green-100 to-green-200 text-green-900 border-2 border-green-600"
-                      : "bg-slate-100 text-slate-900 hover:bg-slate-200 border-2 border-transparent"
+                      ? "bg-gold/20 text-gold border-2 border-gold"
+                      : "bg-secondary text-foreground hover:bg-secondary/80 border-2 border-transparent"
                   }`}
                 >
                   {showCustomAmount ? "✏️ Montant personnalisé" : "➕ Montant personnalisé"}
@@ -213,7 +213,7 @@ const Donate = () => {
                     <div className="flex gap-2">
                       <Button
                         onClick={handleCustomAmount}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3"
+                        className="flex-1 bg-gold hover:bg-gold/90 text-white font-bold py-3"
                       >
                         Valider
                       </Button>
@@ -233,20 +233,20 @@ const Donate = () => {
               </div>
 
               {/* Amount Display */}
-              <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-xl p-8 border-2 border-blue-200">
+              <div className="bg-secondary border border-gold/20 rounded-xl p-8">
                 <div className="text-center">
-                  <p className="text-sm text-slate-600 mb-2">💰 Montant à donner</p>
-                  <p className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                  <p className="text-sm text-muted-foreground mb-2">Montant à donner</p>
+                  <p className="text-5xl font-display font-bold text-gold">
                     {amount.toLocaleString()}
                   </p>
-                  <p className="text-xl text-slate-700 mt-2">XOF</p>
+                  <p className="text-xl text-foreground mt-2">XOF</p>
                 </div>
               </div>
 
               {/* Donor Information */}
               <div className="space-y-4">
-                <Label className="text-lg font-bold text-slate-900 block">
-                  👤 Informations du donateur
+                <Label className="text-lg font-bold text-foreground block">
+                  Informations du donateur
                 </Label>
                 <Input
                   type="text"
@@ -272,18 +272,18 @@ const Donate = () => {
               </div>
 
               {/* Payment Methods Available */}
-              <div className="bg-blue-50 rounded-xl p-6 border-l-4 border-blue-600">
-                <p className="text-sm font-bold text-slate-900 mb-4">
-                  🌐 Méthodes de paiement disponibles:
+              <div className="bg-secondary border border-gold/20 rounded-xl p-6">
+                <p className="text-sm font-bold text-foreground mb-4">
+                  Méthodes de paiement disponibles:
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {["MTN Mobile Money", "Moov Africa", "Celtiis", "Carte Bancaire"].map((method) => (
                     <div
                       key={method}
-                      className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-blue-300"
+                      className="inline-flex items-center gap-2 bg-card px-4 py-2 rounded-lg border border-gold/20"
                     >
-                      <CheckCircle className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-slate-700">{method}</span>
+                      <CheckCircle className="w-4 h-4 text-gold" />
+                      <span className="text-sm font-medium text-foreground">{method}</span>
                     </div>
                   ))}
                 </div>
@@ -305,14 +305,14 @@ const Donate = () => {
                     email: donorEmail || "donation@royaume.com",
                     phone: donorPhone || "00000",
                   }}
-                  buttonClass="bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white font-bold py-4 px-12 rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl text-lg"
+                  buttonClass="bg-gold hover:bg-gold/90 text-white font-bold py-4 px-12 rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl text-lg"
                   buttonText="🔐 Procéder au paiement FeexPay"
                 />
               </div>
 
               {/* Security Info */}
-              <div className="text-center text-sm text-slate-600 bg-green-50 rounded-lg p-4 border border-green-200">
-                <p className="font-semibold text-green-800">
+              <div className="text-center text-sm text-muted-foreground bg-secondary rounded-lg p-4 border border-gold/20">
+                <p className="font-semibold text-foreground">
                   ✅ Paiement 100% sécurisé via FeexPay
                 </p>
                 <p className="text-xs mt-1">Vos données bancaires sont cryptées et protégées</p>
@@ -323,7 +323,7 @@ const Donate = () => {
 
         {/* Benefits Section */}
         <div className="mb-16">
-          <h2 className="text-4xl font-bold text-slate-900 mb-12 text-center">
+          <h2 className="text-4xl font-display font-bold text-foreground mb-12 text-center">
             Pourquoi soutenir le Royaume?
           </h2>
           <div className="grid md:grid-cols-4 gap-8">
@@ -332,13 +332,13 @@ const Donate = () => {
               return (
                 <div
                   key={index}
-                  className="bg-white rounded-xl shadow-lg p-8 text-center hover:shadow-2xl transition-shadow transform hover:scale-105"
+                  className="bg-card border border-gold/20 rounded-xl shadow-lg p-8 text-center hover:shadow-2xl transition-shadow transform hover:scale-105"
                 >
-                  <Icon className="w-16 h-16 text-blue-600 mx-auto mb-6" />
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">
+                  <Icon className="w-16 h-16 text-gold mx-auto mb-6" />
+                  <h3 className="text-xl font-bold text-foreground mb-3">
                     {benefit.title}
                   </h3>
-                  <p className="text-slate-600">{benefit.description}</p>
+                  <p className="text-muted-foreground">{benefit.description}</p>
                 </div>
               );
             })}
@@ -346,61 +346,61 @@ const Donate = () => {
         </div>
 
         {/* FAQ Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-10 mb-16">
-          <h2 className="text-3xl font-bold text-slate-900 mb-8 text-center">
+        <div className="bg-card border border-gold/20 rounded-2xl shadow-lg p-10 mb-16">
+          <h2 className="text-3xl font-display font-bold text-foreground mb-8 text-center">
             ❓ Questions fréquentes
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-3">
+              <h3 className="text-lg font-bold text-foreground mb-3">
                 Puis-je modifier mon montant?
               </h3>
-              <p className="text-slate-600">
+              <p className="text-muted-foreground">
                 Bien sûr! Vous pouvez choisir parmi les montants proposés ou entrer 
                 un montant personnalisé avant de procéder au paiement.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-3">
+              <h3 className="text-lg font-bold text-foreground mb-3">
                 Quelles méthodes acceptez-vous?
               </h3>
-              <p className="text-slate-600">
+              <p className="text-muted-foreground">
                 Nous acceptons MTN Mobile Money, Moov Africa, Celtiis et les 
                 cartes bancaires via FeexPay.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-3">
+              <h3 className="text-lg font-bold text-foreground mb-3">
                 Ma donation est-elle sécurisée?
               </h3>
-              <p className="text-slate-600">
+              <p className="text-muted-foreground">
                 Oui! Tous les paiements sont sécurisés par FeexPay avec le 
                 chiffrement SSL 256-bit.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-3">
+              <h3 className="text-lg font-bold text-foreground mb-3">
                 Quand reçoive-je une confirmation?
               </h3>
-              <p className="text-slate-600">
+              <p className="text-muted-foreground">
                 Vous recevez une confirmation immédiate par email et SMS après 
                 le paiement réussi.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-3">
+              <h3 className="text-lg font-bold text-foreground mb-3">
                 Mes données sont-elles confidentielles?
               </h3>
-              <p className="text-slate-600">
+              <p className="text-muted-foreground">
                 Absolument! Vos informations personnelles ne sont jamais stockées 
                 sur nos serveurs.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-3">
+              <h3 className="text-lg font-bold text-foreground mb-3">
                 Comment puis-je faire un paiement récurrent?
               </h3>
-              <p className="text-slate-600">
+              <p className="text-muted-foreground">
                 Contactez-nous directement pour mettre en place un don récurrent 
                 via email ou téléphone.
               </p>
@@ -409,8 +409,8 @@ const Donate = () => {
         </div>
 
         {/* Call to Action */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl p-12 text-center text-white mb-12">
-          <h2 className="text-3xl font-bold mb-4">Prêt à faire la différence?</h2>
+        <div className="bg-gold rounded-2xl shadow-lg p-12 text-center text-white mb-12">
+          <h2 className="text-3xl font-display font-bold mb-4">Prêt à faire la différence?</h2>
           <p className="text-lg mb-8 opacity-90">
             Chaque donation, peu importe la taille, nous aide à continuer notre mission. 
             Merci pour votre soutien!
