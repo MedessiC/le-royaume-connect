@@ -1,18 +1,40 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import heroBg from "@/assets/hero-bg.jpg";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 
 type Slide = {
-  src: string;
+  src?: string;
   alt: string;
+  color?: string;
+  pretitle?: string;
+  title?: string;
+  description?: string;
 };
 
 const defaultSlides: Slide[] = [
-  { src: heroBg, alt: "Hero image 1" },
-  { src: heroBg, alt: "Hero image 2" },
-  { src: heroBg, alt: "Hero image 3" },
+  {
+    alt: "Hero image 1",
+    color: "bg-gradient-to-r from-blue-600 to-purple-600",
+    pretitle: "Mouvement mondial",
+    title: "MILLENIUM",
+    description:
+      "Depuis Banikoara, Bénin, jusqu'aux quatre coins du monde — une communauté unie dans la foi, la prière et l'action.",
+  },
+  {
+    alt: "Hero image 2",
+    color: "bg-gradient-to-r from-purple-600 to-pink-600",
+    pretitle: "Unité et Service",
+    title: "COMMUNAUTÉ",
+    description: "Rencontrez des frères et soeurs engagés, servons ensemble et grandissons dans la foi.",
+  },
+  {
+    alt: "Hero image 3",
+    color: "bg-gradient-to-r from-pink-600 to-blue-600",
+    pretitle: "Prière en Action",
+    title: "MISSION",
+    description: "Participez à nos projets locaux et internationaux pour impacter des vies concrètement.",
+  },
 ];
 
 type HeroSectionProps = {
@@ -21,20 +43,63 @@ type HeroSectionProps = {
 
 const HeroSection = ({ slides }: HeroSectionProps) => {
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const intervalRef = useRef<number | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
   const activeSlides = slides && slides.length ? slides : defaultSlides;
 
   useEffect(() => {
     if (!carouselApi) return;
 
-    const interval = window.setInterval(() => {
-      carouselApi.scrollNext();
-    }, 4500);
+    // clear existing
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
 
-    return () => window.clearInterval(interval);
+    if (!isPaused) {
+      intervalRef.current = window.setInterval(() => {
+        carouselApi.scrollNext();
+      }, 4200);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [carouselApi, isPaused]);
+
+  // Sync active text with carousel selected slide
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const updateIndex = () => {
+      try {
+        const idx = carouselApi.selectedScrollSnap?.() ?? 0;
+        setActiveIndex(idx);
+      } catch (e) {
+        setActiveIndex(0);
+      }
+    };
+
+    updateIndex();
+    carouselApi.on?.("select", updateIndex);
+    carouselApi.on?.("reInit", updateIndex);
+
+    return () => {
+      carouselApi.off?.("select", updateIndex);
+      carouselApi.off?.("reInit", updateIndex);
+    };
   }, [carouselApi]);
 
   return (
-    <section className="relative min-h-[80vh] sm:min-h-screen flex items-center justify-center overflow-hidden">
+    <section
+      className="relative min-h-[80vh] sm:min-h-screen flex items-center justify-center overflow-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       {/* Background Carousel */}
       <div className="absolute inset-0 w-full h-full">
         <Carousel
@@ -45,13 +110,15 @@ const HeroSection = ({ slides }: HeroSectionProps) => {
           <CarouselContent className="h-full">
             {activeSlides.map((slide, index) => (
               <CarouselItem key={index} className="relative w-full h-full flex-none basis-full">
-                <div className="relative w-full h-full">
-                  <img
-                    src={slide.src}
-                    alt={slide.alt}
-                    loading="lazy"
-                    className="block w-full h-full object-cover transition-transform duration-[1200ms] ease-out hover:scale-105"
-                  />
+                <div className={`relative w-full h-full ${slide.color || 'bg-gradient-to-r from-slate-800 to-slate-900'}`}>
+                  {slide.src && (
+                    <img
+                      src={slide.src}
+                      alt={slide.alt}
+                      loading="lazy"
+                      className="block w-full h-full object-cover transition-transform duration-[1200ms] ease-out hover:scale-105"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60" />
                 </div>
               </CarouselItem>
@@ -66,21 +133,26 @@ const HeroSection = ({ slides }: HeroSectionProps) => {
       <div className="relative z-10 container mx-auto px-4 flex items-center justify-center h-full">
         <div className="w-full max-w-4xl p-8 md:p-12">
           <div className="text-center text-white">
-            <p className="text-gold font-body text-sm tracking-[0.35em] uppercase mb-4 animate-fade-in-up">
-              Mouvement mondial
-            </p>
-            <h1
-              className="font-display text-4xl sm:text-5xl md:text-7xl font-bold text-[#FFD700] leading-tight mb-6 animate-fade-in-up"
-              style={{ animationDelay: "0.2s" }}
-            >
-              MILLENIUM
-            </h1>
-            <p
-              className="text-white/90 font-body text-base sm:text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in-up"
-              style={{ animationDelay: "0.4s" }}
-            >
-              Depuis Banikoara, Bénin, jusqu'aux quatre coins du monde — une communauté unie dans la foi, la prière et l'action.
-            </p>
+            {activeSlides[activeIndex] && (
+              <div key={activeIndex} className="inline-block">
+                <p className="text-gold font-body text-sm tracking-[0.35em] uppercase mb-4 animate-fade-in-up">
+                  {activeSlides[activeIndex].pretitle ?? "Mouvement mondial"}
+                </p>
+                <h1
+                  className="font-display text-4xl sm:text-5xl md:text-7xl font-bold text-[#FFD700] leading-tight mb-6 animate-fade-in-up"
+                  style={{ animationDelay: "0.2s" }}
+                >
+                  {activeSlides[activeIndex].title ?? "MILLENIUM"}
+                </h1>
+                <p
+                  className="text-white/90 font-body text-base sm:text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in-up"
+                  style={{ animationDelay: "0.4s" }}
+                >
+                  {activeSlides[activeIndex].description ??
+                    "Depuis Banikoara, Bénin, jusqu'aux quatre coins du monde — une communauté unie dans la foi, la prière et l'action."}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
@@ -98,6 +170,20 @@ const HeroSection = ({ slides }: HeroSectionProps) => {
                 Découvrir notre mission
               </Button>
             </a>
+          </div>
+
+          {/* Dots indicators */}
+          <div className="mt-6 flex items-center justify-center gap-3">
+            {activeSlides.map((_, idx) => (
+              <button
+                key={idx}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`h-2 w-8 rounded-full transition-all duration-300 ${
+                  idx === activeIndex ? "bg-white/90 scale-100" : "bg-white/40 scale-90"
+                }`}
+                onClick={() => carouselApi?.scrollTo(idx)}
+              />
+            ))}
           </div>
         </div>
       </div>

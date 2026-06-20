@@ -8,11 +8,8 @@ export default defineConfig(({ mode }) => ({
     host: "localhost",
     port: 8080,
     strictPort: true,
-    hmr: {
-      overlay: false,
-      host: "localhost",
-      protocol: "ws",
-    },
+    // Désactiver HMR WebSocket pour éviter les erreurs de connexion en dev local
+    hmr: false,
   },
   plugins: [react()],
   resolve: {
@@ -20,5 +17,18 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
+  },
+  build: {
+    // Activer le cache busting avec hash
+    rollupOptions: {
+      output: {
+        entryFileNames: '[name].[hash].js',
+        chunkFileNames: '[name].[hash].js',
+        assetFileNames: '[name].[hash][extname]'
+      }
+    },
+    // Invalider le cache
+    minify: 'terser',
+    sourcemap: false,
   },
 }));

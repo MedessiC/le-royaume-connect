@@ -1,451 +1,427 @@
-import { type ElementType, useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { FeexPayProvider, FeexPayButton } from "@feexpay/react-sdk";
+import "@feexpay/react-sdk/style.css";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Heart, Copy, Check } from "lucide-react";
-import { FaCcVisa, FaCcMastercard, FaCcPaypal, FaBitcoin, FaMobileAlt, FaMoneyBillWave } from "react-icons/fa";
-
-import { useToast } from "@/hooks/use-toast";
-
-type Donation = {
-  label: string;
-  value: string;
-  hint?: string;
-};
-
-type PaymentProvider = {
-  id: string;
-  label: string;
-  description: string;
-  url: string;
-  note?: string;
-  icon?: ElementType;
-};
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { Heart, Gift, Users, TrendingUp, CheckCircle } from "lucide-react";
 
 const Donate = () => {
-  const quickAmounts = [5000, 10000, 20000, 50000, 100000];
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [customAmount, setCustomAmount] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
   const { toast } = useToast();
+  const [amount, setAmount] = useState<number>(10000);
+  const [showCustomAmount, setShowCustomAmount] = useState(false);
+  const [customAmount, setCustomAmount] = useState<string>("");
+  const [donorName, setDonorName] = useState<string>("");
+  const [donorEmail, setDonorEmail] = useState<string>("");
+  const [donorPhone, setDonorPhone] = useState<string>("");
 
-  const STRIPE_PAYMENT_LINK = import.meta.env.VITE_STRIPE_PAYMENT_LINK as string | undefined;
-  const PAYPAL_BUSINESS_ID = import.meta.env.VITE_PAYPAL_BUSINESS_ID as string | undefined;
-  const FEDAPAY_PUBLIC = import.meta.env.VITE_FEDAPAY_PUBLIC as string | undefined;
-  const FEDAPAY_PAYMENT_LINK = import.meta.env.VITE_FEDAPAY_PAYMENT_LINK as string | undefined;
-  const DONATION_PAYMENT_LINK = import.meta.env.VITE_DONATION_PAYMENT_LINK as string | undefined;
-  const DONATION_CURRENCY = (import.meta.env.VITE_DONATION_CURRENCY as string | undefined) ?? "EUR";
-  const [fedapayReady, setFedapayReady] = useState(false);
-  const [fedapayLoadError, setFedapayLoadError] = useState(false);
+  const quickAmounts = [5000, 10000, 20000, 50000, 100000];
 
-  const amountValue = customAmount.trim()
-    ? Number(customAmount.replace(/[^0-9]/g, ""))
-    : selectedAmount ?? 0;
+  // FeexPay Configuration - Récupère depuis les variables d'environnement
+  const feexpayShopId = import.meta.env.VITE_FEEXPAY_SHOP_ID || "Ayg9lkjkhurIvNp";
+  const feexpayToken =
+    import.meta.env.VITE_FEEXPAY_TOKEN ||
+    "fp_HHNoQGt9Vn8KpZoLaBkG3uEeKpLUYBaHUZIZXJE3Xgv0OKG2tK3A7PtlytctikrT";
+  const feexpayMode = import.meta.env.VITE_FEEXPAY_MODE || "SANDBOX";
 
-  const formatPaymentLink = (link: string) => {
-    const amount = amountValue > 0 ? amountValue : null;
-    let formatted = link
-      .replace(/{{\s*amount\s*}}/gi, amount ? encodeURIComponent(amount.toString()) : "")
-      .replace(/{{\s*currency\s*}}/gi, encodeURIComponent(DONATION_CURRENCY));
-
-    if (amount && !/[[{]?amount[}\]]?/i.test(link)) {
-      const separator = formatted.includes("?") ? "&" : "?";
-      if (!formatted.includes("amount=")) {
-        formatted += `${separator}amount=${encodeURIComponent(amount.toString())}`;
-      }
-      if (!formatted.includes("currency=")) {
-        formatted += `&currency=${encodeURIComponent(DONATION_CURRENCY)}`;
-      }
-    }
-
-    return formatted;
+  const handleQuickAmount = (value: number) => {
+    setAmount(value);
+    setShowCustomAmount(false);
+    setCustomAmount("");
   };
 
-  const payPalUrl = PAYPAL_BUSINESS_ID
-    ? `https://www.paypal.com/donate?business=${encodeURIComponent(PAYPAL_BUSINESS_ID)}&currency_code=${encodeURIComponent(DONATION_CURRENCY)}${amountValue ? `&amount=${amountValue}` : ""}`
-    : null;
-
-  const paymentProviders: PaymentProvider[] = [
-    STRIPE_PAYMENT_LINK
-      ? {
-          id: "stripe",
-          label: "Stripe",
-          description: "Lien de paiement Stripe sécurisé pour cartes et agrégateurs.",
-          url: formatPaymentLink(STRIPE_PAYMENT_LINK),
-          note: "Configurez Stripe pour recevoir les dons en Mobile Money via votre solution connectée.",
-          icon: FaCcVisa,
-        }
-      : null,
-    payPalUrl
-      ? {
-          id: "paypal",
-          label: "PayPal",
-          description: "Donnez facilement avec PayPal, en devise EUR ou USD selon votre compte.",
-          url: payPalUrl,
-          note: "Le don s’effectue sur PayPal et peut être lié à votre compte professionnel.",
-          icon: FaCcPaypal,
-        }
-      : null,
-    FEDAPAY_PAYMENT_LINK
-      ? {
-          id: "fedapay",
-          label: "Fedapay",
-          description: "Paiement via Fedapay, compatible cartes et Mobile Money.",
-          url: formatPaymentLink(FEDAPAY_PAYMENT_LINK),
-          note: "Fedapay peut collecter puis transférer vers un compte Mobile Money configuré.",
-          icon: FaMobileAlt,
-        }
-      : null,
-    DONATION_PAYMENT_LINK
-      ? {
-          id: "link",
-          label: "Agrégateur externe",
-          description: "Lien direct vers votre plateforme de paiement configurée.",
-          url: formatPaymentLink(DONATION_PAYMENT_LINK),
-          note: "Utilisez votre fournisseur existant pour centraliser les dons.",
-          icon: FaMoneyBillWave,
-        }
-      : null,
-  ].filter(Boolean) as PaymentProvider[];
-
-  const simulationProvider: PaymentProvider = {
-    id: "simulate",
-    label: "Simulation",
-    description: "Mode test : simule un paiement sans service réel configuré.",
-    url: "",
-    note: "Aucun agrégateur réel n’est configuré. Le paiement est simulé pour les tests.",
-    icon: FaMoneyBillWave,
-  };
-
-  const displayProviders = paymentProviders.length > 0 ? paymentProviders : [simulationProvider];
-  const hasOnlinePayment = displayProviders.length > 0;
-
-  useEffect(() => {
-    document.title = "Faire un don – MILLENIUM";
-  }, []);
-
-  useEffect(() => {
-    if (!FEDAPAY_PUBLIC) {
-      setFedapayReady(false);
-      return;
-    }
-
-    const scriptId = "fedapay-checkout-js";
-    if (document.getElementById(scriptId)) {
-      setFedapayReady(true);
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = scriptId;
-    script.src = "https://cdn.fedapay.com/checkout.js?v=1.1.7";
-    script.async = true;
-    script.onload = () => setFedapayReady(true);
-    script.onerror = () => setFedapayLoadError(true);
-    document.body.appendChild(script);
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, [FEDAPAY_PUBLIC]);
-
-  const openFedapayCheckout = async (amount: number) => {
-    if (!FEDAPAY_PUBLIC || !fedapayReady || fedapayLoadError) {
-      return false;
-    }
-
-    const fedapay = (window as any).FedaPay;
-    if (!fedapay) {
-      return false;
-    }
-
-    try {
-      const widget = fedapay.init({
-        public_key: FEDAPAY_PUBLIC,
-        transaction: {
-          amount,
-          description: "Donation MILLENIUM",
-          currency_iso: DONATION_CURRENCY,
-        },
+  const handleCustomAmount = () => {
+    if (customAmount && Number(customAmount) > 0) {
+      setAmount(Number(customAmount));
+      setShowCustomAmount(false);
+      setCustomAmount("");
+    } else {
+      toast({
+        title: "Montant invalide",
+        description: "Veuillez entrer un montant valide",
+        variant: "destructive",
       });
-
-      if (widget?.open) {
-        widget.open();
-      }
-      return true;
-    } catch (error) {
-      console.error("Fedapay init error", error);
-      return false;
     }
   };
 
-  const copy = (value: string, label: string) => {
-    navigator.clipboard.writeText(value);
-    setCopied(value);
-    toast({ title: "Copié", description: `${label} copié dans le presse-papier` });
-    setTimeout(() => setCopied(null), 2000);
-  };
+  const handlePaymentCallback = (response: any) => {
+    console.log("FeexPay Response:", response);
 
-  const simulatePayment = () => {
-    toast({ title: "Paiement simulé", description: `Donation simulée de ${amountValue.toLocaleString()} FCFA.` });
-    setModalOpen(false);
-  };
-
-  const openProviderLink = async (provider: PaymentProvider) => {
-    if (provider.id === "simulate") {
-      simulatePayment();
-      return;
+    if (response?.status === "success" || response?.success) {
+      toast({
+        title: "✅ Merci pour votre donation!",
+        description: `Donation de ${amount.toLocaleString()} XOF confirmée avec succès.`,
+        duration: 5000,
+      });
+      // Réinitialiser le formulaire
+      setAmount(10000);
+      setDonorName("");
+      setDonorEmail("");
+      setDonorPhone("");
+    } else if (response?.status === "pending" || response?.pending) {
+      toast({
+        title: "⏳ Paiement en attente",
+        description: "Votre paiement est en cours de traitement.",
+      });
+    } else {
+      toast({
+        title: "Paiement annulé",
+        description: "La transaction a été annulée.",
+        variant: "destructive",
+      });
     }
-
-    if (provider.id === "fedapay") {
-      if (!amountValue || amountValue <= 0) {
-        toast({ title: "Montant requis", description: "Sélectionnez ou saisissez un montant avant de payer avec Fedapay." });
-        return;
-      }
-
-      if (FEDAPAY_PUBLIC && fedapayReady && !fedapayLoadError) {
-        const opened = await openFedapayCheckout(amountValue);
-        if (opened) {
-          setModalOpen(false);
-          return;
-        }
-      }
-
-      // Try server-side checkout creation if client checkout doesn't work
-      try {
-        const resp = await fetch("/.netlify/functions/create-fedapay-checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: amountValue, currency: DONATION_CURRENCY, description: "Donation" }),
-        });
-        const data = await resp.json();
-        if (resp.ok && (data.url || data.checkout_url || data.redirect_url)) {
-          const url = data.url || data.checkout_url || data.redirect_url;
-          window.open(url, "_blank");
-          setModalOpen(false);
-          return;
-        }
-      } catch (err) {
-        console.error("Fedapay server checkout failed", err);
-      }
-
-      if (provider.url) {
-        window.open(provider.url, "_blank");
-        setModalOpen(false);
-        return;
-      }
-
-      toast({ title: "Erreur Fedapay", description: "Impossible de lancer le paiement Fedapay." });
-      setModalOpen(false);
-      return;
-    }
-
-    if (provider.url) window.open(provider.url, "_blank");
-    else toast({ title: "Erreur", description: "Lien de paiement non configuré." });
-    setModalOpen(false);
   };
+
+  const generateCustomId = () => {
+    return `donation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  const benefits = [
+    {
+      icon: Heart,
+      title: "Impact Direct",
+      description: "Votre donation soutient directement nos enseignements",
+    },
+    {
+      icon: Users,
+      title: "Communauté",
+      description: "Rejoignez des milliers de donateurs engagés",
+    },
+    {
+      icon: TrendingUp,
+      title: "Croissance",
+      description: "Aidez le Royaume à grandir et se développer",
+    },
+    {
+      icon: Gift,
+      title: "Reconnaissance",
+      description: "Recevez des remerciements et des privilèges",
+    },
+  ];
+
+  const steps = [
+    {
+      number: 1,
+      title: "Choisir le montant",
+      description: "Sélectionnez parmi les montants prédéfinis ou entrez un montant personnalisé",
+    },
+    {
+      number: 2,
+      title: "Remplir vos données",
+      description: "Entrez votre nom, email et numéro de téléphone",
+    },
+    {
+      number: 3,
+      title: "Sécuriser le paiement",
+      description: "Cliquez sur le bouton FeexPay pour effectuer le paiement",
+    },
+    {
+      number: 4,
+      title: "Confirmation",
+      description: "Recevez immédiatement une confirmation de votre donation",
+    },
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-16">
-        <section className="bg-gradient-hero text-primary-foreground py-16">
-          <div className="container mx-auto px-4 text-center max-w-5xl">
-            <Heart className="w-16 h-16 mx-auto text-gold mb-6" />
-            <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">Page de dons internationale</h1>
-            <p className="text-lg text-primary-foreground/85 font-body leading-relaxed mx-auto max-w-3xl">
-              Donnez en ligne avec un agrégateur sécurisé, par Mobile Money en Afrique ou par virement international.
-              La page est conçue pour recevoir les dons clairement et directement via vos services de paiement préférés.
-            </p>
 
-            <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm text-muted-foreground">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/10 px-4 py-2">
-                <FaCcVisa className="h-4 w-4 text-primary-foreground" />
-                Visa
+      <main className="flex-1 container max-w-5xl mx-auto px-4 py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <div className="flex justify-center mb-6">
+            <Heart className="w-16 h-16 text-red-500" />
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
+            Soutenez le Royaume
+          </h1>
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            Votre générosité nous aide à propager les enseignements et à renforcer notre 
+            communauté dans toute l'Afrique de l'Ouest. Chaque donation, même petite, 
+            fait une grande différence.
+          </p>
+        </div>
+
+        {/* Steps Section */}
+        <div className="grid md:grid-cols-4 gap-4 mb-16">
+          {steps.map((step) => (
+            <div key={step.number} className="text-center">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-lg mx-auto mb-4">
+                {step.number}
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/10 px-4 py-2">
-                <FaCcMastercard className="h-4 w-4 text-primary-foreground" />
-                Mastercard
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/10 px-4 py-2">
-                <FaCcPaypal className="h-4 w-4 text-primary-foreground" />
-                PayPal
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/10 px-4 py-2">
-                <FaBitcoin className="h-4 w-4 text-primary-foreground" />
-                Crypto
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/10 px-4 py-2">
-                <FaMobileAlt className="h-4 w-4 text-primary-foreground" />
-                MTN & Moov
-              </div>
+              <h3 className="font-semibold text-slate-900 mb-2">{step.title}</h3>
+              <p className="text-sm text-slate-600">{step.description}</p>
             </div>
+          ))}
+        </div>
 
-            <div className="mt-12 rounded-[2rem] border border-border bg-background/90 p-8 shadow-xl shadow-black/5">
-              <div className="grid gap-8 lg:grid-cols-[1.3fr_0.9fr] items-start">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground font-semibold mb-3">Choisissez votre montant</p>
-                  <div className="flex flex-wrap gap-3">
-                    {quickAmounts.map((amt) => (
+        {/* Main Donation Card */}
+        <div className="bg-white rounded-2xl shadow-2xl p-10 mb-16">
+          <FeexPayProvider>
+            <div className="space-y-10">
+              {/* Amount Selection */}
+              <div>
+                <Label className="text-lg font-bold text-slate-900 mb-6 block">
+                  📊 Choisissez un montant de donation
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                  {quickAmounts.map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => handleQuickAmount(value)}
+                      className={`p-4 rounded-xl font-bold transition-all transform duration-200 ${
+                        amount === value && !showCustomAmount
+                          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg scale-105 ring-2 ring-blue-300"
+                          : "bg-slate-100 text-slate-900 hover:bg-slate-200 hover:scale-105"
+                      }`}
+                    >
+                      <div className="text-sm">{(value / 1000).toFixed(0)}K</div>
+                      <div className="text-xs">XOF</div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Amount Toggle */}
+                <button
+                  onClick={() => {
+                    setShowCustomAmount(!showCustomAmount);
+                    setCustomAmount("");
+                  }}
+                  className={`w-full p-4 rounded-xl font-bold transition-all ${
+                    showCustomAmount
+                      ? "bg-gradient-to-r from-green-100 to-green-200 text-green-900 border-2 border-green-600"
+                      : "bg-slate-100 text-slate-900 hover:bg-slate-200 border-2 border-transparent"
+                  }`}
+                >
+                  {showCustomAmount ? "✏️ Montant personnalisé" : "➕ Montant personnalisé"}
+                </button>
+
+                {/* Custom Amount Input */}
+                {showCustomAmount && (
+                  <div className="mt-4 space-y-3">
+                    <Input
+                      type="number"
+                      placeholder="Entrez le montant en XOF"
+                      value={customAmount}
+                      onChange={(e) => setCustomAmount(e.target.value)}
+                      className="text-lg py-3"
+                      min="100"
+                    />
+                    <div className="flex gap-2">
                       <Button
-                        key={amt}
-                        variant={selectedAmount === amt && !customAmount ? "hero" : "outline"}
-                        className="min-w-[110px]"
+                        onClick={handleCustomAmount}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3"
+                      >
+                        Valider
+                      </Button>
+                      <Button
                         onClick={() => {
-                          setSelectedAmount(amt);
+                          setShowCustomAmount(false);
                           setCustomAmount("");
                         }}
+                        variant="outline"
+                        className="flex-1 py-3"
                       >
-                        {amt.toLocaleString()} FCFA
+                        Annuler
                       </Button>
-                    ))}
+                    </div>
                   </div>
+                )}
+              </div>
 
-                  <div className="mt-6 grid gap-2">
-                    <Label htmlFor="donation-amount">Montant personnalisé</Label>
-                    <Input
-                      id="donation-amount"
-                      type="text"
-                      value={customAmount}
-                      placeholder="25000"
-                      onChange={(event) => {
-                        const value = event.target.value.replace(/[^0-9]/g, "");
-                        setCustomAmount(value);
-                        setSelectedAmount(null);
-                      }}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Entrez votre montant en FCFA. Si vous utilisez Stripe ou Fedapay, le service peut convertir la devise si nécessaire.
-                    </p>
-                  </div>
-
-                  <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                    <Button
-                      size="lg"
-                      className="w-full sm:w-auto"
-                      onClick={() => setModalOpen(true)}
-                      disabled={!hasOnlinePayment}
-                    >
-                      Ouvrir le paiement en ligne
-                    </Button>
-                  </div>
-
-                  {!hasOnlinePayment && (
-                    <p className="mt-4 text-sm text-destructive">
-                      Aucun agrégateur configuré. Ajoutez Stripe, Fedapay, PayPal ou un lien d’agrégateur dans votre configuration.
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-3xl border border-border bg-primary/5 p-6">
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary mb-4">Agrégateurs disponibles</p>
-                  <div className="space-y-4">
-                    {displayProviders.length > 0 ? (
-                      displayProviders.map((provider) => (
-                        <div key={provider.id} className="rounded-2xl bg-background p-4 border border-border">
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                              {provider.icon ? (
-                                <provider.icon className="h-6 w-6 text-primary-foreground" />
-                              ) : null}
-                              <div>
-                                <h3 className="font-semibold">{provider.label}</h3>
-                                <p className="text-sm text-muted-foreground mt-1">{provider.description}</p>
-                              </div>
-                            </div>
-                            <Button size="sm" variant="outline" onClick={() => openProviderLink(provider)}>
-                              Payer
-                            </Button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">Aucun mode de paiement en ligne n’est configuré pour le moment.</p>
-                    )}
-                  </div>
+              {/* Amount Display */}
+              <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-xl p-8 border-2 border-blue-200">
+                <div className="text-center">
+                  <p className="text-sm text-slate-600 mb-2">💰 Montant à donner</p>
+                  <p className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                    {amount.toLocaleString()}
+                  </p>
+                  <p className="text-xl text-slate-700 mt-2">XOF</p>
                 </div>
               </div>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-3 text-sm text-muted-foreground">
-                <div className="rounded-2xl border border-border bg-secondary/50 p-4">
-                  <p className="font-semibold mb-1">Montant choisi</p>
-                  <p>{amountValue > 0 ? `${amountValue.toLocaleString()} FCFA` : "Aucun montant sélectionné"}</p>
+              {/* Donor Information */}
+              <div className="space-y-4">
+                <Label className="text-lg font-bold text-slate-900 block">
+                  👤 Informations du donateur
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="Votre nom"
+                  value={donorName}
+                  onChange={(e) => setDonorName(e.target.value)}
+                  className="py-3"
+                />
+                <Input
+                  type="email"
+                  placeholder="Votre email"
+                  value={donorEmail}
+                  onChange={(e) => setDonorEmail(e.target.value)}
+                  className="py-3"
+                />
+                <Input
+                  type="tel"
+                  placeholder="Votre numéro de téléphone"
+                  value={donorPhone}
+                  onChange={(e) => setDonorPhone(e.target.value)}
+                  className="py-3"
+                />
+              </div>
+
+              {/* Payment Methods Available */}
+              <div className="bg-blue-50 rounded-xl p-6 border-l-4 border-blue-600">
+                <p className="text-sm font-bold text-slate-900 mb-4">
+                  🌐 Méthodes de paiement disponibles:
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {["MTN Mobile Money", "Moov Africa", "Celtiis", "Carte Bancaire"].map((method) => (
+                    <div
+                      key={method}
+                      className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-blue-300"
+                    >
+                      <CheckCircle className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-slate-700">{method}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="rounded-2xl border border-border bg-secondary/50 p-4">
-                  <p className="font-semibold mb-1">Livraison</p>
-                  <p>Carte, PayPal, Fedapay ou lien externe selon votre configuration.</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-secondary/50 p-4">
-                  <p className="font-semibold mb-1">Réception MoMo</p>
-                  <p>Si l’agrégateur est configuré, le don peut être transféré directement sur un compte Mobile Money.</p>
-                </div>
+              </div>
+
+              {/* FeexPay Button */}
+              <div className="flex justify-center pt-6">
+                <FeexPayButton
+                  amount={amount}
+                  description="Donation pour le Royaume"
+                  token={feexpayToken}
+                  id={feexpayShopId}
+                  customId={generateCustomId()}
+                  mode={feexpayMode}
+                  currency="XOF"
+                  callback={handlePaymentCallback}
+                  callback_info={{
+                    fullname: donorName || "Donateur",
+                    email: donorEmail || "donation@royaume.com",
+                    phone: donorPhone || "00000",
+                  }}
+                  buttonClass="bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white font-bold py-4 px-12 rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl text-lg"
+                  buttonText="🔐 Procéder au paiement FeexPay"
+                />
+              </div>
+
+              {/* Security Info */}
+              <div className="text-center text-sm text-slate-600 bg-green-50 rounded-lg p-4 border border-green-200">
+                <p className="font-semibold text-green-800">
+                  ✅ Paiement 100% sécurisé via FeexPay
+                </p>
+                <p className="text-xs mt-1">Vos données bancaires sont cryptées et protégées</p>
               </div>
             </div>
-          </div>
-        </section>
+          </FeexPayProvider>
+        </div>
 
+        {/* Benefits Section */}
+        <div className="mb-16">
+          <h2 className="text-4xl font-bold text-slate-900 mb-12 text-center">
+            Pourquoi soutenir le Royaume?
+          </h2>
+          <div className="grid md:grid-cols-4 gap-8">
+            {benefits.map((benefit, index) => {
+              const Icon = benefit.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-xl shadow-lg p-8 text-center hover:shadow-2xl transition-shadow transform hover:scale-105"
+                >
+                  <Icon className="w-16 h-16 text-blue-600 mx-auto mb-6" />
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-slate-600">{benefit.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-10 mb-16">
+          <h2 className="text-3xl font-bold text-slate-900 mb-8 text-center">
+            ❓ Questions fréquentes
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 mb-3">
+                Puis-je modifier mon montant?
+              </h3>
+              <p className="text-slate-600">
+                Bien sûr! Vous pouvez choisir parmi les montants proposés ou entrer 
+                un montant personnalisé avant de procéder au paiement.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 mb-3">
+                Quelles méthodes acceptez-vous?
+              </h3>
+              <p className="text-slate-600">
+                Nous acceptons MTN Mobile Money, Moov Africa, Celtiis et les 
+                cartes bancaires via FeexPay.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 mb-3">
+                Ma donation est-elle sécurisée?
+              </h3>
+              <p className="text-slate-600">
+                Oui! Tous les paiements sont sécurisés par FeexPay avec le 
+                chiffrement SSL 256-bit.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 mb-3">
+                Quand reçoive-je une confirmation?
+              </h3>
+              <p className="text-slate-600">
+                Vous recevez une confirmation immédiate par email et SMS après 
+                le paiement réussi.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 mb-3">
+                Mes données sont-elles confidentielles?
+              </h3>
+              <p className="text-slate-600">
+                Absolument! Vos informations personnelles ne sont jamais stockées 
+                sur nos serveurs.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 mb-3">
+                Comment puis-je faire un paiement récurrent?
+              </h3>
+              <p className="text-slate-600">
+                Contactez-nous directement pour mettre en place un don récurrent 
+                via email ou téléphone.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Call to Action */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl p-12 text-center text-white mb-12">
+          <h2 className="text-3xl font-bold mb-4">Prêt à faire la différence?</h2>
+          <p className="text-lg mb-8 opacity-90">
+            Chaque donation, peu importe la taille, nous aide à continuer notre mission. 
+            Merci pour votre soutien!
+          </p>
+          <p className="text-sm opacity-75">
+            Vos dons aident le Royaume à créer un impact durable dans les communautés
+          </p>
+        </div>
       </main>
 
       <Footer />
-
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Choisissez votre mode de paiement</DialogTitle>
-            <DialogDescription>
-              Sélectionnez un agrégateur et utilisez le montant choisi pour payer en ligne.
-              Le service peut recevoir des fonds par carte ou Mobile Money selon la configuration.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-6 space-y-6">
-            <div className="rounded-3xl border border-border bg-secondary/50 p-5">
-              <p className="text-sm text-muted-foreground">
-                Montant choisi : <span className="font-semibold text-foreground">{amountValue > 0 ? `${amountValue.toLocaleString()} FCFA` : "Aucun montant sélectionné"}</span>
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Si vous n’avez pas choisi de montant, le don pourra être finalisé depuis la page de paiement du fournisseur.
-              </p>
-            </div>
-
-            {hasOnlinePayment ? (
-              <div className="grid gap-4">
-                {displayProviders.map((provider) => (
-                  <Card key={provider.id} className="border border-border">
-                    <CardHeader>
-                      <CardTitle className="font-display text-lg">{provider.label}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">{provider.description}</p>
-                      {provider.note && <p className="text-sm text-muted-foreground">{provider.note}</p>}
-                      <Button size="lg" className="w-full" onClick={() => openProviderLink(provider)}>
-                        Payer avec {provider.label}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-3xl border border-destructive/20 bg-destructive/10 p-5">
-                <p className="text-sm text-destructive">Aucun agrégateur n’est configuré. Merci de contacter l’équipe pour activer Stripe, Fedapay, PayPal ou votre lien de paiement.</p>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="mt-6">
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => setModalOpen(false)}>
-              Fermer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

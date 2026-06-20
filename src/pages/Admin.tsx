@@ -22,6 +22,7 @@ import GoldBadge from "@/components/GoldBadge";
 import CountrySelect from "@/components/CountrySelect";
 import TestimonialsAdmin from "@/components/admin/TestimonialsAdmin";
 import StoriesAdmin from "@/components/admin/StoriesAdmin";
+import PopupsAdmin from "@/components/admin/PopupsAdmin";
 
 type Category = { id: string; name: string; slug: string; description: string | null };
 type Teaching = {
@@ -53,6 +54,7 @@ type HomeSettingsForm = {
   marquee_text: string;
   marquee_speed: number;
   carousel_images: string[];
+  carousel_slides?: { image_url?: string; pretitle?: string; title?: string; description?: string }[];
 };
 
 const slugify = (s: string) =>
@@ -97,6 +99,7 @@ const Admin = () => {
     marquee_text: "",
     marquee_speed: 45,
     carousel_images: [],
+    carousel_slides: [],
   });
   const [publicationQuery, setPublicationQuery] = useState("");
   const [publicationStatusFilter, setPublicationStatusFilter] = useState<"all" | "published" | "draft">("all");
@@ -197,6 +200,12 @@ const Admin = () => {
       marquee_text: homeForm.marquee_text.trim() || null,
       marquee_speed: homeForm.marquee_speed,
       carousel_images: homeForm.carousel_images.filter(Boolean),
+      carousel_slides: (homeForm.carousel_slides || []).map((s, idx) => ({
+        image_url: s?.image_url || homeForm.carousel_images[idx] || null,
+        pretitle: s?.pretitle || null,
+        title: s?.title || null,
+        description: s?.description || null,
+      })),
     };
 
     const response = homeSettings?.id
@@ -374,6 +383,13 @@ const Admin = () => {
     setHomeForm({ ...homeForm, carousel_images: images });
   };
 
+  const setCarouselSlideField = (index: number, field: string, value: string | null) => {
+    const slides = (homeForm.carousel_slides || []).slice();
+    while (slides.length < homeForm.carousel_images.length) slides.push({});
+    slides[index] = { ...(slides[index] || {}), [field]: value ?? undefined, image_url: homeForm.carousel_images[index] || undefined };
+    setHomeForm({ ...homeForm, carousel_slides: slides });
+  };
+
   const removeCarouselImage = (index: number) => {
     const images = homeForm.carousel_images.filter((_, idx) => idx !== index);
     setHomeForm({ ...homeForm, carousel_images: images });
@@ -429,6 +445,7 @@ const Admin = () => {
             <TabsTrigger value="categories">Catégories</TabsTrigger>
             <TabsTrigger value="testimonials">Témoignages</TabsTrigger>
             <TabsTrigger value="stories">Histoires</TabsTrigger>
+            <TabsTrigger value="popups">Pop-ups</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
           </TabsList>
 
@@ -550,6 +567,51 @@ const Admin = () => {
                         onChange={(e) => setHomeForm({ ...homeForm, facebook_url: e.target.value })}
                         placeholder="https://www.facebook.com/..."
                       />
+                    </div>
+                  </div>
+
+                  {/* Carousel slides editor */}
+                  <div>
+                    <Label>Carousel - images & textes</Label>
+                    <p className="text-xs text-muted-foreground mt-1 mb-2">Ajoutez ou modifiez les images et textes affichés dans le hero.</p>
+                    <div className="space-y-4">
+                      {(homeForm.carousel_images || []).map((img, idx) => (
+                        <div key={idx} className="p-3 border rounded-lg grid gap-2 md:grid-cols-3 items-start">
+                          <div>
+                            <Label>Image #{idx + 1}</Label>
+                            <MediaUpload
+                              onUpload={(url) => {
+                                setCarouselImage(idx, url);
+                                setCarouselSlideField(idx, 'image_url', url);
+                              }}
+                              currentUrl={img || undefined}
+                            />
+                          </div>
+                          <div className="md:col-span-2 grid gap-2">
+                            <div>
+                              <Label>Pré-titre</Label>
+                              <Input value={(homeForm.carousel_slides?.[idx]?.pretitle) || ''} onChange={(e) => setCarouselSlideField(idx, 'pretitle', e.target.value)} />
+                            </div>
+                            <div>
+                              <Label>Titre</Label>
+                              <Input value={(homeForm.carousel_slides?.[idx]?.title) || ''} onChange={(e) => setCarouselSlideField(idx, 'title', e.target.value)} />
+                            </div>
+                            <div>
+                              <Label>Description</Label>
+                              <Textarea rows={2} value={(homeForm.carousel_slides?.[idx]?.description) || ''} onChange={(e) => setCarouselSlideField(idx, 'description', e.target.value)} />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="flex gap-2">
+                        <Button type="button" onClick={() => setHomeForm({ ...homeForm, carousel_images: [...(homeForm.carousel_images || []), ''] })}>
+                          Ajouter une image
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setHomeForm({ ...homeForm, carousel_images: (homeForm.carousel_images || []).slice(0, -1), carousel_slides: (homeForm.carousel_slides || []).slice(0, -1) })}>
+                          Retirer la dernière
+                        </Button>
+                      </div>
                     </div>
                   </div>
 

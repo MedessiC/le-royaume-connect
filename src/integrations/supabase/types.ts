@@ -353,6 +353,63 @@ export type Database = {
         }
         Relationships: []
       }
+      popups: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          title: string
+          description: string | null
+          image_url: string | null
+          cta_text: string | null
+          cta_url: string | null
+          is_active: boolean
+          frequency_days: number
+          pages: Json
+          bg_color: string
+          text_color: string
+          accent_color: string
+          animation_type: string
+          position: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title: string
+          description?: string | null
+          image_url?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          is_active?: boolean
+          frequency_days?: number
+          pages?: Json
+          bg_color?: string
+          text_color?: string
+          accent_color?: string
+          animation_type?: string
+          position?: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title?: string
+          description?: string | null
+          image_url?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          is_active?: boolean
+          frequency_days?: number
+          pages?: Json
+          bg_color?: string
+          text_color?: string
+          accent_color?: string
+          animation_type?: string
+          position?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

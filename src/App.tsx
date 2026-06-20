@@ -9,6 +9,7 @@ import { LocaleProvider } from "@/i18n";
 import useServiceWorker from "@/hooks/useServiceWorker";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { initVersionCheck } from "@/lib/versionCheck";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
@@ -30,6 +31,11 @@ import NotFound from "./pages/NotFound.tsx";
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Initialize version checking on app load
+  useEffect(() => {
+    initVersionCheck();
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -98,6 +104,11 @@ const App = () => {
 };
 
 const AppWithServiceWorker = () => {
+  // Do not register service worker in development to avoid caching/HMR issues
+  if (import.meta.env.DEV) {
+    return <App />;
+  }
+
   useServiceWorker();
   return <App />;
 };

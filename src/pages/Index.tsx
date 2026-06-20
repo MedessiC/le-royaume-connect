@@ -78,6 +78,9 @@ const Index = () => {
         slides={homeSettings?.carousel_images?.filter(Boolean).map((src, index) => ({
           src,
           alt: `Image ${index + 1}`,
+          pretitle: homeSettings?.carousel_slides?.[index]?.pretitle,
+          title: homeSettings?.carousel_slides?.[index]?.title,
+          description: homeSettings?.carousel_slides?.[index]?.description,
         }))}
       />
       <LiveSection liveEnabled={homeSettings?.live_enabled ?? false} liveUrl={homeSettings?.live_url ?? null} />
