@@ -42,7 +42,46 @@ const Index = () => {
   useEffect(() => {
     const loadSettings = async () => {
       const { data } = await supabase.from("home_settings").select("*").maybeSingle();
-      if (data) setHomeSettings(data as HomeSettings);
+      if (data) {
+        const settings = data as HomeSettings & { carousel_images?: string[] };
+
+        // Normalize carousel image URLs: if stored value is a raw storage path or non-http URL,
+        // attempt to generate an accessible URL (public or signed) from the Supabase storage.
+        if (Array.isArray(settings.carousel_images) && settings.carousel_images.length > 0) {
+          const normalized = await Promise.all(
+            settings.carousel_images.map(async (img) => {
+              if (!img) return img;
+              // If already absolute URL, keep it
+              if (/^https?:\/\//i.test(img)) return img;
+
+              // If appears to be a storage path (may start with bucket/ or /teaching-media/...), try to create a signed URL
+              try {
+                const bucket = "teaching-media";
+                // Trim leading slashes
+                const path = img.replace(/^\/*/, "");
+                // Try public URL first
+                const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
+                if (publicData?.publicUrl) {
+                  return publicData.publicUrl;
+                }
+
+                // Fallback: create a short-lived signed URL
+                const { data: signed, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60);
+                if (signed?.signedUrl) return signed.signedUrl;
+                console.warn("Could not create signed URL for", path, error);
+                return img;
+              } catch (e) {
+                console.error("Error normalizing carousel image", img, e);
+                return img;
+              }
+            }),
+          );
+
+          settings.carousel_images = normalized;
+        }
+
+        setHomeSettings(settings as HomeSettings);
+      }
     };
 
     loadSettings();

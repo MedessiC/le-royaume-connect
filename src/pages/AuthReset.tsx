@@ -19,8 +19,30 @@ const AuthReset = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      toast({ title: "Lien invalide", description: "Ouvrez le lien de réinitialisation dans le même navigateur où vous avez demandé le reset.", variant: "destructive" });
+    // Ensure session is available; if not, try to recover tokens from URL (access_token from Supabase recovery link)
+    let currentUser = user;
+    if (!currentUser) {
+      try {
+        // Try query string first
+        const qs = new URLSearchParams(window.location.search);
+        // Also try hash fragment (some providers put tokens in the fragment)
+        const hash = new URLSearchParams(window.location.hash.replace(/^#/, "?"));
+        const access_token = qs.get("access_token") || hash.get("access_token");
+        const refresh_token = qs.get("refresh_token") || hash.get("refresh_token");
+
+        if (access_token) {
+          // Set session directly with tokens provided in URL
+          await supabase.auth.setSession({ access_token, refresh_token: refresh_token ?? undefined });
+          const { data } = await supabase.auth.getUser();
+          currentUser = data.user ?? null;
+        }
+      } catch (err) {
+        console.error("Failed to set session from URL tokens", err);
+      }
+    }
+
+    if (!currentUser) {
+      toast({ title: "Lien invalide", description: "Ouvrez le lien de réinitialisation dans le même navigateur où vous avez demandé le reset, ou utilisez le lien envoyé par email.", variant: "destructive" });
       return;
     }
     if (password.length < 6) {
