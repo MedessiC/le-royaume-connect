@@ -85,6 +85,19 @@ const Index = () => {
     };
 
     loadSettings();
+    // If Supabase sent tokens in the URL hash to the root, forward to /auth/reset preserving the hash
+    try {
+      if (typeof window !== "undefined") {
+        const hash = window.location.hash || "";
+        if (hash.includes("access_token") && !window.location.pathname.startsWith("/auth/reset")) {
+          // preserve hash when redirecting
+          window.location.replace(`/auth/reset${hash}`);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Error checking URL hash for auth tokens", e);
+    }
   }, []);
 
   const isLive = homeSettings?.live_enabled ?? false;
