@@ -3,11 +3,19 @@ const CACHE_BASE = 'le-royaume-connect';
 const CACHE_VERSION = Date.now(); // Use current timestamp for auto-update
 const CACHE_NAME = `${CACHE_BASE}-${CACHE_VERSION}`;
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
   '/offline.html',
 ];
+
+const shouldUseNetworkFirst = (request) => {
+  const url = new URL(request.url);
+  return (
+    request.mode === 'navigate' ||
+    url.pathname === '/' ||
+    url.pathname === '/index.html' ||
+    url.pathname === '/version.txt' ||
+    url.pathname === '/service-worker.js'
+  );
+};
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -51,31 +59,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (shouldUseNetworkFirst(event.request)) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then((response) => response)
+        .catch(() => caches.match(event.request).then((response) => response || caches.match('/offline.html')))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
+      if (response) return response;
 
       return fetch(event.request).then((response) => {
-        // Don't cache non-successful responses
         if (!response || response.status !== 200 || response.type === 'error') {
           return response;
         }
 
-        // Clone the response
         const responseToCache = response.clone();
-
-        // Cache successful responses
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
         });
 
         return response;
-      }).catch(() => {
-        // Return offline page if available
-        return caches.match('/offline.html');
-      });
+      }).catch(() => caches.match('/offline.html'));
     })
   );
 });

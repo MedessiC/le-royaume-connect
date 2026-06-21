@@ -365,11 +365,17 @@ const Community = () => {
     const liveActive = currentLive?.status === "live";
 
     return (
-      <div className={compact ? "space-y-2" : "grid gap-3 border-b border-[#d1d7db] bg-[#f0f2f5] p-3 dark:border-[#222d34] dark:bg-[#202c33] sm:grid-cols-2"}>
-        <div className="rounded-xl border border-border bg-background p-3 shadow-sm">
-          <div className="mb-3 flex items-center justify-between gap-3">
+      <div
+        className={
+          compact
+            ? "space-y-2"
+            : "grid gap-2 border-b border-[#d1d7db] bg-[#f0f2f5] p-2 dark:border-[#222d34] dark:bg-[#202c33] sm:gap-3 sm:p-3 md:grid-cols-2"
+        }
+      >
+        <div className="min-w-0 rounded-lg border border-border bg-background p-2.5 shadow-sm sm:p-3">
+          <div className="mb-2.5 flex items-center justify-between gap-2 sm:mb-3 sm:gap-3">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-600">
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-600 sm:h-9 sm:w-9">
                 <PhoneCall className="h-4 w-4" />
               </span>
               <div className="min-w-0">
@@ -379,13 +385,13 @@ const Community = () => {
                 </p>
               </div>
             </div>
-            <span className={callActive ? "h-2.5 w-2.5 rounded-full bg-green-500" : "h-2.5 w-2.5 rounded-full bg-muted"} />
+            <span className={callActive ? "h-2.5 w-2.5 shrink-0 rounded-full bg-green-500" : "h-2.5 w-2.5 shrink-0 rounded-full bg-muted"} />
           </div>
           <div className="flex gap-2">
             <Button
               type="button"
               size="sm"
-              className="flex-1"
+              className="min-w-0 flex-1"
               disabled={startingSession === "call"}
               onClick={() => startLiveKitSession("call")}
             >
@@ -400,10 +406,10 @@ const Community = () => {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-background p-3 shadow-sm">
-          <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="min-w-0 rounded-lg border border-border bg-background p-2.5 shadow-sm sm:p-3">
+          <div className="mb-2.5 flex items-center justify-between gap-2 sm:mb-3 sm:gap-3">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-600">
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-600 sm:h-9 sm:w-9">
                 <Radio className="h-4 w-4" />
               </span>
               <div className="min-w-0">
@@ -413,7 +419,7 @@ const Community = () => {
                 </p>
               </div>
             </div>
-            <span className={liveActive ? "rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white" : "rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"}>
+            <span className={liveActive ? "shrink-0 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white" : "shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"}>
               {liveActive ? "LIVE" : "OFF"}
             </span>
           </div>
@@ -422,7 +428,7 @@ const Community = () => {
               <Button
                 type="button"
                 size="sm"
-                className="flex-1"
+                className="min-w-0 flex-1"
                 disabled={startingSession === "viewer"}
                 onClick={() => startLiveKitSession(isAdmin ? "live-host" : "viewer")}
               >
@@ -433,7 +439,7 @@ const Community = () => {
               <Button
                 type="button"
                 size="sm"
-                className="flex-1"
+                className="min-w-0 flex-1"
                 disabled={!isAdmin || startingSession === "live-host"}
                 onClick={() => startLiveKitSession("live-host")}
               >
@@ -463,7 +469,7 @@ const Community = () => {
               setSelectedProfile(p);
               setShowMembers(false);
             }}
-            className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left transition hover:bg-muted"
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-muted"
           >
             <UserAvatar src={p.avatar_url} name={p.full_name || "Membre"} className="h-8 w-8" />
             <div className="min-w-0 flex-1">
@@ -480,13 +486,13 @@ const Community = () => {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
       <Navbar />
-      <main className="flex-1 px-2 py-3 sm:px-4 sm:py-4">
-        <div className="mx-auto grid min-h-[calc(100vh-5.5rem)] max-w-6xl grid-cols-1 gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="hidden rounded-2xl border border-border bg-card p-4 shadow-lg lg:block">
+      <main className="flex-1 px-0 py-0 sm:px-4 sm:py-4">
+        <div className="mx-auto grid min-h-[calc(100dvh-4.25rem)] max-w-6xl grid-cols-1 gap-0 sm:gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <aside className="hidden rounded-lg border border-border bg-card p-4 shadow-lg lg:block">
             <div className="mb-4 flex items-center gap-3">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-slate-950">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gold text-slate-950">
                 <Users className="h-5 w-5" />
               </div>
               <div>
@@ -495,7 +501,7 @@ const Community = () => {
               </div>
             </div>
 
-            <div className="mb-4 flex items-center gap-2 rounded-xl border border-border bg-popover px-3 py-2">
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-popover px-3 py-2">
               <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 type="search"
@@ -506,7 +512,7 @@ const Community = () => {
               />
             </div>
 
-            <div className="rounded-xl border border-gold/30 bg-gold/5 px-3 py-3">
+            <div className="rounded-lg border border-gold/30 bg-gold/5 px-3 py-3">
               <p className="text-sm font-semibold text-foreground">#général</p>
               <p className="text-xs text-muted-foreground">Discussion ouverte</p>
             </div>
@@ -524,7 +530,7 @@ const Community = () => {
             </div>
           </aside>
 
-          <section className="flex min-h-[calc(100vh-5.5rem)] flex-col overflow-hidden rounded-2xl border border-border shadow-xl">
+          <section className="flex min-h-[calc(100dvh-4.25rem)] flex-col overflow-hidden border-y border-border shadow-xl sm:rounded-lg sm:border lg:min-h-[calc(100dvh-6.5rem)]">
             <ChatHeader
               messageCount={visibleMessages.length}
               onlineCount={displayedCount}
@@ -536,8 +542,8 @@ const Community = () => {
               onShowSearch={() => setShowMobileSearch((value) => !value)}
             />
             {showMobileSearch && (
-              <div className="border-b border-[#d1d7db] bg-[#f0f2f5] px-3 py-2 dark:border-[#222d34] dark:bg-[#202c33] lg:hidden">
-                <div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 dark:bg-[#2a3942]">
+              <div className="border-b border-[#d1d7db] bg-[#f0f2f5] px-2.5 py-2 dark:border-[#222d34] dark:bg-[#202c33] lg:hidden">
+                <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 dark:bg-[#2a3942]">
                   <Search className="h-4 w-4 shrink-0 text-[#667781] dark:text-[#8696a0]" />
                   <input
                     type="search"
@@ -580,6 +586,7 @@ const Community = () => {
         title={liveKitSession?.title ?? "Salon LiveKit"}
         token={liveKitSession?.token ?? null}
         serverUrl={liveKitSession?.url ?? null}
+        mode={liveKitSession?.mode}
         onOpenChange={(open) => {
           if (!open) setLiveKitSession(null);
         }}

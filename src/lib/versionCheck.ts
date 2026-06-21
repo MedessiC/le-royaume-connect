@@ -148,11 +148,7 @@ export const forceReload = () => {
     });
   }
 
-  // Reload page with hard refresh (bypass cache)
-  window.location.href = window.location.href;
-  
-  // Fallback for some browsers
   setTimeout(() => {
-    location.reload();
+    window.location.reload();
   }, 100);
 };

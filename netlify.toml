@@ -1,6 +1,6 @@
 [build]
   publish = "dist"
-  command = "npm run build"
+  command = "node scripts/write-build-version.cjs && bun run build"
 
 [[redirects]]
   from = "/*"
@@ -11,12 +11,17 @@
 [[headers]]
 for = "/index.html"
 [headers.values]
-Cache-Control = "public, max-age=0, must-revalidate"
+Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
 for = "/version.txt"
 [headers.values]
-Cache-Control = "public, max-age=0, must-revalidate"
+Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+for = "/service-worker.js"
+[headers.values]
+Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
 for = "/*.js"
