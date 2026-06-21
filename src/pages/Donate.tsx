@@ -20,17 +20,18 @@ const Donate = () => {
 
   const quickAmounts = [5000, 10000, 20000, 50000, 100000];
 
-  // FeexPay Configuration
+  // FeexPay configuration
   const SANDBOX_SHOP_ID = "Ayg9lkjkhurIvNp";
   const SANDBOX_TOKEN = "fp_HHNoQGt9Vn8KpZoLaBkG3uEeKpLUYBaHUZIZXJE3Xgv0OKG2tK3A7PtlytctikrT";
 
   const envShopId = import.meta.env.VITE_FEEXPAY_SHOP_ID ?? "";
   const envToken = import.meta.env.VITE_FEEXPAY_TOKEN ?? "";
-  // If VITE_FEEXPAY_MODE is set use it, otherwise default to SANDBOX in dev and LIVE in prod
-  let feexpayMode = (import.meta.env.VITE_FEEXPAY_MODE || (import.meta.env.DEV ? "SANDBOX" : "LIVE")).toUpperCase();
+  const feexpayMode = (
+    (import.meta.env.VITE_FEEXPAY_MODE as string | undefined) ??
+    (import.meta.env.DEV ? "SANDBOX" : "LIVE")
+  ).toUpperCase() as "SANDBOX" | "LIVE";
 
-  const usingSandbox = feexpayMode === "SANDBOX" || import.meta.env.DEV;
-
+  const usingSandbox = feexpayMode === "SANDBOX";
   const feexpayShopId = envShopId || (usingSandbox ? SANDBOX_SHOP_ID : "");
   const feexpayToken = envToken || (usingSandbox ? SANDBOX_TOKEN : "");
 
@@ -57,26 +58,30 @@ const Donate = () => {
   const handlePaymentCallback = (response: any) => {
     console.log("FeexPay Response:", response);
 
-    if (response?.status === "success" || response?.success) {
+    const status = response?.status?.toString().toUpperCase();
+    const isSuccess = status === "SUCCESSFUL" || status === "SUCCESS" || response?.success === true;
+    const isPending = status === "PENDING" || response?.pending === true;
+
+    if (isSuccess) {
       toast({
         title: "✅ Merci pour votre donation!",
         description: `Donation de ${amount.toLocaleString()} XOF confirmée avec succès.`,
         duration: 5000,
       });
-      // Réinitialiser le formulaire
       setAmount(10000);
       setDonorName("");
       setDonorEmail("");
       setDonorPhone("");
-    } else if (response?.status === "pending" || response?.pending) {
+    } else if (isPending) {
       toast({
         title: "⏳ Paiement en attente",
         description: "Votre paiement est en cours de traitement.",
       });
     } else {
       toast({
-        title: "Paiement annulé",
-        description: "La transaction a été annulée.",
+        title: "Paiement non confirmé",
+        description:
+          response?.message || "La transaction n'a pas pu être finalisée. Veuillez réessayer.",
         variant: "destructive",
       });
     }
