@@ -60,6 +60,30 @@ type SupabaseMutableClient = typeof supabase & {
 const LIVE_ROOM_NAME = "community-live";
 const CALL_ROOM_NAME = "community-general";
 
+const getFunctionErrorMessage = async (error: unknown) => {
+  const fallback = error instanceof Error ? error.message : "La fonction LiveKit n'a pas renvoyé de token.";
+  const context = (error as { context?: unknown })?.context;
+
+  if (context instanceof Response) {
+    try {
+      const body = await context.clone().json();
+      if (typeof body?.error === "string") return body.error;
+      if (typeof body?.message === "string") return body.message;
+      if (typeof body?.details === "string") return body.details;
+      return JSON.stringify(body);
+    } catch {
+      try {
+        const text = await context.clone().text();
+        return text || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+  }
+
+  return fallback;
+};
+
 const Community = () => {
   const { user, profile, isAdmin } = useAuth();
   const { toast } = useToast();
@@ -220,6 +244,8 @@ const Community = () => {
 
   const displayedProfiles = presenceSynced ? onlineProfiles : [];
   const displayedCount = presenceSynced ? onlineCount : 0;
+  const callActive = communityRoom?.status === "active";
+  const liveActive = currentLive?.status === "live";
 
   const markCallActive = async () => {
     const query = supabaseDb
@@ -323,6 +349,15 @@ const Community = () => {
       return;
     }
 
+    if (mode === "call" && !isAdmin && !callActive) {
+      toast({
+        title: "Appel réservé aux admins",
+        description: "Seuls les administrateurs peuvent lancer l'appel de groupe.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setStartingSession(mode);
 
     if (mode === "call") await markCallActive();
@@ -343,9 +378,13 @@ const Community = () => {
     setStartingSession(null);
 
     if (error || !data?.token || !data?.url) {
+      const description = error
+        ? await getFunctionErrorMessage(error)
+        : "La fonction LiveKit n'a pas renvoyé de token.";
+
       toast({
         title: "Impossible de démarrer",
-        description: error?.message ?? "La fonction LiveKit n'a pas renvoyé de token.",
+        description,
         variant: "destructive",
       });
       return;
@@ -361,9 +400,6 @@ const Community = () => {
   };
 
   const renderMediaPanel = (compact = false) => {
-    const callActive = communityRoom?.status === "active";
-    const liveActive = currentLive?.status === "live";
-
     return (
       <div
         className={
@@ -381,7 +417,7 @@ const Community = () => {
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">Appel général</p>
                 <p className="text-xs text-muted-foreground">
-                  {callActive ? "En cours maintenant" : "Salon vocal et vidéo ouvert"}
+                  {callActive ? "En cours maintenant" : isAdmin ? "Prêt à lancer" : "En attente d'un admin"}
                 </p>
               </div>
             </div>
@@ -392,11 +428,11 @@ const Community = () => {
               type="button"
               size="sm"
               className="min-w-0 flex-1"
-              disabled={startingSession === "call"}
+              disabled={startingSession === "call" || (!isAdmin && !callActive)}
               onClick={() => startLiveKitSession("call")}
             >
               <Video className="h-4 w-4" />
-              {callActive ? "Rejoindre" : "Démarrer"}
+              {callActive ? "Rejoindre" : isAdmin ? "Démarrer" : "En attente"}
             </Button>
             {isAdmin && callActive && (
               <Button type="button" size="icon" variant="outline" onClick={markCallEnded} aria-label="Terminer l'appel">
@@ -536,8 +572,12 @@ const Community = () => {
               onlineCount={displayedCount}
               callBusy={startingSession === "call"}
               liveBusy={startingSession === "live-host"}
+              callActive={callActive}
+              liveActive={liveActive}
+              isAdmin={isAdmin}
               onStartCall={() => startLiveKitSession("call")}
-              onStartLive={() => startLiveKitSession("live-host")}
+              onStartVideo={() => startLiveKitSession("call")}
+              onStartLive={() => startLiveKitSession(liveActive && !isAdmin ? "viewer" : "live-host")}
               onShowMembers={() => setShowMembers(true)}
               onShowSearch={() => setShowMobileSearch((value) => !value)}
             />

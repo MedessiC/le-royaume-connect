@@ -279,6 +279,7 @@ export type Database = {
         Row: {
           active: boolean
           carousel_images: string[]
+          carousel_slides: Json[]
           created_at: string
           facebook_url: string | null
           id: string
@@ -297,6 +298,7 @@ export type Database = {
         Insert: {
           active?: boolean
           carousel_images?: string[]
+          carousel_slides?: Json[]
           created_at?: string
           facebook_url?: string | null
           id?: string
@@ -315,6 +317,7 @@ export type Database = {
         Update: {
           active?: boolean
           carousel_images?: string[]
+          carousel_slides?: Json[]
           created_at?: string
           facebook_url?: string | null
           id?: string

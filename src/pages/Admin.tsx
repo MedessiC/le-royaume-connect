@@ -154,6 +154,7 @@ const Admin = () => {
         marquee_text: settings.data.marquee_text ?? "",
         marquee_speed: settings.data.marquee_speed ?? 45,
         carousel_images: settings.data.carousel_images ?? [],
+        carousel_slides: settings.data.carousel_slides ?? [],
       });
     }
   };

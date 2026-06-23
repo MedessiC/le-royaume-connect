@@ -34,6 +34,7 @@ type HomeSettings = {
   marquee_text: string | null;
   marquee_speed: number | null;
   carousel_images?: string[];
+  carousel_slides?: { image_url?: string; pretitle?: string; title?: string; description?: string }[];
 };
 
 const Index = () => {

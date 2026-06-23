@@ -7,7 +7,11 @@ type ChatHeaderProps = {
   onlineCount: number;
   callBusy: boolean;
   liveBusy: boolean;
+  callActive: boolean;
+  liveActive: boolean;
+  isAdmin: boolean;
   onStartCall: () => void;
+  onStartVideo: () => void;
   onStartLive: () => void;
   onShowMembers: () => void;
   onShowSearch: () => void;
@@ -18,7 +22,11 @@ const ChatHeader = ({
   onlineCount,
   callBusy,
   liveBusy,
+  callActive,
+  liveActive,
+  isAdmin,
   onStartCall,
+  onStartVideo,
   onStartLive,
   onShowMembers,
   onShowSearch,
@@ -54,8 +62,8 @@ const ChatHeader = ({
         size="icon"
         className="h-8 w-8 rounded-full text-[#54656f] hover:bg-white/80 dark:text-[#aebac1] dark:hover:bg-[#2a3942] sm:h-9 sm:w-9"
         onClick={onStartCall}
-        disabled={callBusy}
-        aria-label="Lancer un appel de groupe"
+        disabled={callBusy || (!isAdmin && !callActive)}
+        aria-label={callActive ? "Rejoindre l'appel de groupe" : "Lancer un appel de groupe"}
       >
         <Phone className="h-4 w-4" />
       </Button>
@@ -63,10 +71,10 @@ const ChatHeader = ({
         type="button"
         variant="ghost"
         size="icon"
-        className="hidden h-9 w-9 rounded-full text-[#54656f] hover:bg-white/80 dark:text-[#aebac1] dark:hover:bg-[#2a3942] md:inline-flex"
+        className="hiddeVideo9 w-9 rounded-full text-[#54656f] hover:bg-white/80 dark:text-[#aebac1] dark:hover:bg-[#2a3942] md:inline-flex"
         onClick={onStartCall}
-        disabled={callBusy}
-        aria-label="Lancer un appel vidéo"
+        disabled={callBusy || (!isAdmin && !callActive)}
+        aria-label={callActive ? "Rejoindre l'appel vidéo" : "Lancer un appel vidéo"}
       >
         <Video className="h-4 w-4" />
       </Button>
@@ -76,8 +84,8 @@ const ChatHeader = ({
         size="icon"
         className="h-8 w-8 rounded-full text-[#54656f] hover:bg-white/80 dark:text-[#aebac1] dark:hover:bg-[#2a3942] sm:h-9 sm:w-9"
         onClick={onStartLive}
-        disabled={liveBusy}
-        aria-label="Démarrer un live"
+        disabled={liveBusy || (!isAdmin && !liveActive)}
+        aria-label={liveActive ? "Suivre le live" : "Démarrer un live"}
       >
         <Radio className="h-4 w-4" />
       </Button>
