@@ -33,7 +33,7 @@ const SearchBar: React.FC<Props> = ({
 
   return (
     <div className="bg-card border border-border rounded-2xl p-4 mb-10 shadow-sm">
-      <div className="flex flex-col md:flex-row md:items-center gap-3">
+      <div className="flex flex-col gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -54,9 +54,9 @@ const SearchBar: React.FC<Props> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-2 items-end">
           <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger className="rounded-full min-w-[140px]">
+            <SelectTrigger className="rounded-full w-full">
               <SelectValue placeholder={t("search.category")} />
             </SelectTrigger>
             <SelectContent>
@@ -67,7 +67,7 @@ const SearchBar: React.FC<Props> = ({
             </SelectContent>
           </Select>
 
-          <div className="rounded-full min-w-[120px]">
+          <div className="rounded-full w-full">
             <CountrySelect 
               value={country === "all" ? "" : country} 
               onChange={(v) => setCountry(v || "all")} 
@@ -75,7 +75,11 @@ const SearchBar: React.FC<Props> = ({
             />
           </div>
 
-          <Button variant="hero" size="sm" onClick={() => { setSearch(search.trim()); }}>
+          <Button 
+            variant="hero" 
+            className="w-full rounded-full h-10 sm:col-span-1 lg:col-span-1"
+            onClick={() => { setSearch(search.trim()); }}
+          >
             {t("search.searchButton")}
           </Button>
         </div>

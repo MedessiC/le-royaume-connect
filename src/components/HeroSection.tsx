@@ -18,8 +18,7 @@ const defaultSlides: Slide[] = [
     color: "bg-gradient-to-r from-blue-600 to-purple-600",
     pretitle: "Mouvement mondial",
     title: "MILLENIUM",
-    description:
-      "Une ère nouvelle à nulle autre pareille\nUne Seule référence: L'Afrique de l'Ouest\nUn seul rassemblement, une seule fois\nUn seul peuple\nUne seule Communauté\nUne seule dynastie\n\nUn Seul Lieu de Convergence:\nLa Poubligea da Beni. La République du Bénin\nBANIKOARA: SION KonG.\n\nBienvenu à BANIKOARA: SION nouvelle",
+    description: "",
   },
   {
     alt: "Hero image 2",

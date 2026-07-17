@@ -8,18 +8,26 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+        // Attendre que Supabase traite la session depuis l'URL
+        // Supabase gère automatiquement le callback OAuth et crée une session
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Vérifier si une session a été créée
+        const { data: { session }, error } = await supabase.auth.getSession();
+
         if (error) {
-          console.error('Supabase OAuth callback error:', error);
+          console.error('Supabase OAuth session error:', error);
           navigate('/auth', { replace: true });
           return;
         }
 
-        if (!data?.session) {
+        if (!session) {
+          console.warn('No session found after OAuth callback');
           navigate('/auth', { replace: true });
           return;
         }
 
+        console.log('OAuth authentication successful, redirecting to /feed');
         navigate('/feed', { replace: true });
       } catch (err) {
         console.error('OAuth callback exception:', err);

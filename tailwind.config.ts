@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Cinzel", "serif"],
+        display: ["Poppins", "sans-serif"],
         body: ["Inter", "sans-serif"],
       },
       colors: {

@@ -111,6 +111,8 @@ const Admin = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [userQuery, setUserQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [usersPerPage] = useState(10);
+  const [displayedUsersCount, setDisplayedUsersCount] = useState(10);
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -432,22 +434,22 @@ const Admin = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 container mx-auto px-4 pt-24 pb-16 max-w-6xl">
-        <header className="mb-8">
-          <h1 className="font-display text-4xl font-bold text-foreground">Panel d'administration</h1>
-          <p className="text-muted-foreground font-body">Gérez le contenu et les permissions du site.</p>
+      <main className="flex-1 container mx-auto px-4 pt-20 md:pt-24 pb-16 max-w-7xl">
+        <header className="mb-6 md:mb-8">
+          <h1 className="font-display text-2xl md:text-4xl font-bold text-foreground">Panel d'administration</h1>
+          <p className="text-sm md:text-base text-muted-foreground font-body">Gérez le contenu et les permissions du site.</p>
         </header>
 
-        <Tabs defaultValue="teachings">
-          <TabsList>
-            <TabsTrigger value="home">Accueil</TabsTrigger>
-            <TabsTrigger value="publications">Publications</TabsTrigger>
-            <TabsTrigger value="teachings">Enseignements</TabsTrigger>
-            <TabsTrigger value="categories">Catégories</TabsTrigger>
-            <TabsTrigger value="testimonials">Témoignages</TabsTrigger>
-            <TabsTrigger value="stories">Histoires</TabsTrigger>
-            <TabsTrigger value="popups">Pop-ups</TabsTrigger>
-            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+        <Tabs defaultValue="teachings" className="w-full">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 w-full h-auto gap-1 rounded-lg">
+            <TabsTrigger value="home" className="text-xs md:text-sm">Accueil</TabsTrigger>
+            <TabsTrigger value="publications" className="text-xs md:text-sm">Publications</TabsTrigger>
+            <TabsTrigger value="teachings" className="text-xs md:text-sm">Enseignements</TabsTrigger>
+            <TabsTrigger value="categories" className="text-xs md:text-sm">Catégories</TabsTrigger>
+            <TabsTrigger value="testimonials" className="text-xs md:text-sm">Témoignages</TabsTrigger>
+            <TabsTrigger value="stories" className="text-xs md:text-sm">Histoires</TabsTrigger>
+            <TabsTrigger value="popups" className="text-xs md:text-sm">Pop-ups</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs md:text-sm">Utilisateurs</TabsTrigger>
           </TabsList>
 
           <TabsContent value="home" className="space-y-6">
@@ -457,7 +459,7 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={saveHomeSettings} className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div>
                       <Label>URL YouTube</Label>
                       <Input
@@ -485,7 +487,7 @@ const Admin = () => {
                     </div>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <Label>Link TikTok</Label>
                       <Input
@@ -668,7 +670,7 @@ const Admin = () => {
                 <CardTitle>Gestion des publications</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid gap-4 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="lg:col-span-2">
                     <Label>Recherche</Label>
                     <Input
@@ -739,19 +741,19 @@ const Admin = () => {
                         </div>
                       </div>
 
-                      <div className="grid gap-2 md:grid-cols-3 text-xs text-muted-foreground">
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 text-xs text-muted-foreground">
                         <span>Auteur : {getAuthorName(t.author_id)}</span>
                         <span>Créé le : {new Date(t.created_at).toLocaleDateString("fr-FR")}</span>
                         <span>Pays : {t.country || "—"}</span>
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" onClick={() => startEdit(t)}>Modifier</Button>
-                        <Button size="sm" variant="outline" onClick={() => loadTeachingComments(t)}>Voir les commentaires</Button>
-                        <Button size="sm" variant="ghost" onClick={() => togglePublished(t)}>
+                        <Button size="sm" variant="outline" onClick={() => startEdit(t)} className="text-xs">Modifier</Button>
+                        <Button size="sm" variant="outline" onClick={() => loadTeachingComments(t)} className="text-xs">Voir commentaires</Button>
+                        <Button size="sm" variant="ghost" onClick={() => togglePublished(t)} className="text-xs">
                           {t.published ? "Dépublier" : "Publier"}
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteTeaching(t.id)}>Supprimer</Button>
+                        <Button size="sm" variant="destructive" onClick={() => deleteTeaching(t.id)} className="text-xs">Supprimer</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -837,7 +839,7 @@ const Admin = () => {
                       placeholder="Écrivez le contenu de l'enseignement ici..."
                     />
                   </div>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <Label>Image de couverture</Label>
                       <MediaUpload value={form.cover} onChange={(v) => setForm({ ...form, cover: v })} accept="image" />
@@ -851,7 +853,7 @@ const Admin = () => {
                       <MediaUpload value={form.audio} onChange={(v) => setForm({ ...form, audio: v })} accept="audio" />
                     </div>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <Label>Pays</Label>
                       <CountrySelect value={form.country} onChange={(v) => setForm({ ...form, country: v })} placeholder="Sélectionner un pays..." />
@@ -877,29 +879,31 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {teachings.map((t) => (
-                <Card key={t.id} className={editingId === t.id ? "border-gold" : ""}>
-                  <CardContent className="p-4 flex items-center gap-4">
-                    {t.cover_image_url && (
-                      <img src={t.cover_image_url} alt="" className="w-20 h-14 object-cover rounded shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-display font-semibold truncate">{t.title}</h3>
-                        {t.published ? <Badge>Publié</Badge> : <Badge variant="secondary">Brouillon</Badge>}
-                        {t.video_url && <Badge variant="outline">Vidéo</Badge>}
+                <Card key={t.id} className={`${editingId === t.id ? "border-gold" : ""} hover:shadow-md transition-shadow`}>
+                  <CardContent className="p-3 md:p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 md:gap-4 items-start">
+                      {t.cover_image_url && (
+                        <img src={t.cover_image_url} alt="" className="w-20 h-14 object-cover rounded shrink-0 sm:order-1" />
+                      )}
+                      <div className="flex-1 min-w-0 sm:order-2">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-display font-semibold truncate text-sm">{t.title}</h3>
+                          {t.published ? <Badge className="text-xs">Publié</Badge> : <Badge variant="secondary" className="text-xs">Brouillon</Badge>}
+                          {t.video_url && <Badge variant="outline" className="text-xs">Vidéo</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{t.excerpt}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{t.excerpt}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Switch checked={t.published} onCheckedChange={() => togglePublished(t)} />
-                      <Button size="icon" variant="ghost" onClick={() => startEdit(t)} aria-label="Modifier">
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => deleteTeaching(t.id)} aria-label="Supprimer">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0 sm:order-3">
+                        <Switch checked={t.published} onCheckedChange={() => togglePublished(t)} className="scale-75" />
+                        <Button size="icon" variant="ghost" onClick={() => startEdit(t)} aria-label="Modifier" className="h-8 w-8">
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => deleteTeaching(t.id)} aria-label="Supprimer" className="h-8 w-8">
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -920,12 +924,12 @@ const Admin = () => {
               </CardContent>
             </Card>
 
-            <div className="grid gap-3">
+            <div className="space-y-3">
               {categories.map((c) => (
                 <Card key={c.id}>
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">{c.name}</h3>
+                  <CardContent className="p-3 md:p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold truncate">{c.name}</h3>
                       <p className="text-xs text-muted-foreground">{c.description}</p>
                     </div>
                     <Button size="icon" variant="ghost" onClick={() => deleteCategory(c.id)}>
@@ -941,21 +945,43 @@ const Admin = () => {
           <TabsContent value="users" className="space-y-4">
             <Card className="border-gold/20">
               <CardHeader>
-                <CardTitle>Utilisateurs</CardTitle>
+                <CardTitle className="text-lg md:text-2xl">Utilisateurs inscrits</CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">Total : {filteredUsers.length} utilisateur{filteredUsers.length !== 1 ? "s" : ""}</p>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="md:col-span-2 lg:col-span-2">
                     <Label>Rechercher un utilisateur</Label>
                     <Input
                       value={userQuery}
-                      onChange={(e) => setUserQuery(e.target.value)}
+                      onChange={(e) => {
+                        setUserQuery(e.target.value);
+                        setDisplayedUsersCount(10);
+                      }}
                       placeholder="Nom, prénom ou ID"
+                      className="rounded-full"
                     />
                   </div>
-                  <div className="flex items-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setUserQuery("")}>Effacer</Button>
-                    <Button type="button" variant="hero" onClick={() => setSelectedUserId(null)}>Voir tous</Button>
+                  <div className="flex gap-2 items-end">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setUserQuery("");
+                        setDisplayedUsersCount(10);
+                      }}
+                      className="flex-1"
+                    >
+                      Effacer
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="hero" 
+                      onClick={() => setSelectedUserId(null)}
+                      className="flex-1"
+                    >
+                      Tous
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -970,7 +996,7 @@ const Admin = () => {
                   <div className="flex flex-col gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Nom</p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-foreground">{selectedUser.full_name || "(sans nom)"}</p>
                         <GoldBadge hasGoldBadge={badgeIds.has(selectedUser.id)} />
                       </div>
@@ -995,7 +1021,7 @@ const Admin = () => {
               </Card>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredUsers.length === 0 ? (
                 <Card>
                   <CardContent className="p-6 text-center text-muted-foreground">
@@ -1003,55 +1029,96 @@ const Admin = () => {
                   </CardContent>
                 </Card>
               ) : (
-                filteredUsers.map((u) => {
-                  const isUserAdmin = adminIds.has(u.id);
-                  const hasGoldBadge = badgeIds.has(u.id);
-                  return (
-                    <Card key={u.id} className={selectedUserId === u.id ? "border-gold" : ""}>
-                      <CardContent className="p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{u.full_name || "(sans nom)"}</h3>
-                            <GoldBadge hasGoldBadge={hasGoldBadge} />
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-xs text-muted-foreground">{u.country || "—"}</p>
-                            {isUserAdmin && <Badge className="ml-1">Admin</Badge>}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setSelectedUserId(u.id)}>
-                            Voir
-                          </Button>
-                          {u.id === user!.id ? (
-                            <span className="text-xs text-muted-foreground">vous</span>
-                          ) : (
-                            <>
-                              {isUserAdmin ? (
-                                <Button size="sm" variant="outline" onClick={() => toggleAdmin(u.id, false)}>
-                                  <ShieldOff className="w-4 h-4" /> Retirer admin
-                                </Button>
+                <>
+                  {filteredUsers.slice(0, displayedUsersCount).map((u) => {
+                    const isUserAdmin = adminIds.has(u.id);
+                    const hasGoldBadge = badgeIds.has(u.id);
+                    return (
+                      <Card key={u.id} className={`${selectedUserId === u.id ? "border-gold" : ""} hover:shadow-md transition-shadow`}>
+                        <CardContent className="p-3 md:p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 md:gap-4">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold truncate">{u.full_name || "(sans nom)"}</h3>
+                                <GoldBadge hasGoldBadge={hasGoldBadge} />
+                              </div>
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                <p className="text-xs text-muted-foreground">{u.country || "—"}</p>
+                                {isUserAdmin && <Badge className="text-xs">Admin</Badge>}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 justify-start md:justify-end">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => setSelectedUserId(u.id)}
+                                className="text-xs"
+                              >
+                                Voir
+                              </Button>
+                              {u.id === user!.id ? (
+                                <span className="text-xs text-muted-foreground flex items-center">vous</span>
                               ) : (
-                                <Button size="sm" variant="outline" onClick={() => toggleAdmin(u.id, true)}>
-                                  <Shield className="w-4 h-4" /> Promouvoir admin
-                                </Button>
+                                <>
+                                  {isUserAdmin ? (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => toggleAdmin(u.id, false)}
+                                      className="text-xs"
+                                    >
+                                      <ShieldOff className="w-3 h-3" /> Retirer
+                                    </Button>
+                                  ) : (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => toggleAdmin(u.id, true)}
+                                      className="text-xs"
+                                    >
+                                      <Shield className="w-3 h-3" /> Promouvoir
+                                    </Button>
+                                  )}
+                                  {hasGoldBadge ? (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => toggleGoldBadge(u.id, false)}
+                                      className="text-xs"
+                                    >
+                                      <Award className="w-3 h-3" /> Retirer
+                                    </Button>
+                                  ) : (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => toggleGoldBadge(u.id, true)}
+                                      className="text-xs"
+                                    >
+                                      <Award className="w-3 h-3" /> Ajouter
+                                    </Button>
+                                  )}
+                                </>
                               )}
-                              {hasGoldBadge ? (
-                                <Button size="sm" variant="outline" onClick={() => toggleGoldBadge(u.id, false)}>
-                                  <Award className="w-4 h-4" /> Retirer badge
-                                </Button>
-                              ) : (
-                                <Button size="sm" variant="outline" onClick={() => toggleGoldBadge(u.id, true)}>
-                                  <Award className="w-4 h-4" /> Ajouter badge
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+
+                  {displayedUsersCount < filteredUsers.length && (
+                    <div className="flex justify-center pt-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setDisplayedUsersCount(displayedUsersCount + usersPerPage)}
+                        className="w-full md:w-auto"
+                      >
+                        Charger plus ({displayedUsersCount} / {filteredUsers.length})
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </TabsContent>
