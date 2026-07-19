@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import TeachingCard from "@/components/TeachingCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Loader2, X } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 
 const getYoutubeEmbedUrl = (url: string) => {
@@ -23,7 +23,6 @@ const getYoutubeEmbedUrl = (url: string) => {
   return null;
 };
 
-
 type Profile = { id: string; full_name: string | null; has_gold_badge?: boolean };
 type Category = { id: string; name: string; slug: string };
 type Teaching = {
@@ -40,6 +39,32 @@ type Teaching = {
   created_at: string;
   categories?: { name: string } | null;
 };
+
+// Skeleton that mirrors TeachingCard's real proportions — header, title
+// block, media aspect-video, footer — so the layout doesn't jump when
+// real cards arrive.
+const TeachingCardSkeleton = () => (
+  <div className="overflow-hidden rounded-2xl border border-border bg-card animate-pulse" aria-hidden="true">
+    <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3 w-1/3 rounded bg-muted" />
+        <div className="h-2 w-1/5 rounded bg-muted" />
+      </div>
+    </div>
+    <div className="px-4 pt-4 pb-3 space-y-2">
+      <div className="h-2 w-1/4 rounded bg-muted" />
+      <div className="h-4 w-4/5 rounded bg-muted" />
+      <div className="h-3 w-full rounded bg-muted" />
+      <div className="h-3 w-2/3 rounded bg-muted" />
+    </div>
+    <div className="aspect-video w-full bg-muted" />
+    <div className="border-t border-border px-4 py-2.5 space-y-2.5">
+      <div className="h-3 w-1/3 rounded bg-muted" />
+      <div className="h-8 w-full rounded-lg bg-muted" />
+    </div>
+  </div>
+);
 
 const Feed = () => {
   const { user } = useAuth();
@@ -213,6 +238,10 @@ const Feed = () => {
     return () => io.disconnect();
   }, [hasMore]);
 
+  const setObserverRef = useCallback((el: HTMLDivElement | null) => {
+    observerRef.current = el;
+  }, []);
+
   const handleToggleLike = async (teachingId: string) => {
     if (!user) {
       navigate("/auth");
@@ -260,45 +289,80 @@ const Feed = () => {
     });
   }, [teachings, debouncedSearch, categoryId, country]);
 
+  const hasActiveFilters = categoryId !== "all" || country !== "all" || debouncedSearch !== "";
+
+  const resetFilters = () => {
+    setSearch("");
+    setCategoryId("all");
+    setCountry("all");
+  };
+
+  const isInitialLoading = loading && teachings.length === 0;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 pt-16">
         {/* Hero */}
-        <section className="bg-gradient-hero text-primary-foreground py-10">
+        <section className="bg-gradient-hero text-primary-foreground py-14 md:py-20">
           <div className="container mx-auto px-4 text-center max-w-3xl">
-            <h1 className="font-display text-3xl md:text-5xl font-bold mb-3 leading-tight">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.25em] uppercase text-gold-light mb-4">
+              Bibliothèque du mouvement
+            </p>
+            <h1 className="font-display text-3xl md:text-5xl font-bold mb-4 leading-tight">
               Fil d'<span className="text-gradient-gold">enseignements</span>
             </h1>
-            <p className="mx-auto max-w-2xl text-sm md:text-base text-primary-foreground/85 font-body">
-              Découvre rapidement des enseignements structurés, accessibles et organisés pour le voyage spirituel moderne.
+            <span className="inline-block w-14 h-px bg-gold-light/60 mb-5" />
+            <p className="mx-auto max-w-2xl text-sm md:text-base text-primary-foreground/80 font-body">
+              Des enseignements structurés, accessibles et organisés pour le voyage spirituel moderne.
             </p>
           </div>
         </section>
 
         <div className="container mx-auto px-4 py-8 max-w-6xl">
-          <SearchBar
-            search={search}
-            setSearch={setSearch}
-            categoryId={categoryId}
-            setCategoryId={setCategoryId}
-            country={country}
-            setCountry={setCountry}
-            categories={categories}
-            countries={countries}
-          />
+          <div className="sticky top-16 z-10 -mx-4 px-4 py-3 mb-6 bg-background/80 backdrop-blur-md border-b border-border/60">
+            <SearchBar
+              search={search}
+              setSearch={setSearch}
+              categoryId={categoryId}
+              setCategoryId={setCategoryId}
+              country={country}
+              setCountry={setCountry}
+              categories={categories}
+              countries={countries}
+            />
+          </div>
 
           {/* Results */}
-          {loading ? (
-            <p className="text-center text-muted-foreground py-12">Chargement…</p>
+          {isInitialLoading ? (
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-live="polite">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <TeachingCardSkeleton key={i} />
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground font-body">
+            <div className="text-center py-16 md:py-24">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-muted mb-5">
+                <BookOpen className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
+              </div>
+              <h2 className="font-display text-lg font-bold text-foreground mb-2">
+                {teachings.length === 0 ? "Aucun enseignement publié pour le moment" : "Aucun résultat pour ces filtres"}
+              </h2>
+              <p className="text-muted-foreground font-body text-sm max-w-sm mx-auto mb-6">
                 {teachings.length === 0
-                  ? "Aucun enseignement publié pour le moment."
-                  : "Aucun résultat pour ces filtres."}
+                  ? "Revenez bientôt : de nouveaux enseignements sont ajoutés régulièrement."
+                  : "Essayez d'élargir votre recherche ou de réinitialiser les filtres."}
               </p>
+              {hasActiveFilters && teachings.length > 0 && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-gold-dark dark:text-gold-light hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded"
+                >
+                  <X className="w-3.5 h-3.5" aria-hidden="true" />
+                  Réinitialiser les filtres
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -327,21 +391,25 @@ const Feed = () => {
                     onToggleCollection={() => {}}
                   />
                 ))}
+                {loadingMore &&
+                  Array.from({ length: 3 }).map((_, i) => <TeachingCardSkeleton key={`more-${i}`} />)}
               </div>
 
-              <div className="flex justify-center mt-6">
+              <div className="flex justify-center mt-8">
                 {hasMore && (
                   <button
                     type="button"
                     onClick={() => setPage((p) => p + 1)}
-                    className="bg-primary text-primary-foreground px-4 py-2 rounded-full hover:opacity-95"
+                    disabled={loadingMore}
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-full font-medium hover:opacity-95 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
+                    {loadingMore && <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />}
                     {loadingMore ? "Chargement…" : "Charger plus"}
                   </button>
                 )}
               </div>
 
-              <div ref={(el) => (observerRef.current = el)} className="h-1" />
+              <div ref={setObserverRef} className="h-1" />
             </>
           )}
         </div>

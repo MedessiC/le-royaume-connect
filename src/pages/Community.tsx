@@ -248,6 +248,14 @@ const Community = () => {
   const liveActive = currentLive?.status === "live";
 
   const markCallActive = async () => {
+    // Optimistic update — was missing before, so this action lagged
+    // behind the equivalent live-start flow, which does update locally.
+    setCommunityRoom((room) =>
+      room
+        ? { ...room, status: "active", host_id: user?.id ?? null, started_at: new Date().toISOString(), ended_at: null }
+        : room,
+    );
+
     const query = supabaseDb
       .from("community_rooms")
       .update({
@@ -270,6 +278,8 @@ const Community = () => {
   };
 
   const markCallEnded = async () => {
+    setCommunityRoom((room) => (room ? { ...room, status: "idle", ended_at: new Date().toISOString() } : room));
+
     const query = supabaseDb
       .from("community_rooms")
       .update({
@@ -292,11 +302,16 @@ const Community = () => {
       title: "Live communautaire",
       description: "Direct de la communauté MILLENIUM",
       room_name: LIVE_ROOM_NAME,
-      status: "live",
+      status: "live" as const,
       host_id: user.id,
       started_at: new Date().toISOString(),
       ended_at: null,
     };
+
+    setCurrentLive((live) => ({
+      id: live?.id ?? "",
+      ...payload,
+    }));
 
     const query = supabaseDb.from("lives").upsert(payload, { onConflict: "room_name" }) as Promise<{
       error: { message: string } | null;
@@ -405,7 +420,7 @@ const Community = () => {
         className={
           compact
             ? "space-y-2"
-            : "grid gap-2 border-b border-[#d1d7db] bg-[#f0f2f5] p-2 dark:border-[#222d34] dark:bg-[#202c33] sm:gap-3 sm:p-3 md:grid-cols-2"
+            : "grid gap-2 border-b border-border bg-muted/40 p-2 sm:gap-3 sm:p-3 md:grid-cols-2"
         }
       >
         <div className="min-w-0 rounded-lg border border-border bg-background p-2.5 shadow-sm sm:p-3">
@@ -421,7 +436,13 @@ const Community = () => {
                 </p>
               </div>
             </div>
-            <span className={callActive ? "h-2.5 w-2.5 shrink-0 rounded-full bg-green-500" : "h-2.5 w-2.5 shrink-0 rounded-full bg-muted"} />
+            <span
+              className={
+                callActive
+                  ? "h-2.5 w-2.5 shrink-0 rounded-full bg-green-500"
+                  : "h-2.5 w-2.5 shrink-0 rounded-full bg-muted"
+              }
+            />
           </div>
           <div className="flex gap-2">
             <Button
@@ -445,7 +466,7 @@ const Community = () => {
         <div className="min-w-0 rounded-lg border border-border bg-background p-2.5 shadow-sm sm:p-3">
           <div className="mb-2.5 flex items-center justify-between gap-2 sm:mb-3 sm:gap-3">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-600 sm:h-9 sm:w-9">
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive sm:h-9 sm:w-9">
                 <Radio className="h-4 w-4" />
               </span>
               <div className="min-w-0">
@@ -455,7 +476,13 @@ const Community = () => {
                 </p>
               </div>
             </div>
-            <span className={liveActive ? "shrink-0 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white" : "shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"}>
+            <span
+              className={
+                liveActive
+                  ? "shrink-0 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground"
+                  : "shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
+              }
+            >
               {liveActive ? "LIVE" : "OFF"}
             </span>
           </div>
@@ -505,7 +532,7 @@ const Community = () => {
               setSelectedProfile(p);
               setShowMembers(false);
             }}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-muted"
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
           >
             <UserAvatar src={p.avatar_url} name={p.full_name || "Membre"} className="h-8 w-8" />
             <div className="min-w-0 flex-1">
@@ -528,7 +555,7 @@ const Community = () => {
         <div className="mx-auto grid min-h-[calc(100dvh-4.25rem)] max-w-6xl grid-cols-1 gap-0 sm:gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
           <aside className="hidden rounded-lg border border-border bg-card p-4 shadow-lg lg:block">
             <div className="mb-4 flex items-center gap-3">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gold text-slate-950">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gold text-accent-foreground">
                 <Users className="h-5 w-5" />
               </div>
               <div>
@@ -537,11 +564,12 @@ const Community = () => {
               </div>
             </div>
 
-            <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-popover px-3 py-2">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-popover px-3 py-2 focus-within:ring-2 focus-within:ring-gold">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               <input
                 type="search"
                 placeholder="Rechercher un message"
+                aria-label="Rechercher un message dans le salon"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-9 w-full bg-transparent text-sm focus:outline-none"
@@ -582,12 +610,13 @@ const Community = () => {
               onShowSearch={() => setShowMobileSearch((value) => !value)}
             />
             {showMobileSearch && (
-              <div className="border-b border-[#d1d7db] bg-[#f0f2f5] px-2.5 py-2 dark:border-[#222d34] dark:bg-[#202c33] lg:hidden">
-                <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 dark:bg-[#2a3942]">
-                  <Search className="h-4 w-4 shrink-0 text-[#667781] dark:text-[#8696a0]" />
+              <div className="border-b border-border bg-muted/40 px-2.5 py-2 lg:hidden">
+                <div className="flex items-center gap-2 rounded-lg bg-background px-3 py-2 focus-within:ring-2 focus-within:ring-gold">
+                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                   <input
                     type="search"
                     placeholder="Rechercher dans #général"
+                    aria-label="Rechercher un message dans #général"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="h-8 w-full bg-transparent text-sm focus:outline-none"
@@ -595,7 +624,10 @@ const Community = () => {
                 </div>
               </div>
             )}
-            {renderMediaPanel()}
+            {/* Uniquement en dessous de lg : au-delà, l'aside affiche déjà
+                ce panneau — le dupliquer ici créait deux jeux de boutons
+                actifs en simultané pour la même action. */}
+            <div className="lg:hidden">{renderMediaPanel()}</div>
             <ChatMessageList
               messages={visibleMessages}
               loading={loading}

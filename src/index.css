@@ -19,8 +19,12 @@
     /* Brand colors */
     --primary: 231 64% 53%; /* royal blue */
     --primary-foreground: 0 0% 100%; /* white */
+    --secondary: 210 25% 94%;
+    --secondary-foreground: 220 12% 12%;
     --accent: 51 100% 50%; /* gold (ffd700) */
     --accent-foreground: 220 12% 12%; /* dark text on gold */
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
 
     /* Muted / UI */
     --muted: 210 20% 96%;
@@ -35,7 +39,7 @@
     --sidebar-background: 231 64% 53%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 51 100% 50%;
-    --sidebar-primary-foreground: var(--foreground);
+    --sidebar-primary-foreground: 220 12% 12%;
     --sidebar-accent: 225 50% 45%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 10% 20%;
@@ -52,7 +56,7 @@
     --gradient-hero: linear-gradient(135deg, hsl(231 64% 32%) 0%, hsl(231 64% 53%) 60%, hsl(51 100% 50%) 100%);
     --gradient-gold: linear-gradient(135deg, hsl(51 100% 45%) 0%, hsl(51 100% 50%) 50%, hsl(51 100% 70%) 100%);
     --shadow-royal: 0 20px 60px -15px hsl(231 64% 20% / 0.28);
-    --shadow-accent: 0 10px 40px -10px hsl(51 100% 40% / 0.22);
+    --shadow-gold: 0 10px 40px -10px hsl(51 100% 40% / 0.22);
 
     --font-display: 'Poppins', sans-serif;
     --font-body: 'Inter', sans-serif;
@@ -78,6 +82,35 @@
     --border: 220 10% 18%;
     --input: 220 10% 18%;
     --ring: 225 73% 57%;
+
+    /* Sidebar — repeat the light values here rather than letting them
+       silently inherit from :root; keeps the sidebar deliberately
+       "always royal blue" rather than reacting to theme by accident. */
+    --sidebar-background: 231 50% 14%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 51 100% 50%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 225 40% 22%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 10% 20%;
+    --sidebar-ring: 225 73% 57%;
+
+    /* Gold reads fine on black as-is, but bumped slightly lighter so
+       it doesn't sit right at the edge of AA contrast on a 6% bg. */
+    --gold: 51 100% 55%;
+    --gold-light: 51 100% 74%;
+    --gold-dark: 51 90% 45%;
+    --royal: 225 73% 57%;
+    --royal-deep: 225 60% 34%;
+    --royal-light: 225 73% 72%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(225 60% 12%) 0%, hsl(225 60% 22%) 60%, hsl(51 100% 50%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(51 100% 40%) 0%, hsl(51 100% 55%) 50%, hsl(51 100% 74%) 100%);
+
+    /* Dark-mode shadows must be lighter/glow-based — a navy shadow at
+       28% opacity is invisible against a near-black card. */
+    --shadow-royal: 0 20px 60px -15px hsl(0 0% 0% / 0.6);
+    --shadow-gold: 0 10px 40px -8px hsl(51 100% 55% / 0.18);
   }
 }
 
@@ -138,15 +171,25 @@
 }
 
 @layer utilities {
-  /* More accessible gold for text on light backgrounds */
+  /* Accessible gold for text: darker on light backgrounds, lighter on
+     dark backgrounds. Previously hardcoded to --gold-dark in both
+     modes, which is under-contrast on a near-black background. */
   .text-gold {
     color: hsl(var(--gold-dark));
+  }
+
+  .dark .text-gold {
+    color: hsl(var(--gold-light));
   }
 
   .marquee {
     position: relative;
     overflow: hidden;
-    background: rgba(255, 215, 0, 0.12);
+    background: hsl(var(--gold) / 0.12);
+  }
+
+  .dark .marquee {
+    background: hsl(var(--gold) / 0.08);
   }
 
   .marquee-content {

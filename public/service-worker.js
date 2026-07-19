@@ -1,110 +1,40 @@
-// Generate a unique cache name based on service worker timestamp
-const CACHE_BASE = 'le-royaume-connect';
-const CACHE_VERSION = Date.now(); // Use current timestamp for auto-update
-const CACHE_NAME = `${CACHE_BASE}-${CACHE_VERSION}`;
-const urlsToCache = [
-  '/offline.html',
-];
+// KILL SWITCH — this replaces the previous caching service worker.
+// Goal: every client currently running the old SW gets it cleared out,
+// all caches wiped, and every open tab force-reloaded from the network.
+// Once you're confident every visitor has picked this up (a few days to
+// a couple weeks depending on traffic), you can remove the SW entirely
+// (this file + the registration call in your app).
 
-const shouldUseNetworkFirst = (request) => {
-  const url = new URL(request.url);
-  return (
-    request.mode === 'navigate' ||
-    url.pathname === '/' ||
-    url.pathname === '/index.html' ||
-    url.pathname === '/version.txt' ||
-    url.pathname === '/service-worker.js'
-  );
-};
-
-// Install event
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache).catch(err => {
-        console.log('Cache.addAll error:', err);
-      });
-    })
-  );
+self.addEventListener('install', () => {
+  // Activate immediately, don't wait for old tabs to close
   self.skipWaiting();
 });
 
-// Activate event - clean old cache versions
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          // Delete caches that don't match current version or base name
-          if (cacheName.startsWith(CACHE_BASE) && cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
-});
+    (async () => {
+      // Delete every cache this origin owns, not just our old CACHE_BASE
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
 
-// Fetch event
-self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
+      // Take control of any open tabs immediately
+      await self.clients.claim();
 
-  // Skip external requests
-  if (!event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
+      // Force every open tab to reload from network, then tell it to
+      // drop this SW entirely so it stops intercepting fetches
+      const clients = await self.clients.matchAll({ type: 'window' });
+      clients.forEach((client) => client.navigate(client.url));
 
-  if (shouldUseNetworkFirst(event.request)) {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then((response) => response)
-        .catch(() => caches.match(event.request).then((response) => response || caches.match('/offline.html')))
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) return response;
-
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type === 'error') {
-          return response;
-        }
-
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
-        return response;
-      }).catch(() => caches.match('/offline.html'));
-    })
+      // Unregister — after this, the browser stops using this SW for
+      // new requests once the current clients release it
+      await self.registration.unregister();
+    })()
   );
 });
 
-// Handle messages from clients
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
-    // Clear all caches when requested by client
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName.startsWith(CACHE_BASE)) {
-            console.log('Clearing cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    });
-  }
+// While this SW is still transitioning out, never intercept fetches —
+// let everything hit the network directly, no cache reads or writes.
+self.addEventListener('fetch', () => {
+  // Intentionally not calling event.respondWith(): falls through to
+  // normal browser network handling.
 });
