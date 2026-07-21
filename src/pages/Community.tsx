@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneCall, Radio, Search, Square, Users, Video } from "lucide-react";
+import SEO from "@/components/SEO";
 
 type LiveKitTokenMode = "call" | "live-host" | "viewer";
 
@@ -116,6 +117,8 @@ const Community = () => {
     remove,
     setReply,
     insertEmoji,
+    loadMoreOlder,
+    hasMoreOlder,
   } = useCommunityChat({
     user,
     profile: user && profile ? { id: user.id, ...profile } : null,
@@ -415,14 +418,66 @@ const Community = () => {
   };
 
   const renderMediaPanel = (compact = false) => {
+    // Mobile optimization: If nothing is active, do not display anything to save screen space
+    if (!compact) {
+      if (!callActive && !liveActive) {
+        return null;
+      }
+      
+      // If active, render an ultra-slim row
+      return (
+        <div className="flex flex-col sm:flex-row gap-2 border-b border-border bg-muted/40 p-2 text-xs">
+          {callActive && (
+            <div className="flex-grow flex items-center justify-between bg-card border border-green-500/20 rounded-xl px-3 py-2 shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="font-semibold text-foreground">Appel général en cours</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button 
+                  size="sm" 
+                  className="h-8 px-3 text-[11px] rounded-lg bg-green-600 hover:bg-green-700 text-white" 
+                  onClick={() => startLiveKitSession("call")}
+                >
+                  Rejoindre
+                </Button>
+                {isAdmin && (
+                  <Button size="icon" variant="outline" className="h-8 w-8 rounded-lg" onClick={markCallEnded} aria-label="Terminer l'appel">
+                    <Square className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+          {liveActive && (
+            <div className="flex-grow flex items-center justify-between bg-card border border-red-500/20 rounded-xl px-3 py-2 shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="font-semibold text-foreground">Live communautaire actif</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button 
+                  size="sm" 
+                  className="h-8 px-3 text-[11px] rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20" 
+                  onClick={() => startLiveKitSession(isAdmin ? "live-host" : "viewer")}
+                >
+                  {isAdmin ? "Entrer" : "Suivre"}
+                </Button>
+                {isAdmin && (
+                  <Button size="icon" variant="outline" className="h-8 w-8 rounded-lg" onClick={endLive} aria-label="Terminer le live">
+                    <Square className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Desktop sidebar compact layout (always show triggers)
     return (
-      <div
-        className={
-          compact
-            ? "space-y-2"
-            : "grid gap-2 border-b border-border bg-muted/40 p-2 sm:gap-3 sm:p-3 md:grid-cols-2"
-        }
-      >
+      <div className="space-y-2">
         <div className="min-w-0 rounded-lg border border-border bg-background p-2.5 shadow-sm sm:p-3">
           <div className="mb-2.5 flex items-center justify-between gap-2 sm:mb-3 sm:gap-3">
             <div className="flex min-w-0 items-center gap-2">
@@ -550,9 +605,15 @@ const Community = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
+      <SEO
+        title="Communauté — Espace de discussion | MILLENIUM"
+        description="Rejoignez la communauté MILLENIUM et échangez avec des disciples du monde entier. Mouvement fondé par ZOVIZO à Banikoara, Bénin."
+        path="/community"
+        keywords={["communauté MILLENIUM", "disciples ZOVIZO", "forum spirituel Bénin", "Le Règne Millénaire", "chat chrétien Afrique"]}
+      />
       <Navbar />
-      <main className="flex-1 px-0 py-0 sm:px-4 sm:py-4">
-        <div className="mx-auto grid min-h-[calc(100dvh-4.25rem)] max-w-6xl grid-cols-1 gap-0 sm:gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <main className="flex-1 px-0 py-0 sm:px-4 sm:py-4 pt-14 sm:pt-16">
+        <div className="mx-auto grid min-h-[calc(100dvh-3.5rem)] sm:min-h-[calc(100dvh-4rem)] max-w-6xl grid-cols-1 gap-0 sm:gap-3 lg:grid-cols-[260px_minmax(0,1fr)]">
           <aside className="hidden rounded-lg border border-border bg-card p-4 shadow-lg lg:block">
             <div className="mb-4 flex items-center gap-3">
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gold text-accent-foreground">
@@ -594,7 +655,7 @@ const Community = () => {
             </div>
           </aside>
 
-          <section className="flex min-h-[calc(100dvh-4.25rem)] flex-col overflow-hidden border-y border-border shadow-xl sm:rounded-lg sm:border lg:min-h-[calc(100dvh-6.5rem)]">
+          <section className="flex min-h-[calc(100dvh-3.5rem)] sm:min-h-[calc(100dvh-4rem)] flex-col overflow-hidden border-y border-border shadow-xl sm:rounded-lg sm:border lg:min-h-[calc(100dvh-8rem)]">
             <ChatHeader
               messageCount={visibleMessages.length}
               onlineCount={displayedCount}
@@ -638,6 +699,8 @@ const Community = () => {
               onReply={setReply}
               onDelete={remove}
               onProfileClick={setSelectedProfile}
+              hasMoreOlder={hasMoreOlder}
+              loadMoreOlder={loadMoreOlder}
             />
             <ChatComposer
               content={content}

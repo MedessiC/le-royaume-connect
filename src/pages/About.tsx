@@ -117,10 +117,10 @@ const About = () => {
         <section className="bg-gradient-hero text-primary-foreground py-24">
           <div className="container mx-auto px-4 text-center max-w-3xl">
             <Crown className="w-14 h-14 mx-auto text-gold mb-6" />
-            <h1 className="font-display text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="font-display text-4xl md:text-6xl font-bold mb-6 text-white">
               Notre <span className="text-gradient-gold">Histoire</span>
             </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/85 font-body leading-relaxed">
+            <p className="text-lg md:text-xl text-white/85 font-body leading-relaxed">
               Du cœur de Banikoara aux quatre coins du monde — l'épopée d'une communauté
               spirituelle souveraine, fondée sur la foi, l'unité et la transmission.
             </p>
@@ -595,13 +595,13 @@ const About = () => {
         </section>
 
         {/* PRÉSENCE MONDIALE */}
-        <section className="bg-gradient-hero text-foreground py-20">
+        <section className="bg-gradient-hero text-white py-20">
           <div className="container mx-auto px-4 text-center max-w-3xl">
             <Globe className="w-12 h-12 mx-auto text-gold mb-6" />
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-6 text-white">
               Une présence sur tous les continents
             </h2>
-            <p className="text-lg text-foreground/85 font-body leading-relaxed mb-8">
+            <p className="text-lg text-white/85 font-body leading-relaxed mb-8">
               Aujourd'hui, des milliers de membres vivent l'œuvre du Règne Millénaire en Afrique,
               en Europe, en Amérique du Nord, dans les Caraïbes et au-delà. Cette plateforme est
               le pont qui les relie tous — convergés vers Sion, Banikoara, Bénin.

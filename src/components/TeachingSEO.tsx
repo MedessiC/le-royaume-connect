@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { siteMetadata } from "@/lib/seo";
+import { siteMetadata, buildOrganizationSchema } from "@/lib/seo";
 
 interface TeachingSEOProps {
   title: string;
@@ -30,15 +30,14 @@ const setLinkTag = (rel: string, href: string): HTMLLinkElement => {
   let element = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
   if (!element) {
     element = document.createElement("link");
-    element.setAttribute("rel", rel);
+    element.setAttribute(rel, "rel");
     document.head.appendChild(element);
   }
   element.setAttribute("href", href);
   return element;
 };
 
-const setSchemaScript = (schema: object) => {
-  const id = "seo-jsonld";
+const setSchemaScript = (id: string, schema: object): HTMLScriptElement => {
   let script = document.head.querySelector<HTMLScriptElement>(`script#${id}`);
   if (!script) {
     script = document.createElement("script");
@@ -56,7 +55,6 @@ export default function TeachingSEO({
   path,
   image,
   keywords = [],
-  author,
   publishedDate,
   modifiedDate,
   content,
@@ -64,31 +62,37 @@ export default function TeachingSEO({
   country,
 }: TeachingSEOProps) {
   useEffect(() => {
-    if (typeof document === "undefined") {
-      return;
-    }
+    if (typeof document === "undefined") return;
 
     const canonical = `${siteMetadata.siteUrl}${path}`;
     const fullTitle = `${title} | ${siteMetadata.siteName}`;
     const finalImage = image || `${siteMetadata.siteUrl}${siteMetadata.defaultImage}`;
+    const wordCount = content
+      ? Math.ceil(content.replace(/<[^>]+>/g, "").split(/\s+/).filter(Boolean).length)
+      : 0;
+
     const finalKeywords = [
       ...keywords,
       categoryName,
       country,
-      "enseignement",
-      "spirituel",
+      "ZOVIZO",
       "MILLENIUM",
-    ].filter(Boolean);
+      "Le Règne Millénaire",
+      "enseignement biblique",
+      "Banikoara",
+      "Bénin",
+    ].filter(Boolean) as string[];
 
+    // ── Core ─────────────────────────────────────────────────────
     document.title = fullTitle;
-    
-    // Meta tags
     setMetaTag("name", "description", description);
     setMetaTag("name", "keywords", finalKeywords.join(", "));
     setMetaTag("name", "robots", "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1");
-    setMetaTag("name", "author", author?.name || "MILLENIUM");
-    
-    // Open Graph (Facebook, WhatsApp)
+    setMetaTag("name", "author", "Le Règne Millénaire — MILLENIUM");
+    setMetaTag("name", "creator", "ZOVIZO");
+    setMetaTag("name", "publisher", siteMetadata.siteName);
+
+    // ── Open Graph ────────────────────────────────────────────────
     setMetaTag("property", "og:locale", "fr_FR");
     setMetaTag("property", "og:title", fullTitle);
     setMetaTag("property", "og:description", description);
@@ -98,77 +102,70 @@ export default function TeachingSEO({
     setMetaTag("property", "og:image", finalImage);
     setMetaTag("property", "og:image:width", "1200");
     setMetaTag("property", "og:image:height", "630");
-    setMetaTag("property", "og:image:type", "image/png");
-    
-    // Twitter/X
+    setMetaTag("property", "og:image:alt", title);
+
+    // ── Twitter / X ───────────────────────────────────────────────
     setMetaTag("name", "twitter:card", "summary_large_image");
     setMetaTag("name", "twitter:title", fullTitle);
     setMetaTag("name", "twitter:description", description);
     setMetaTag("name", "twitter:image", finalImage);
     setMetaTag("name", "twitter:creator", "@leregnemillenaire");
-    
-    // Article specific
-    if (publishedDate) {
-      setMetaTag("property", "article:published_time", publishedDate);
-    }
-    if (modifiedDate) {
-      setMetaTag("property", "article:modified_time", modifiedDate);
-    }
-    if (author?.name) {
-      setMetaTag("property", "article:author", author.name);
-    }
-    if (categoryName) {
-      setMetaTag("property", "article:section", categoryName);
-    }
-    
-    // Canonical
+    setMetaTag("name", "twitter:site", "@leregnemillenaire");
+
+    // ── Article specific ──────────────────────────────────────────
+    if (publishedDate) setMetaTag("property", "article:published_time", publishedDate);
+    if (modifiedDate) setMetaTag("property", "article:modified_time", modifiedDate);
+    setMetaTag("property", "article:author", `${siteMetadata.siteUrl}/#organization`);
+    if (categoryName) setMetaTag("property", "article:section", categoryName);
+
+    // ── Canonical ─────────────────────────────────────────────────
     setLinkTag("canonical", canonical);
 
-    // JSON-LD Schema with Article type
-    const authorSchema = author
-      ? {
-          "@type": "Person",
-          name: author.name,
-          url: `${siteMetadata.siteUrl}/profile/${author.id}`,
-        }
-      : {
-          "@type": "Organization",
-          name: siteMetadata.siteName,
-          url: siteMetadata.siteUrl,
-        };
-
+    // ── JSON-LD — Article + BreadcrumbList + Organization ─────────
     const schema = {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "Article",
+          "@id": `${canonical}#article`,
           headline: title,
           description: description,
-          image: finalImage,
+          image: {
+            "@type": "ImageObject",
+            url: finalImage,
+            width: 1200,
+            height: 630,
+          },
           datePublished: publishedDate,
           dateModified: modifiedDate || publishedDate,
-          author: authorSchema,
-          publisher: {
+          // Always authored by the official organization
+          author: {
             "@type": "Organization",
-            name: siteMetadata.siteName,
-            logo: {
-              "@type": "ImageObject",
-              url: `${siteMetadata.siteUrl}${siteMetadata.defaultImage}`,
-            },
+            "@id": `${siteMetadata.siteUrl}/#organization`,
+            name: "Le Règne Millénaire — MILLENIUM",
+            url: siteMetadata.siteUrl,
+          },
+          publisher: {
+            "@id": `${siteMetadata.siteUrl}/#organization`,
           },
           url: canonical,
+          mainEntityOfPage: canonical,
           inLanguage: "fr-FR",
           isPartOf: {
-            "@type": "WebSite",
-            url: siteMetadata.siteUrl,
-            name: siteMetadata.siteName,
+            "@id": `${siteMetadata.siteUrl}/#website`,
           },
           articleSection: categoryName || "Enseignement",
           keywords: finalKeywords,
-          wordCount: content?.length ? Math.ceil(content.length / 4.7) : 0,
+          wordCount,
+          // Speakable — helps Google Assistant read the article
+          speakable: {
+            "@type": "SpeakableSpecification",
+            cssSelector: [".prose", "h1", "h2"],
+          },
         },
         {
           "@type": "BreadcrumbList",
+          "@id": `${canonical}#breadcrumb`,
           itemListElement: [
             {
               "@type": "ListItem",
@@ -180,7 +177,7 @@ export default function TeachingSEO({
               "@type": "ListItem",
               position: 2,
               name: "Enseignements",
-              item: `${siteMetadata.siteUrl}/teachings`,
+              item: `${siteMetadata.siteUrl}/feed`,
             },
             {
               "@type": "ListItem",
@@ -190,14 +187,15 @@ export default function TeachingSEO({
             },
           ],
         },
+        buildOrganizationSchema(),
       ],
     };
 
-    const script = setSchemaScript(schema);
+    const articleScript = setSchemaScript("seo-jsonld", schema);
     return () => {
-      script.remove();
+      articleScript.remove();
     };
-  }, [title, description, path, image, keywords, author, publishedDate, modifiedDate, content, categoryName, country]);
+  }, [title, description, path, image, keywords, publishedDate, modifiedDate, content, categoryName, country]);
 
   return null;
 }

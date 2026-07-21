@@ -112,14 +112,14 @@ const ChatBubble = ({
 
         <div
           className={cn(
-            "absolute top-1/2 flex -translate-y-1/2 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100",
+            "absolute top-1/2 flex -translate-y-1/2 gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10",
             isMine ? "-left-16" : "-right-16",
           )}
         >
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7 rounded-full bg-white shadow dark:bg-[#2a3942]"
+            className="h-7 w-7 rounded-full bg-white shadow-md border border-border/40 dark:bg-[#2a3942] text-[#54656f] dark:text-[#aebac1]"
             onClick={onReply}
             aria-label="Répondre"
           >
@@ -129,9 +129,9 @@ const ChatBubble = ({
             <Button
               size="icon"
               variant="ghost"
-              className="h-7 w-7 rounded-full bg-white shadow dark:bg-[#2a3942]"
+              className="h-7 w-7 rounded-full bg-white shadow-md border border-border/40 dark:bg-[#2a3942] text-destructive hover:bg-destructive/10"
               onClick={onDelete}
-              aria-label="Supprimer"
+              aria-label="Supprimer le message"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>

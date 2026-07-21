@@ -1,10 +1,21 @@
+# ── Sitemap ──────────────────────────────────────────────────────────
 Sitemap: https://leregnemillenaire.com/sitemap.xml
 
+# ── Crawlers autorisés ───────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /account
+Disallow: /notifications
+Disallow: /auth/callback
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /account
+Crawl-delay: 10
 
 User-agent: Twitterbot
 Allow: /
@@ -12,5 +23,16 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+# ── Tous les autres crawlers ─────────────────────────────────────────
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /account
+Disallow: /notifications

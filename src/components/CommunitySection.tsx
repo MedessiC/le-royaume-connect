@@ -1,30 +1,56 @@
 import { FaGlobeEurope, FaComments, FaBookOpen, FaDonate } from "react-icons/fa";
+import { useEffect, useRef, useState } from "react";
 
 const features = [
-  { icon: FaGlobeEurope, title: "Communauté mondiale", desc: "Connectez-vous avec des frères et sœurs du monde entier" },
+  { icon: FaGlobeEurope, title: "Communauté Mondiale", desc: "Connectez-vous avec des frères et sœurs du monde entier" },
   { icon: FaComments, title: "Forums & Échanges", desc: "Débattez, partagez et grandissez ensemble dans la foi" },
   { icon: FaBookOpen, title: "Enseignements", desc: "Accédez aux prédications, études bibliques et contenus spirituels" },
-  { icon: FaDonate, title: "Soutenir", desc: "Soutenez l'œuvre via Mobile Money ou carte bancaire" },
+  { icon: FaDonate, title: "Soutenir L'œuvre", desc: "Soutenez le mouvement via Mobile Money ou carte bancaire" },
 ];
 
 const CommunitySection = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); observer.disconnect(); } }, { threshold: 0.1 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section id="community" className="py-24 bg-gradient-hero">
-      <div className="container mx-auto px-4">
+    <section id="community" className="relative overflow-hidden py-24 md:py-32 bg-slate-950 text-white">
+      {/* Background texture */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(0_0%_100%_/_0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(0_0%_100%_/_0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
+
+      <div className="relative container mx-auto px-4">
         <div className="text-center mb-16">
-          <p className="text-gold font-body text-sm tracking-[0.2em] uppercase mb-3">Pourquoi nous rejoindre</p>
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
-            Un espace pour <span className="text-gradient-gold">chaque membre</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white/5 border border-white/10 text-gold text-xs font-semibold uppercase tracking-widest mb-4">
+            Pourquoi Nous Rejoindre
+          </div>
+          <h2 className="font-display text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
+            Un Espace Souverain pour <span className="text-gradient-gold">Chaque Membre</span>
           </h2>
-          <div className="w-20 h-1 bg-gradient-gold mx-auto rounded-full" />
+          <p className="text-white/70 max-w-xl mx-auto text-sm leading-relaxed">
+            Notre plateforme réunit foi, enseignement et fraternité dans un espace numérique unique.
+          </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          {features.map((f) => (
-            <div key={f.title} className="bg-primary-foreground/5 backdrop-blur-sm border border-gold/10 rounded-lg p-6 text-center hover:border-gold/30 transition-colors">
-              <f.icon className="w-10 h-10 text-gold mx-auto mb-4" />
-              <h3 className="font-display text-lg font-semibold text-primary-foreground mb-2">{f.title}</h3>
-              <p className="font-body text-sm text-primary-foreground/70">{f.desc}</p>
+        <div ref={ref} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          {features.map((f, i) => (
+            <div
+              key={f.title}
+              className={`group rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-8 text-center hover:border-gold/40 hover:bg-white/10 transition-all duration-500 ${
+                visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+              }`}
+              style={{ transitionDelay: `${i * 100}ms` }}
+            >
+              <div className="w-12 h-12 rounded-xl border border-gold/30 bg-gold/15 flex items-center justify-center mx-auto mb-5 text-gold group-hover:scale-105 transition-transform">
+                <f.icon className="w-5 h-5" />
+              </div>
+              <h3 className="font-display text-base font-bold text-white mb-2">{f.title}</h3>
+              <p className="font-body text-xs text-white/60 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>

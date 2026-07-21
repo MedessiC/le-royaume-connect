@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { sortMessages } from "./groupMessages";
 import type { ChatMessage, ParentMessage, Profile, ReplyTo } from "./types";
+import { moderateMessage } from "@/lib/moderation";
 
 type UseCommunityChatOptions = {
   user: User | null;
@@ -19,6 +20,7 @@ export function useCommunityChat({ user, profile }: UseCommunityChatOptions) {
   const [replyTo, setReplyTo] = useState<ReplyTo>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [stickToBottom, setStickToBottom] = useState(true);
+  const [messageLimit, setMessageLimit] = useState(30);
 
   const enrichMessages = useCallback(
     async (rows: Array<{ id: string; user_id: string; content: string; created_at: string; parent_id?: string | null }>) => {
@@ -81,8 +83,8 @@ export function useCommunityChat({ user, profile }: UseCommunityChatOptions) {
     const { data: msgs, error } = await supabase
       .from("community_messages")
       .select("*")
-      .order("created_at", { ascending: true })
-      .limit(200);
+      .order("created_at", { ascending: false }) // Fetch most recent messages first
+      .limit(messageLimit);
 
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -90,9 +92,11 @@ export function useCommunityChat({ user, profile }: UseCommunityChatOptions) {
       return;
     }
 
-    setMessages(await enrichMessages(msgs ?? []));
+    // Reverse them to restore chronological order (oldest to newest)
+    const reversed = msgs ? [...msgs].reverse() : [];
+    setMessages(await enrichMessages(reversed));
     setLoading(false);
-  }, [enrichMessages, toast]);
+  }, [enrichMessages, toast, messageLimit]);
 
   const handleRealtimeEvent = useCallback(
     async (payload: { eventType?: string; new?: { id?: string }; old?: { id?: string } }) => {
@@ -104,6 +108,10 @@ export function useCommunityChat({ user, profile }: UseCommunityChatOptions) {
         if (!id) return;
         const newMessage = await fetchMessageById(id);
         if (!newMessage) return;
+
+        // Ne pas afficher les messages qui violeraient la modération
+        const modResult = moderateMessage(newMessage.content);
+        if (modResult.blocked) return;
 
         setMessages((current) => {
           if (current.some((msg) => msg.id === newMessage.id)) return current;
@@ -161,6 +169,17 @@ export function useCommunityChat({ user, profile }: UseCommunityChatOptions) {
     if (!user || !content.trim() || posting) return;
 
     const trimmed = content.trim();
+
+    // ── Modération avant envoi ─────────────────────────────────────────────
+    const modResult = moderateMessage(trimmed);
+    if (modResult.blocked) {
+      toast({
+        title: "Message bloqué par la modération",
+        description: modResult.reason ?? "Ce contenu n'est pas autorisé dans cette communauté.",
+        variant: "destructive",
+      });
+      return; // Ne pas envoyer, ne pas effacer la saisie
+    }
     const parentId = replyTo?.id ?? null;
     const tempId = `pending-${crypto.randomUUID()}`;
 
@@ -212,14 +231,21 @@ export function useCommunityChat({ user, profile }: UseCommunityChatOptions) {
 
   const remove = useCallback(
     async (id: string) => {
-      if (id.startsWith("pending-")) {
-        setMessages((current) => current.filter((msg) => msg.id !== id));
-        return;
-      }
+      // Optimistic removal from state immediately for responsive UX
+      setMessages((current) => current.filter((msg) => msg.id !== id));
+
+      if (id.startsWith("pending-")) return;
+
       const { error } = await supabase.from("community_messages").delete().eq("id", id);
-      if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      if (error) {
+        toast({ title: "Erreur lors de la suppression", description: error.message, variant: "destructive" });
+        // Re-fetch if deletion failed on backend
+        fetchMessages();
+      } else {
+        toast({ title: "Message supprimé" });
+      }
     },
-    [toast],
+    [fetchMessages, toast],
   );
 
   const visibleMessages = useMemo(() => {
@@ -244,6 +270,15 @@ export function useCommunityChat({ user, profile }: UseCommunityChatOptions) {
     setContent((prev) => `${prev}${emoji}`);
   }, []);
 
+  const loadMoreOlder = useCallback(() => {
+    setMessageLimit((prev) => prev + 30);
+    setStickToBottom(false);
+  }, []);
+
+  const hasMoreOlder = useMemo(() => {
+    return messages.length >= messageLimit;
+  }, [messages.length, messageLimit]);
+
   return {
     messages,
     visibleMessages,
@@ -261,5 +296,7 @@ export function useCommunityChat({ user, profile }: UseCommunityChatOptions) {
     remove,
     setReply,
     insertEmoji,
+    loadMoreOlder,
+    hasMoreOlder,
   };
 }

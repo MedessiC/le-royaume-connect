@@ -18,6 +18,7 @@ import LiveSection from "@/components/LiveSection";
 import Footer from "@/components/Footer";
 import FeaturedVideo from "@/components/FeaturedVideo";
 import SocialFloating from "@/components/SocialFloating";
+import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 
 type HomeSettings = {
@@ -105,6 +106,17 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEO
+        title="MILLENIUM — Mouvement Mondial | ZOVIZO | Banikoara, Bénin"
+        description="MILLENIUM est le mouvement spirituel mondial fondé par ZOVIZO à Banikoara, Bénin. Rejoignez des milliers de disciples autour de la vision du Règne Millénaire, de l'enseignement biblique et de la foi."
+        path="/"
+        keywords={[
+          "ZOVIZO", "MILLENIUM", "Le Règne Millénaire", "Banikoara", "Bénin",
+          "mouvement spirituel", "enseignement biblique", "foi chrétienne Afrique",
+          "leregnemillenaire", "prophète Bénin", "communauté spirituelle mondiale",
+        ]}
+        withFAQ={true}
+      />
       <Navbar />
       {homeSettings?.marquee_text ? (
         <section className="overflow-hidden border-b border-gold/20 bg-gold/10">

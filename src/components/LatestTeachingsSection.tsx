@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import TeachingCard from "@/components/TeachingCard";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ArrowRight } from "lucide-react";
 
 type Profile = { id: string; full_name: string | null; has_gold_badge?: boolean };
 
@@ -20,6 +20,19 @@ type Teaching = {
   created_at: string;
   likes_count?: number;
   comments_count?: number;
+};
+
+const getYoutubeEmbedUrl = (url: string) => {
+  const patterns = [
+    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/,
+    /([A-Za-z0-9_-]{11})$/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match?.[1]) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
+  }
+  return null;
 };
 
 const LatestTeachingsSection = () => {
@@ -52,12 +65,7 @@ const LatestTeachingsSection = () => {
         }
       }
 
-      const enriched = teachingsData.map((t) => ({
-        ...t,
-        author: t.author_id ? profileMap[t.author_id] : null,
-      }));
-
-      setTeachings(enriched);
+      setTeachings(teachingsData.map((t) => ({ ...t, author: t.author_id ? profileMap[t.author_id] : null })));
       setLoading(false);
     };
 
@@ -66,50 +74,45 @@ const LatestTeachingsSection = () => {
 
   if (loading) {
     return (
-      <section className="py-24 bg-background">
+      <section className="py-12 md:py-24 bg-background">
         <div className="container mx-auto px-4">
-          <div className="h-64 rounded-3xl bg-muted animate-pulse" />
+          <div className="h-64 rounded-2xl bg-muted animate-pulse" />
         </div>
       </section>
     );
   }
 
-  if (!teachings.length) {
-    return null;
-  }
+  if (!teachings.length) return null;
 
   return (
-    <section className="py-24 bg-secondary/30">
+    <section className="py-12 md:py-24 bg-background relative overflow-hidden">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <p className="text-gold-dark font-body text-sm tracking-[0.2em] uppercase mb-3">Derniers contenus</p>
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
+        <div className="text-center mb-8 md:mb-14">
+          <div className="section-eyebrow mx-auto mb-2" style={{ width: "fit-content" }}>Derniers contenus</div>
+          <h2 className="font-display text-2xl md:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight mb-3">
             Enseignements récents
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">Découvrez les derniers enseignements publiés par nos frères et sœurs du monde entier.</p>
+          <p className="text-muted-foreground max-w-xl mx-auto text-xs sm:text-sm">
+            Découvrez les derniers enseignements publiés par nos frères et sœurs du monde entier.
+          </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        {/* Mobile: Horizontal Snap Carousel · Desktop: Grid */}
+        <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-4 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 mb-8">
           {teachings.map((teaching) => (
-            <TeachingCard
-              key={teaching.id}
-              {...teaching}
-              getYoutubeEmbedUrl={(url: string) => {
-                const patterns = [/(?:youtu\.be\/)([A-Za-z0-9_-]{11})/, /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/, /([A-Za-z0-9_-]{11})$/];
-                for (const pattern of patterns) {
-                  const match = url.match(pattern);
-                  if (match?.[1]) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
-                }
-                return null;
-              }}
-            />
+            <div key={teaching.id} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-auto snap-center">
+              <TeachingCard
+                {...teaching}
+                getYoutubeEmbedUrl={getYoutubeEmbedUrl}
+              />
+            </div>
           ))}
         </div>
 
         <div className="text-center">
           <Link to="/feed">
-            <Button variant="hero" size="lg">
-              <BookOpen className="w-4 h-4" /> Voir tous les enseignements
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-xs sm:text-sm font-bold">
+              <BookOpen className="w-4 h-4" /> Voir tous les enseignements <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         </div>

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Heart, Gift, Users, TrendingUp, CheckCircle } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const Donate = () => {
   const { toast } = useToast();
@@ -139,6 +140,12 @@ const Donate = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO
+        title="Soutenir MILLENIUM — Faire un don | ZOVIZO"
+        description="Soutenez la vision de ZOVIZO et le mouvement MILLENIUM. Faites un don pour contribuer à l’expansion du Règne Millénaire et à l’enseignement biblique mondial."
+        path="/donate"
+        keywords={["don MILLENIUM", "soutenir ZOVIZO", "offrir pour le Règne Millénaire", "offrande Bénin", "soutien mouvement spirituel"]}
+      />
       <Navbar />
 
       <main className="flex-1 container max-w-5xl mx-auto px-4 py-16">

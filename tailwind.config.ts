@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         display: ["Poppins", "sans-serif"],
+        serif: ["Poppins", "sans-serif"],
         body: ["Inter", "sans-serif"],
       },
       colors: {
@@ -55,6 +56,11 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           light: "hsl(var(--gold-light))",
           dark: "hsl(var(--gold-dark))",
+        },
+        royal: {
+          DEFAULT: "hsl(var(--royal))",
+          deep: "hsl(var(--royal-deep))",
+          light: "hsl(var(--royal-light))",
         },
         midnight: {
           DEFAULT: "hsl(var(--midnight))",

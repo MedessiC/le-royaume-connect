@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, BookOpen, Users, Search } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
+import SEO from "@/components/SEO";
 
 type Teaching = {
   id: string;
@@ -92,6 +93,12 @@ const SearchResults = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Recherche d’enseignements et membres | MILLENIUM"
+        description="Recherchez parmi les enseignements et membres de la communauté MILLENIUM. Trouvez les messages de ZOVIZO et du Règne Millénaire."
+        path="/search"
+        keywords={["recherche MILLENIUM", "trouver enseignement ZOVIZO", "chercher Règne Millénaire"]}
+      />
       <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 md:py-12">

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChatBubble from "./ChatBubble";
 import ChatDateSeparator from "./ChatDateSeparator";
@@ -16,6 +16,8 @@ type ChatMessageListProps = {
   onReply: (message: ChatMessage) => void;
   onDelete: (id: string) => void;
   onProfileClick: (profile: Profile) => void;
+  hasMoreOlder?: boolean;
+  loadMoreOlder?: () => void;
 };
 
 const ChatMessageList = ({
@@ -28,9 +30,12 @@ const ChatMessageList = ({
   onReply,
   onDelete,
   onProfileClick,
+  hasMoreOlder = false,
+  loadMoreOlder,
 }: ChatMessageListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevScrollHeightRef = useRef<number>(0);
 
   const handleScroll = () => {
     const el = scrollRef.current;
@@ -49,9 +54,28 @@ const ChatMessageList = ({
     }
   }, [messages, loading, stickToBottom]);
 
+  // Adjust scroll position after loading older messages to prevent scrolling jumps
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && prevScrollHeightRef.current > 0) {
+      const scrollDiff = el.scrollHeight - prevScrollHeightRef.current;
+      if (scrollDiff > 0) {
+        el.scrollTop += scrollDiff;
+      }
+      prevScrollHeightRef.current = 0;
+    }
+  }, [messages]);
+
   useEffect(() => {
     if (!loading) scrollToBottom("auto");
   }, [loading]);
+
+  const handleLoadMoreClick = () => {
+    if (scrollRef.current) {
+      prevScrollHeightRef.current = scrollRef.current.scrollHeight;
+    }
+    loadMoreOlder?.();
+  };
 
   const renderItems = buildMessageRenderList(messages);
 
@@ -78,6 +102,20 @@ const ChatMessageList = ({
             "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8c4bc' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
         }}
       >
+        {/* Load older messages button shelf */}
+        {hasMoreOlder && (
+          <div className="flex justify-center mb-5 mt-1">
+            <button
+              type="button"
+              onClick={handleLoadMoreClick}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-border/60 bg-card hover:bg-secondary text-xs font-bold text-muted-foreground transition-all duration-200 shadow-sm"
+            >
+              <History className="w-3.5 h-3.5" />
+              Charger les messages précédents
+            </button>
+          </div>
+        )}
+
         {renderItems.length === 0 ? (
           <div className="flex h-full min-h-[200px] items-center justify-center">
             <p className="rounded-lg bg-white/80 px-4 py-2 text-sm text-[#667781] shadow-sm dark:bg-[#202c33] dark:text-[#8696a0]">

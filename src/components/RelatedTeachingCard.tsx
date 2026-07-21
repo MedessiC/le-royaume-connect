@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { Calendar, MapPin, User, ArrowRight } from "lucide-react";
+import { MapPin, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import UserAvatar from "@/components/UserAvatar";
+import GoldBadge from "@/components/GoldBadge";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null };
 
@@ -18,16 +19,6 @@ type RelatedTeachingProps = {
   is_admin?: boolean;
 };
 
-const getInitials = (name: string | null | undefined) => {
-  if (!name) return "?";
-  return name
-    .split(/\s+/)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
-
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -41,15 +32,11 @@ export const RelatedTeachingCard = ({
   title,
   excerpt,
   cover_image_url,
-  author,
-  author_id,
   created_at,
   country,
   category_name,
-  is_admin = false,
 }: RelatedTeachingProps) => {
-  const authorName = author?.full_name ?? "Membre";
-  const authorInitials = getInitials(author?.full_name);
+  const officialName = "@leregnemillenaire";
 
   return (
     <Link
@@ -67,7 +54,7 @@ export const RelatedTeachingCard = ({
           />
           {category_name && (
             <div className="absolute top-3 left-3">
-              <Badge className="bg-gold/90 text-background text-[10px] rounded-full">
+              <Badge className="bg-gold/90 text-background text-[10px] rounded-full font-bold">
                 {category_name}
               </Badge>
             </div>
@@ -111,10 +98,11 @@ export const RelatedTeachingCard = ({
         <div className="space-y-3 border-t border-border/50 pt-3">
           {/* Author */}
           <div className="flex items-center gap-2">
-            <UserAvatar src={author?.avatar_url} name={author?.full_name || "Auteur"} className="h-7 w-7" />
+            <UserAvatar name="Le Règne Millénaire" className="h-7 w-7 border border-gold/30" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground truncate">
-                {is_admin ? "@leregnemillenaire" : authorName}
+              <p className="text-xs font-semibold text-foreground truncate flex items-center gap-1">
+                {officialName}
+                <GoldBadge hasGoldBadge={true} className="w-3 h-3" />
               </p>
               <p className="text-[10px] text-muted-foreground">{formatDate(created_at)}</p>
             </div>

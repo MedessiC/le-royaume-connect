@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
 type Slide = {
   src?: string;
@@ -10,29 +10,37 @@ type Slide = {
   pretitle?: string;
   title?: string;
   description?: string;
+  ctaText?: string;
+  ctaLink?: string;
 };
 
 const defaultSlides: Slide[] = [
   {
-    alt: "Hero image 1",
-    color: "bg-gradient-to-r from-blue-600 to-purple-600",
-    pretitle: "Mouvement mondial",
-    title: "MILLENIUM",
-    description: "",
+    alt: "Vision Millenium",
+    color: "from-slate-950 via-slate-900 to-indigo-950",
+    pretitle: "Mouvement Mondial · Banikoara",
+    title: "Unir les peuples dans la foi et la vérité",
+    description: "Une vision souveraine née à Banikoara pour rassembler une communauté dispersée à travers les nations.",
+    ctaText: "Rejoindre la communauté",
+    ctaLink: "/community",
   },
   {
-    alt: "Hero image 2",
-    color: "bg-gradient-to-r from-purple-600 to-pink-600",
-    pretitle: "Unité et Service",
-    title: "COMMUNAUTÉ",
-    description: "Rencontrez des frères et soeurs engagés, servons ensemble et grandissons dans la foi.",
+    alt: "Communauté & Service",
+    color: "from-slate-950 via-slate-900 to-blue-950",
+    pretitle: "Fraternité & Engagement",
+    title: "Bâtir ensemble un avenir de foi et de service",
+    description: "Accédez aux enseignements, échangez en toute souveraineté et participez activement à l'œuvre du Règne.",
+    ctaText: "Découvrir les enseignements",
+    ctaLink: "/feed",
   },
   {
-    alt: "Hero image 3",
-    color: "bg-gradient-to-r from-pink-600 to-blue-600",
-    pretitle: "Prière en Action",
-    title: "MISSION",
-    description: "Participez à nos projets locaux et internationaux pour impacter des vies concrètement.",
+    alt: "Mission & Projets",
+    color: "from-slate-950 via-slate-900 to-slate-950",
+    pretitle: "Action Spirituelle & Sociale",
+    title: "Impacter des vies sur chaque continent",
+    description: "Découvrez nos projets locaux et internationaux pour soutenir la jeunesse et étendre l'œuvre du Mouvement.",
+    ctaText: "Soutenir notre mission",
+    ctaLink: "/donate",
   },
 ];
 
@@ -40,164 +48,185 @@ type HeroSectionProps = {
   slides?: Slide[];
 };
 
+const DURATION_MS = 7000;
+
 const HeroSection = ({ slides }: HeroSectionProps) => {
-  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const intervalRef = useRef<number | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
+
   const activeSlides = slides && slides.length ? slides : defaultSlides;
-  const currentSlide = activeSlides[activeIndex] || {};
-  const descriptionLines = (currentSlide.description || "").split('\n').filter(Boolean);
+  const currentSlide = activeSlides[activeIndex] || defaultSlides[0];
 
+  // Timer & progress bar handling (Microsoft style)
   useEffect(() => {
-    if (!carouselApi) return;
+    if (!isPlaying) return;
 
-    // clear existing
-    if (intervalRef.current) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, (elapsed / DURATION_MS) * 100);
+      setProgress(pct);
 
-    if (!isPaused) {
-      intervalRef.current = window.setInterval(() => {
-        carouselApi.scrollNext();
-      }, 4200);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (elapsed >= DURATION_MS) {
+        setActiveIndex((prev) => (prev + 1) % activeSlides.length);
+        setProgress(0);
       }
-    };
-  }, [carouselApi, isPaused]);
+    }, 50);
 
-  // Sync active text with carousel selected slide
-  useEffect(() => {
-    if (!carouselApi) return;
+    return () => clearInterval(interval);
+  }, [activeIndex, isPlaying, activeSlides.length]);
 
-    const updateIndex = () => {
-      try {
-        const idx = carouselApi.selectedScrollSnap?.() ?? 0;
-        setActiveIndex(idx);
-      } catch (e) {
-        setActiveIndex(0);
-      }
-    };
+  const handleSelectSlide = (index: number) => {
+    setActiveIndex(index);
+    setProgress(0);
+  };
 
-    updateIndex();
-    carouselApi.on?.("select", updateIndex);
-    carouselApi.on?.("reInit", updateIndex);
+  const handlePrev = () => {
+    setActiveIndex((prev) => (prev === 0 ? activeSlides.length - 1 : prev - 1));
+    setProgress(0);
+  };
 
-    return () => {
-      carouselApi.off?.("select", updateIndex);
-      carouselApi.off?.("reInit", updateIndex);
-    };
-  }, [carouselApi]);
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev + 1) % activeSlides.length);
+    setProgress(0);
+  };
 
   return (
-    <section
-      className="relative min-h-[80vh] sm:min-h-screen flex items-center justify-center overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      {/* Background Carousel */}
+    <section className="relative min-h-[88vh] lg:min-h-screen flex items-center justify-center overflow-hidden bg-slate-950 text-white">
+      
+      {/* Background Images / Gradients with Microsoft-style crossfade */}
       <div className="absolute inset-0 w-full h-full">
-        <Carousel
-          setApi={setCarouselApi}
-          opts={{ loop: true, speed: 7, align: "center", draggable: true }}
-          className="w-full h-full"
-        >
-          <CarouselContent className="h-full">
-            {activeSlides.map((slide, index) => (
-              <CarouselItem key={index} className="relative w-full h-full flex-none basis-full">
-                <div className={`relative w-full h-full ${slide.color || 'bg-gradient-to-r from-slate-800 to-slate-900'}`}>
-                  {slide.src && (
-                    <img
-                      src={slide.src}
-                      alt={slide.alt}
-                      loading="lazy"
-                      className="block w-full h-full object-cover transition-transform duration-[1200ms] ease-out hover:scale-105"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60" />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="text-white/90 border-white/70 bg-black/30 hover:bg-black/40" />
-          <CarouselNext className="text-white/90 border-white/70 bg-black/30 hover:bg-black/40" />
-        </Carousel>
+        {activeSlides.map((slide, index) => {
+          const isActive = index === activeIndex;
+          return (
+            <div
+              key={index}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+                isActive ? "opacity-100 z-0" : "opacity-0 -z-10"
+              }`}
+            >
+              {slide.src ? (
+                <img
+                  src={slide.src}
+                  alt={slide.alt}
+                  className={`w-full h-full object-cover transition-transform duration-[8000ms] ease-out ${
+                    isActive ? "scale-105" : "scale-100"
+                  }`}
+                />
+              ) : (
+                <div className={`w-full h-full bg-gradient-to-br ${slide.color || "from-slate-950 to-slate-900"}`} />
+              )}
+              
+              {/* Microsoft-style clean gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/70 to-slate-950/30" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+            </div>
+          );
+        })}
       </div>
 
-      {/* Text Content */}
-      <div className="relative z-10 container mx-auto px-4 flex items-center justify-center h-full">
-        <div className="w-full max-w-4xl p-8 md:p-12">
-          <div className="text-center text-white">
-            {activeSlides[activeIndex] && (
-              <div key={activeIndex} className="inline-block">
-                <p className="text-gold font-body text-sm tracking-[0.35em] uppercase mb-4 animate-fade-in-up">
-                  {activeSlides[activeIndex].pretitle ?? "Mouvement mondial"}
-                </p>
-                <h1
-                  className="font-display text-4xl sm:text-5xl md:text-7xl font-bold text-[#FFD700] leading-tight mb-6 animate-fade-in-up"
-                  style={{ animationDelay: "0.2s" }}
-                >
-                  {activeSlides[activeIndex].title ?? "MILLENIUM"}
-                </h1>
-                <div className="text-white/90 font-body max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-                  {descriptionLines.length > 0
-                    ? descriptionLines.map((line, i) => (
-                        <p
-                          key={i}
-                          className={
-                            "mx-auto " + (i === 0 ? "text-lg sm:text-xl md:text-2xl font-semibold" : "text-base sm:text-lg md:text-xl")
-                          }
-                        >
-                          {line}
-                        </p>
-                      ))
-                    : null}
-                </div>
-              </div>
-            )}
-          </div>
+      {/* Main Container - Left-aligned Microsoft-inspired Hero Layout */}
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-12 pt-28 pb-20 flex flex-col justify-between min-h-[82vh]">
+        
+        {/* Content Box */}
+        <div className="max-w-2xl my-auto py-8">
+          {/* Headline */}
+          <h1 key={activeIndex} className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.1] mb-6 animate-fade-in-up">
+            {currentSlide.title}
+          </h1>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
-            <Link to="/community" className="w-full sm:w-auto">
-              <Button variant="hero" size="lg" className="w-full sm:w-auto text-base px-10">
-                Voir la communauté
+          {/* Subtitle / Description */}
+          <p className="font-body text-base sm:text-lg text-white/80 leading-relaxed max-w-xl mb-8">
+            {currentSlide.description}
+          </p>
+
+          {/* Primary & Secondary Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <Link to={currentSlide.ctaLink || "/community"}>
+              <Button size="lg" className="w-full sm:w-auto bg-gold hover:bg-gold-light text-slate-950 font-bold px-8 py-3.5 rounded-lg text-sm transition-all duration-200 shadow-lg shadow-gold/20 hover:shadow-gold/40">
+                {currentSlide.ctaText || "Rejoindre la communauté"}
               </Button>
             </Link>
-            <a href="#mission" className="w-full sm:w-auto">
-              <Button
-                variant="default"
-                size="lg"
-                className="w-full sm:w-auto text-base px-10 bg-royal text-white border border-royal/90 hover:bg-royal/90"
-              >
-                Découvrir notre mission
-              </Button>
+
+            <a href="#mission" className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-white/90 hover:text-gold transition-colors py-3 px-4">
+              <span>Découvrir notre mission</span>
+              <ArrowRight className="w-4 h-4" />
             </a>
           </div>
+        </div>
 
-          {/* Dots indicators */}
-          <div className="mt-6 flex items-center justify-center gap-3">
-            {activeSlides.map((_, idx) => (
-              <button
-                key={idx}
-                aria-label={`Go to slide ${idx + 1}`}
-                className={`h-2 w-8 rounded-full transition-all duration-300 ${
-                  idx === activeIndex ? "bg-white/90 scale-100" : "bg-white/40 scale-90"
-                }`}
-                onClick={() => carouselApi?.scrollTo(idx)}
-              />
-            ))}
+        {/* Microsoft-style Hero Controls Bar (Bottom Navigation & Progress Indicator) */}
+        <div className="w-full pt-8 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-4">
+          
+          {/* Slide Progress Tabs (Numbered 01, 02, 03) */}
+          <div className="flex items-center gap-6 w-full sm:w-auto">
+            {activeSlides.map((slide, idx) => {
+              const isActive = idx === activeIndex;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectSlide(idx)}
+                  className={`group flex flex-col gap-1 text-left transition-all ${
+                    isActive ? "text-white" : "text-white/40 hover:text-white/70"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-xs font-bold tracking-wider">
+                    <span>0{idx + 1}</span>
+                    <span className="hidden md:inline font-medium text-[0.75rem] truncate max-w-[120px]">
+                      {slide.alt.replace("Millenium", "").trim()}
+                    </span>
+                  </div>
+
+                  {/* Progress Bar Line */}
+                  <div className="w-16 sm:w-24 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full bg-gold transition-all duration-75 ${
+                        isActive ? "" : "w-0"
+                      }`}
+                      style={{ width: isActive ? `${progress}%` : "0%" }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Microsoft Play/Pause & Arrow Navigation Controls */}
+          <div className="flex items-center gap-3 self-end sm:self-center">
+            {/* Play/Pause Toggle Button */}
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              aria-label={isPlaying ? "Mettre en pause le carrousel" : "Démarrer le carrousel"}
+              className="p-2.5 rounded-md bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border border-white/15 backdrop-blur-sm transition-all"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+            </button>
+
+            {/* Prev Arrow */}
+            <button
+              onClick={handlePrev}
+              aria-label="Diapositive précédente"
+              className="p-2.5 rounded-md bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border border-white/15 backdrop-blur-sm transition-all"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {/* Next Arrow */}
+            <button
+              onClick={handleNext}
+              aria-label="Diapositive suivante"
+              className="p-2.5 rounded-md bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border border-white/15 backdrop-blur-sm transition-all"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
+
       </div>
 
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
+      {/* Subtle bottom gradient fade to page body */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none z-10" />
     </section>
   );
 };

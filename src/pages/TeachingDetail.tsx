@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CommentsSection from "@/components/CommentsSection";
 import RelatedTeachingCard from "@/components/RelatedTeachingCard";
@@ -18,7 +17,8 @@ import TTSButton from "@/components/TTSButton";
 import UserAvatar from "@/components/UserAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Calendar, MapPin, ArrowLeft, BookOpen, Heart, MessageSquare, Sparkles, Bookmark, Plus, Check } from "lucide-react";
+import { useAudioPlayer } from "@/context/AudioPlayerContext";
+import { Calendar, MapPin, ArrowLeft, BookOpen, Heart, Bookmark, Plus, Check, Music, Play, Pause } from "lucide-react";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null; has_gold_badge?: boolean };
 
@@ -82,6 +82,7 @@ const TeachingDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { playTrack, currentTrack, isPlaying } = useAudioPlayer();
   const [teaching, setTeaching] = useState<Teaching | null>(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<Array<{
@@ -212,21 +213,20 @@ const TeachingDetail = () => {
           .limit(3)
           .then(async ({ data: rel }) => {
             if (!rel) return;
-            
-            // Load author data and categories
+
             const authorIds = Array.from(new Set(rel.map((r: any) => r.author_id).filter(Boolean)));
             const categoryIds = Array.from(new Set(rel.map((r: any) => r.category_id).filter(Boolean)));
-            
+
             let authorMap: Record<string, Profile> = {};
             let adminIds = new Set<string>();
             let categoryMap: Record<string, string> = {};
-            
+
             if (authorIds.length) {
               const [profilesRes, rolesRes] = await Promise.all([
                 supabase.from("profiles").select("id, full_name, avatar_url").in("id", authorIds),
                 supabase.from("user_roles").select("user_id").eq("role", "admin").in("user_id", authorIds),
               ]);
-              
+
               if (profilesRes.data) {
                 authorMap = Object.fromEntries(profilesRes.data.map((p) => [p.id, p]));
               }
@@ -234,21 +234,21 @@ const TeachingDetail = () => {
                 rolesRes.data.forEach((role) => adminIds.add(role.user_id));
               }
             }
-            
+
             if (categoryIds.length) {
               const categoriesRes = await supabase.from("categories").select("id, name").in("id", categoryIds);
               if (categoriesRes.data) {
                 categoryMap = Object.fromEntries(categoriesRes.data.map((c) => [c.id, c.name]));
               }
             }
-            
+
             const enrichedRel = rel.map((r: any) => ({
               ...r,
               author: authorMap[r.author_id] || null,
               category_name: categoryMap[r.category_id] || undefined,
               is_admin: adminIds.has(r.author_id),
             }));
-            
+
             setRelated(enrichedRel);
           });
       });
@@ -395,7 +395,7 @@ const TeachingDetail = () => {
         },
       ]);
       setCommentText("");
-      setLikesCount((count) => count); // keep likes unchanged
+      setLikesCount((count) => count);
     }
   };
 
@@ -479,16 +479,23 @@ const TeachingDetail = () => {
     }
   };
 
+  // ── Loading state ─────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center text-muted-foreground">Chargement…</main>
+        <main className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 rounded-full border-2 border-gold border-t-transparent animate-spin" />
+            <p className="text-muted-foreground text-sm">Chargement de l'enseignement…</p>
+          </div>
+        </main>
         <Footer />
       </div>
     );
   }
 
+  // ── Not found ─────────────────────────────────────────────────────
   if (!teaching) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -496,22 +503,29 @@ const TeachingDetail = () => {
         <main className="flex-1 container mx-auto px-4 pt-24 pb-16 text-center">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h1 className="font-display text-2xl font-bold text-foreground mb-3">Enseignement introuvable</h1>
-          <Link to="/feed"><Button variant="hero"><ArrowLeft className="w-4 h-4" /> Retour au fil</Button></Link>
+          <Link to="/feed">
+            <Button>
+              <ArrowLeft className="w-4 h-4" /> Retour au fil
+            </Button>
+          </Link>
         </main>
         <Footer />
       </div>
     );
   }
 
+  // ── Reading time estimate ─────────────────────────────────────────
+  const readingTime = Math.max(1, Math.ceil(teaching.content.replace(/<[^>]+>/g, "").split(/\s+/).length / 200));
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <TeachingSEO
         title={teaching.title}
         description={teaching.excerpt || teaching.content.substring(0, 160)}
         path={`/teachings/${id}`}
         image={teaching.cover_image_url || undefined}
         keywords={[teaching.categories?.name, teaching.country].filter(Boolean) as string[]}
-        author={teaching.author ? { name: teaching.author.full_name || "Auteur", id: teaching.author_id || "" } : undefined}
+        author={{ name: "Le Règne Millénaire", id: "official" }}
         publishedDate={teaching.created_at}
         modifiedDate={teaching.created_at}
         content={teaching.content}
@@ -519,336 +533,388 @@ const TeachingDetail = () => {
         country={teaching.country || undefined}
       />
       <Navbar />
+
+      {/* ── Reading Progress Bar ── */}
+      <ReadingProgress />
+
       <main className="flex-1 pt-16">
-        <article className="container mx-auto px-4 max-w-3xl py-10">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-sm text-muted-foreground hover:text-gold inline-flex items-center gap-1 mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" /> Retour
-          </button>
+        {/* ── HERO cover image ── */}
+        {teaching.cover_image_url && (
+          <div className="relative w-full aspect-[21/9] max-h-[520px] overflow-hidden bg-muted">
+            <img
+              src={teaching.cover_image_url}
+              alt={teaching.title}
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+          </div>
+        )}
 
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-wrap items-center gap-2">
-              {teaching.categories?.name && (
-                <Badge variant="secondary" className="text-[11px] py-1 px-2 rounded-full tracking-[0.16em] uppercase">
-                  {teaching.categories.name}
-                </Badge>
-              )}
-              {teaching.country && (
-                <Badge variant="outline" className="text-[11px] py-1 px-2 rounded-full tracking-[0.16em] uppercase gap-1">
-                  <MapPin className="w-3 h-3" /> {teaching.country}
-                </Badge>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <UserAvatar src={teaching.author?.avatar_url} name={teaching.author?.full_name || "Auteur"} className="h-11 w-11 flex-shrink-0" />
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Publié par{' '}
-                    {teaching.author?.id ? (
-                      <Link to={`/profile/${teaching.author.id}`} className="text-foreground font-medium hover:text-gold transition-colors flex items-center gap-1 inline-flex">
-                        {teaching.isAuthorAdmin ? "@leregnemillenaire" : teaching.author.full_name || "un membre"}
-                        <GoldBadge hasGoldBadge={teaching.author.has_gold_badge ?? false} />
-                      </Link>
-                    ) : (
-                      <span className="text-foreground font-medium flex items-center gap-1 inline-flex">{teaching.isAuthorAdmin ? "@leregnemillenaire" : teaching.author?.full_name ?? "un membre"}</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(teaching.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
-                  </p>
-                </div>
-              </div>
-              {teaching.isAuthorAdmin && (
-                <Badge variant="secondary" className="bg-blue-500 text-white">Admin</Badge>
-              )}
-            </div>
+        <div className={`container mx-auto px-4 max-w-3xl ${!teaching.cover_image_url ? "pt-24" : ""}`}>
+          {/* ── Back link ── */}
+          <div className="flex items-center pt-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-gold transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              Retour
+            </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <Button variant="outline" size="sm" onClick={handleToggleLike}>
-              <Heart className="w-4 h-4" /> {isLiked ? "J’aime" : "Aimer"} ({likesCount})
-            </Button>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Bookmark className="w-4 h-4" />
-                  {savedCollectionIds.length > 0 ? `Enregistré (${savedCollectionIds.length})` : "Enregistrer"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">Collections</p>
-                    <span className="text-xs text-muted-foreground">{savedCollectionIds.length} enregistré(s)</span>
-                  </div>
-                  {collections.length > 0 ? (
-                    <div className="space-y-2">
-                      {collections.map((collection) => {
-                        const isSaved = savedCollectionIds.includes(collection.id);
-                        return (
-                          <button
-                            key={collection.id}
-                            type="button"
-                            onClick={() => handleToggleCollection(collection.id)}
-                            className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition ${
-                              isSaved ? "border-gold bg-gold/10 text-gold" : "border-border bg-card text-foreground hover:border-gold/30"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <span>{collection.name}</span>
-                              {isSaved ? <Check className="w-4 h-4 text-gold" /> : null}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Aucune collection encore. Créez-en une pour organiser vos enseignements.</p>
-                  )}
-
-                  <div className="pt-3 border-t border-border">
-                    <Label htmlFor="collection-name" className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-                      Nouvelle collection
-                    </Label>
-                    <div className="mt-2 flex gap-2">
-                      <Input
-                        id="collection-name"
-                        value={collectionName}
-                        onChange={(event) => setCollectionName(event.target.value)}
-                        placeholder="Mon enseignement préféré"
-                      />
-                      <Button size="sm" type="button" onClick={handleCreateCollection} disabled={!collectionName.trim() || collectionSaving}>
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <TTSButton
-              text={teaching.content}
-              lang={"fr-FR"}
-              size="md"
-            />
-            <ShareButton
-              title={teaching.title}
-              description={teaching.excerpt || teaching.content.substring(0, 160)}
-              url={`/teachings/${id}`}
-              size="md"
-              variant="outline"
-            />
+          {/* ── Meta chips ── */}
+          <div className="flex flex-wrap items-center gap-2 mt-6">
+            {teaching.categories?.name && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold text-[11px] font-bold tracking-[0.14em] uppercase">
+                {teaching.categories.name}
+              </span>
+            )}
+            {teaching.country && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary border border-border text-[11px] font-medium text-muted-foreground">
+                <MapPin className="w-3 h-3" />
+                {teaching.country}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary border border-border text-[11px] font-medium text-muted-foreground">
+              <BookOpen className="w-3 h-3" />
+              {readingTime} min de lecture
+            </span>
           </div>
 
-          <h1 className="font-display text-3xl md:text-5xl font-bold text-foreground leading-tight mb-4">
+          {/* ── Title ── */}
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground leading-tight mt-5 mb-4">
             {teaching.title}
           </h1>
 
+          {/* ── Excerpt / Lead ── */}
           {teaching.excerpt && (
-            <p className="text-lg text-muted-foreground font-body italic border-l-4 border-gold pl-4 mb-6">
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed border-l-[3px] border-gold pl-4 mb-8 italic">
               {teaching.excerpt}
             </p>
           )}
 
-          {teaching.cover_image_url ? (
-            <>
-              <div className="prose prose-lg max-w-none text-foreground font-body leading-relaxed prose-headings:text-foreground prose-p:text-foreground prose-a:text-foreground prose-strong:text-foreground prose-ul:list-disc prose-li:text-foreground mb-6">
-                {renderTeachingContent(teaching.content)}
+          {/* ── Publisher + Action bar ── */}
+          <div className="flex items-center justify-between gap-4 py-4 border-y border-border mb-8">
+            <div className="flex items-center gap-3">
+              <UserAvatar name="Le Règne Millénaire" className="h-10 w-10 border-2 border-gold/40" />
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-bold text-sm text-foreground">@leregnemillenaire</span>
+                  <GoldBadge hasGoldBadge={true} />
+                  <Badge variant="secondary" className="bg-gold/20 text-gold border-gold/30 text-[10px] font-bold tracking-wide ml-1">
+                    Officiel
+                  </Badge>
+                </div>
+                <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(teaching.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                </span>
               </div>
+            </div>
 
-              {teaching.video_url && (
-                <div className="mb-6 overflow-hidden rounded-3xl border border-border bg-secondary">
-                  {getYoutubeEmbedUrl(teaching.video_url) ? (
-                    <div className="aspect-video w-full">
-                      <iframe
-                        className="h-full w-full"
-                        src={getYoutubeEmbedUrl(teaching.video_url)}
-                        title={teaching.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
+            {/* Actions — desktop */}
+            <div className="hidden sm:flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleToggleLike}
+                aria-pressed={isLiked}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  isLiked
+                    ? "bg-destructive/10 border-destructive/30 text-destructive"
+                    : "bg-secondary border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive"
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-current" : ""}`} />
+                {likesCount > 0 && <span>{likesCount}</span>}
+              </button>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      savedCollectionIds.length > 0
+                        ? "bg-gold/10 border-gold/40 text-gold"
+                        : "bg-secondary border-border text-muted-foreground hover:border-gold/40 hover:text-gold"
+                    }`}
+                  >
+                    <Bookmark className="w-3.5 h-3.5" />
+                    {savedCollectionIds.length > 0 ? "Enregistré" : "Sauvegarder"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold">Collections</p>
+                      <span className="text-xs text-muted-foreground">{savedCollectionIds.length} enregistré(s)</span>
                     </div>
+                    {collections.length > 0 ? (
+                      <div className="space-y-2">
+                        {collections.map((collection) => {
+                          const isSaved = savedCollectionIds.includes(collection.id);
+                          return (
+                            <button
+                              key={collection.id}
+                              type="button"
+                              onClick={() => handleToggleCollection(collection.id)}
+                              className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition ${
+                                isSaved ? "border-gold bg-gold/10 text-gold" : "border-border bg-card text-foreground hover:border-gold/30"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <span>{collection.name}</span>
+                                {isSaved ? <Check className="w-4 h-4 text-gold" /> : null}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Aucune collection encore. Créez-en une !</p>
+                    )}
+                    <div className="pt-3 border-t border-border">
+                      <Label htmlFor="collection-name-detail" className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                        Nouvelle collection
+                      </Label>
+                      <div className="mt-2 flex gap-2">
+                        <Input
+                          id="collection-name-detail"
+                          value={collectionName}
+                          onChange={(event) => setCollectionName(event.target.value)}
+                          placeholder="Mon enseignement préféré"
+                        />
+                        <Button size="sm" type="button" onClick={handleCreateCollection} disabled={!collectionName.trim() || collectionSaving}>
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <TTSButton text={teaching.content} lang="fr-FR" size="md" />
+              <ShareButton
+                title={teaching.title}
+                description={teaching.excerpt || teaching.content.substring(0, 160)}
+                url={`/teachings/${id}`}
+                size="md"
+                variant="outline"
+              />
+            </div>
+          </div>
+
+          {/* ── Audio Player (inline, premium) ── */}
+          {teaching.audio_url && (
+            <div className="mb-8 rounded-2xl overflow-hidden border border-gold/30 bg-gradient-to-r from-slate-900 via-royal/80 to-slate-900 shadow-royal">
+              <div className="flex items-center gap-4 p-4">
+                <div className="relative flex-shrink-0">
+                  {teaching.cover_image_url ? (
+                    <img src={teaching.cover_image_url} alt={teaching.title} className="w-14 h-14 rounded-xl object-cover" />
                   ) : (
-                    <video controls src={teaching.video_url} className="w-full rounded-3xl" />
+                    <div className="w-14 h-14 rounded-xl bg-gold/20 flex items-center justify-center">
+                      <Music className="w-7 h-7 text-gold" />
+                    </div>
                   )}
                 </div>
-              )}
-
-              <div className="w-full bg-muted mb-6 rounded-3xl overflow-hidden border border-border shadow-royal">
-                <img
-                  src={teaching.cover_image_url}
-                  alt={teaching.title}
-                  className="w-full h-auto object-contain"
-                  loading="lazy"
-                />
-              </div>
-
-              {teaching.audio_url && (
-                <div className="mb-6 rounded-3xl border border-border bg-secondary p-4">
-                  <audio controls src={teaching.audio_url} className="w-full" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-white truncate">{teaching.title}</p>
+                  <p className="text-xs text-white/60 mt-0.5">@leregnemillenaire · Audio</p>
                 </div>
-              )}
-            </>
-          ) : teaching.video_url || teaching.audio_url ? (
-            <>
-              {teaching.video_url && (
-                <div className="mb-6 overflow-hidden rounded-3xl border border-border bg-secondary">
-                  {getYoutubeEmbedUrl(teaching.video_url) ? (
-                    <div className="aspect-video w-full">
-                      <iframe
-                        className="h-full w-full"
-                        src={getYoutubeEmbedUrl(teaching.video_url)}
-                        title={teaching.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
+                <Button
+                  onClick={() =>
+                    playTrack({
+                      id: teaching.id,
+                      title: teaching.title,
+                      authorName: "@leregnemillenaire",
+                      audioUrl: teaching.audio_url!,
+                      coverUrl: teaching.cover_image_url,
+                      country: teaching.country,
+                    })
+                  }
+                  className="flex-shrink-0 bg-gold hover:bg-gold/90 text-slate-950 font-bold rounded-full w-11 h-11 p-0 flex items-center justify-center shadow-gold"
+                >
+                  {currentTrack?.id === teaching.id && isPlaying ? (
+                    <Pause className="w-5 h-5 fill-current" />
                   ) : (
-                    <video controls src={teaching.video_url} className="w-full rounded-3xl" />
+                    <Play className="w-5 h-5 fill-current ml-0.5" />
                   )}
-                </div>
-              )}
-
-              {teaching.audio_url && (
-                <div className="mb-6 rounded-3xl border border-border bg-secondary p-4">
-                  <audio controls src={teaching.audio_url} className="w-full" />
-                </div>
-              )}
-
-              <div className="prose prose-lg max-w-none text-foreground dark:text-white dark:prose-invert font-body leading-relaxed prose-headings:text-foreground prose-p:text-foreground prose-a:text-foreground prose-strong:text-foreground prose-li:text-foreground mb-6">
-                {renderTeachingContent(teaching.content)}
+                </Button>
               </div>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div className={`prose prose-lg max-w-none text-foreground dark:text-white dark:prose-invert font-body leading-relaxed prose-headings:text-foreground prose-p:text-foreground prose-a:text-foreground prose-strong:text-foreground prose-li:text-foreground ${!showFullContent ? "line-clamp-6" : ""}`}>
-                {renderTeachingContent(teaching.content)}
+              <div className="px-4 pb-3">
+                <p className="text-[11px] text-white/40 text-center">
+                  Écoute continue · Le lecteur continue même si vous naviguez vers d'autres pages
+                </p>
               </div>
-              {!showFullContent && (
-                <button
-                  type="button"
-                  onClick={() => setShowFullContent(true)}
-                  className="inline-flex items-center gap-2 rounded-full border border-gold bg-gold/10 px-4 py-2 text-sm font-medium text-gold transition hover:bg-gold/20"
-                >
-                  Voir plus...
-                </button>
-              )}
-              {showFullContent && (
-                <button
-                  type="button"
-                  onClick={() => setShowFullContent(false)}
-                  className="inline-flex items-center gap-2 rounded-full border border-gold bg-gold/10 px-4 py-2 text-sm font-medium text-gold transition hover:bg-gold/20"
-                >
-                  Voir moins
-                </button>
+            </div>
+          )}
+
+          {/* ── Video ── */}
+          {teaching.video_url && (
+            <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-secondary">
+              {getYoutubeEmbedUrl(teaching.video_url) ? (
+                <div className="aspect-video w-full">
+                  <iframe
+                    className="h-full w-full"
+                    src={getYoutubeEmbedUrl(teaching.video_url)}
+                    title={teaching.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <video controls src={teaching.video_url} className="w-full" />
               )}
             </div>
           )}
 
-          <CommentsSection
-            comments={comments}
-            commentText={commentText}
-            onCommentChange={setCommentText}
-            onPublishComment={handleSendComment}
-            isPublishingComment={false}
-            user={user}
-            likesCount={likesCount}
-            isLiked={isLiked}
-            onToggleLike={handleToggleLike}
-            onReply={(commentId, authorName) => {
-              setReplyTo({ id: commentId, name: authorName });
-              setReplyText("");
-            }}
-            onToggleCommentLike={handleToggleCommentLike}
-            replyingTo={replyTo}
-            replyText={replyText}
-            onReplyChange={setReplyText}
-            onPublishReply={handleSendReply}
-            isPublishingReply={false}
-            onCancelReply={() => {
-              setReplyTo(null);
-              setReplyText("");
-            }}
-          />
-        </article>
+          {/* ── Article Content ── */}
+          <div className={`prose prose-lg max-w-none mb-8
+            text-foreground font-body leading-[1.9] tracking-[0.01em]
+            prose-headings:font-display prose-headings:text-foreground prose-headings:leading-tight prose-headings:font-bold
+            prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
+            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
+            prose-p:text-foreground prose-p:leading-[1.9] prose-p:mb-5
+            prose-a:text-gold prose-a:no-underline hover:prose-a:underline
+            prose-strong:text-foreground prose-strong:font-bold
+            prose-ul:list-disc prose-ul:pl-5 prose-li:text-foreground prose-li:mb-1
+            prose-blockquote:border-l-4 prose-blockquote:border-gold prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground
+            dark:prose-invert dark:prose-p:text-foreground dark:prose-headings:text-foreground dark:prose-strong:text-foreground dark:prose-li:text-foreground
+          `}>
+            {!teaching.video_url && !teaching.audio_url && !showFullContent ? (
+              <>
+                <div className="line-clamp-[12]">
+                  {renderTeachingContent(teaching.content)}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFullContent(true)}
+                  className="not-prose mt-4 inline-flex items-center gap-2 rounded-full border border-gold bg-gold/10 px-5 py-2.5 text-sm font-semibold text-gold transition hover:bg-gold/20"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Lire l'intégralité
+                </button>
+              </>
+            ) : (
+              <>
+                {renderTeachingContent(teaching.content)}
+                {!teaching.video_url && !teaching.audio_url && showFullContent && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFullContent(false)}
+                    className="not-prose mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-5 py-2 text-sm font-medium text-muted-foreground transition hover:border-gold/30 hover:text-gold"
+                  >
+                    Réduire
+                  </button>
+                )}
+              </>
+            )}
+          </div>
 
-        {/* Related Teachings */}
-        {related.length > 0 && (
-          <section className="relative bg-gradient-to-b from-background via-gold/3 to-gold/8 py-20 border-t border-gold/20 overflow-hidden">
-            {/* Decorative background elements */}
-            <div className="absolute inset-0 opacity-30 pointer-events-none">
-              <div className="absolute top-10 left-5% w-72 h-72 bg-gold/5 rounded-full blur-3xl" />
-              <div className="absolute bottom-10 right-5% w-96 h-96 bg-royal/5 rounded-full blur-3xl" />
+          {/* ── Mobile Action Bar (sticky) ── */}
+          <div className="sm:hidden sticky bottom-4 z-40 flex items-center justify-center pb-2">
+            <div className="flex items-center gap-1.5 bg-card/95 backdrop-blur-md border border-border rounded-full px-3 py-2 shadow-lg">
+              <button
+                type="button"
+                onClick={handleToggleLike}
+                aria-pressed={isLiked}
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  isLiked ? "text-destructive" : "text-muted-foreground"
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
+                {likesCount > 0 && <span>{likesCount}</span>}
+              </button>
+              <div className="w-px h-4 bg-border" />
+              <TTSButton text={teaching.content} lang="fr-FR" size="sm" />
+              <div className="w-px h-4 bg-border" />
+              <SaveButton
+                teachingId={teaching.id}
+                teachingTitle={teaching.title}
+                size="sm"
+                isSaved={savedCollectionIds.length > 0}
+                savedCollectionIds={savedCollectionIds}
+                collections={collections}
+                onToggleCollection={handleToggleCollection}
+              />
+              <div className="w-px h-4 bg-border" />
+              <ShareButton
+                title={teaching.title}
+                description={teaching.excerpt || teaching.content.substring(0, 160)}
+                url={`/teachings/${id}`}
+                size="sm"
+              />
             </div>
+          </div>
 
-            <div className="container mx-auto px-4 max-w-6xl relative z-10">
-              {/* Section Header */}
-              <div className="mb-16 text-center">
-                {/* Top Label */}
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <div className="h-px w-8 md:w-12 bg-gradient-to-r from-gold/0 to-gold/60" />
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-gold animate-pulse" />
-                    <span className="text-xs md:text-sm font-semibold text-gold uppercase tracking-widest letter-spacing-2">
-                      Continuer votre lecture
-                    </span>
-                    <Sparkles className="w-5 h-5 text-gold animate-pulse" />
-                  </div>
-                  <div className="h-px w-8 md:w-12 bg-gradient-to-l from-gold/0 to-gold/60" />
-                </div>
+          {/* ── Comments ── */}
+          <div className="mt-4 mb-16">
+            <CommentsSection
+              comments={comments}
+              commentText={commentText}
+              onCommentChange={setCommentText}
+              onPublishComment={handleSendComment}
+              isPublishingComment={false}
+              user={user}
+              likesCount={likesCount}
+              isLiked={isLiked}
+              onToggleLike={handleToggleLike}
+              onReply={(commentId, authorName) => {
+                setReplyTo({ id: commentId, name: authorName });
+                setReplyText("");
+              }}
+              onToggleCommentLike={handleToggleCommentLike}
+              replyingTo={replyTo}
+              replyText={replyText}
+              onReplyChange={setReplyText}
+              onPublishReply={handleSendReply}
+              isPublishingReply={false}
+              onCancelReply={() => {
+                setReplyTo(null);
+                setReplyText("");
+              }}
+            />
+          </div>
+        </div>
 
-                {/* Main Title */}
-                <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
+        {/* ── Related Teachings ── */}
+        {related.length > 0 && (
+          <section className="border-t border-border/60 bg-gradient-to-b from-secondary/40 to-background py-16">
+            <div className="container mx-auto px-4 max-w-6xl">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/30" />
+                <div className="flex items-center gap-2 text-xs font-bold text-gold uppercase tracking-[0.2em]">
+                  <BookOpen className="w-4 h-4" />
                   À lire également
-                </h2>
-
-                {/* Subtitle */}
-                <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                  Découvrez d'autres enseignements pour approfondir votre compréhension spirituelle
-                </p>
-
-                {/* Decorative line below subtitle */}
-                <div className="flex items-center justify-center gap-2 mt-6">
-                  <div className="h-px w-6 bg-gold/30" />
-                  <BookOpen className="w-4 h-4 text-gold/50" />
-                  <div className="h-px w-6 bg-gold/30" />
                 </div>
+                <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/30" />
               </div>
 
-              {/* Related Cards Grid */}
-              <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-16">
-                {related.map((teaching) => (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5 mb-10">
+                {related.map((rel) => (
                   <RelatedTeachingCard
-                    key={teaching.id}
-                    id={teaching.id}
-                    title={teaching.title}
-                    excerpt={teaching.excerpt}
-                    cover_image_url={teaching.cover_image_url}
-                    author={teaching.author}
-                    author_id={teaching.author_id}
-                    created_at={teaching.created_at}
-                    country={teaching.country}
-                    category_name={teaching.category_name}
-                    is_admin={teaching.is_admin}
+                    key={rel.id}
+                    id={rel.id}
+                    title={rel.title}
+                    excerpt={rel.excerpt}
+                    cover_image_url={rel.cover_image_url}
+                    author={rel.author}
+                    author_id={rel.author_id}
+                    created_at={rel.created_at}
+                    country={rel.country}
+                    category_name={rel.category_name}
+                    is_admin={rel.is_admin}
                   />
                 ))}
               </div>
 
-              {/* CTA Section */}
-              <div className="mt-12 text-center">
-                <p className="text-sm text-muted-foreground mb-6">Vous cherchez plus d'enseignements inspirants ?</p>
+              <div className="text-center">
                 <Link
                   to="/feed"
-                  className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-gold to-gold/80 hover:from-gold/95 hover:to-gold/70 text-background font-semibold transition-all duration-300 hover:shadow-xl hover:shadow-gold/40 hover:scale-105 active:scale-95"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gold text-slate-950 font-bold text-sm hover:bg-gold/90 transition-all shadow-gold hover:shadow-xl hover:scale-105 active:scale-95"
                 >
-                  <BookOpen className="w-5 h-5" />
+                  <BookOpen className="w-4 h-4" />
                   Voir tous les enseignements
-                  <ArrowLeft className="w-4 h-4 rotate-180" />
                 </Link>
               </div>
             </div>
@@ -859,5 +925,29 @@ const TeachingDetail = () => {
     </div>
   );
 };
+
+// ── Reading Progress Bar ──────────────────────────────────────────────
+function ReadingProgress() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0);
+    };
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
+  return (
+    <div className="fixed top-16 left-0 right-0 z-50 h-[2px] bg-transparent pointer-events-none">
+      <div
+        className="h-full bg-gradient-to-r from-gold via-gold/80 to-gold transition-[width] duration-75 ease-linear"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  );
+}
 
 export default TeachingDetail;

@@ -6,7 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocaleProvider } from "@/i18n";
-import useServiceWorker from "@/hooks/useServiceWorker";
+import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
+import FloatingAudioPlayer from "@/components/FloatingAudioPlayer";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { initVersionCheck } from "@/lib/versionCheck";
@@ -45,55 +46,58 @@ const App = () => {
           <BrowserRouter>
             <AuthProvider>
               <LocaleProvider>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/auth/check-email" element={<AuthCheckEmail />} />
-                  <Route path="/auth/callback" element={<AuthCallback />} />
-                  <Route path="/auth/reset" element={<AuthReset />} />
-                  <Route path="/oauth/consent" element={<AuthCallback />} />
-                  <Route path="/feed" element={<Feed />} />
-                  <Route path="/teachings/:id" element={<TeachingDetail />} />
-                  <Route path="/profile/:id" element={<Profile />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/donate" element={<Donate />} />
-                  <Route path="/community" element={<Community />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route
-                    path="/notifications"
-                    element={
-                      <ProtectedRoute>
-                        <Notifications />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/collections"
-                    element={
-                      <ProtectedRoute>
-                        <Collections />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/account"
-                    element={
-                      <ProtectedRoute>
-                        <Account />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute adminOnly>
-                        <Admin />
-                      </ProtectedRoute>
-                    }
-                  />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <AudioPlayerProvider>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/check-email" element={<AuthCheckEmail />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/auth/reset" element={<AuthReset />} />
+                    <Route path="/oauth/consent" element={<AuthCallback />} />
+                    <Route path="/feed" element={<Feed />} />
+                    <Route path="/teachings/:id" element={<TeachingDetail />} />
+                    <Route path="/profile/:id" element={<Profile />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/donate" element={<Donate />} />
+                    <Route path="/community" element={<Community />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route
+                      path="/notifications"
+                      element={
+                        <ProtectedRoute>
+                          <Notifications />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/collections"
+                      element={
+                        <ProtectedRoute>
+                          <Collections />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/account"
+                      element={
+                        <ProtectedRoute>
+                          <Account />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute adminOnly>
+                          <Admin />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  <FloatingAudioPlayer />
+                </AudioPlayerProvider>
               </LocaleProvider>
             </AuthProvider>
           </BrowserRouter>
@@ -103,15 +107,4 @@ const App = () => {
   );
 };
 
-const AppWithServiceWorker = () => {
-  // Do not register service worker in development to avoid caching/HMR issues
-  if (import.meta.env.DEV) {
-    return <App />;
-  }
-
-  useServiceWorker();
-  return <App />;
-};
-
-export default AppWithServiceWorker;
-
+export default App;

@@ -35,9 +35,9 @@ const TestimonialsSection = () => {
 
   if (loading) {
     return (
-      <section className="py-24 md:py-32 bg-secondary/30">
+      <section className="py-24 md:py-32 bg-section-alt">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
@@ -51,73 +51,70 @@ const TestimonialsSection = () => {
     );
   }
 
-  if (!testimonials.length) {
-    return null;
-  }
+  if (!testimonials.length) return null;
 
   return (
-    <section className="py-24 md:py-32 bg-secondary/30">
-      <div className="container mx-auto px-4">
+    <section className="py-24 md:py-32 bg-section-alt relative overflow-hidden">
+      <div className="relative container mx-auto px-4">
         <div className="text-center mb-16">
-          <p className="text-gold-dark font-body text-sm tracking-[0.25em] uppercase mb-3">
-            Paroles de foi
-          </p>
-          <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground">
-            Témoignages de nos frères et sœurs
+          <div className="section-eyebrow mx-auto mb-3" style={{ width: "fit-content" }}>
+            Paroles de Foi
+          </div>
+          <h2 className="font-display text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
+            Témoignages
           </h2>
-          <span className="inline-block w-14 h-px bg-gold mt-6 mb-4" />
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm">
-            Découvrez comment le Règne Millénaire impacte vies et communautés
+          <p className="text-muted-foreground max-w-xl mx-auto text-sm leading-relaxed">
+            Découvrez comment le Règne Millénaire impacte des vies et des communautés.
           </p>
         </div>
 
-        {/* Grille dès md, scroll horizontal snap sur mobile */}
+        {/* Mobile: horizontal scroll · Desktop: grid */}
         <div className="flex md:grid md:grid-cols-3 gap-6 max-w-5xl mx-auto overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-4 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-          {testimonials.map((testimonial) => (
+          {testimonials.map((t, i) => (
             <div
-              key={testimonial.id}
-              className="group relative flex-shrink-0 w-[85%] sm:w-[70%] md:w-auto snap-center rounded-2xl border border-border bg-card p-7 pt-10 transition-all duration-500 hover:border-gold/40 hover:shadow-royal"
+              key={t.id}
+              className="group relative flex-shrink-0 w-[85%] sm:w-[70%] md:w-auto snap-center card-elevated rounded-2xl p-7 pt-10 transition-all duration-300 hover:border-gold/40 hover:shadow-gold"
+              style={{ animationDelay: `${i * 100}ms` }}
             >
+              {/* Quote mark */}
               <span
                 aria-hidden
-                className="absolute top-3 left-5 font-display text-5xl leading-none text-gold/25 select-none"
+                className="absolute top-2 left-5 font-display text-6xl font-extrabold leading-none text-gold/15 select-none"
               >
-                "
+                “
               </span>
 
-              <blockquote className="font-body text-foreground leading-relaxed mb-6 min-h-[88px] text-[0.95rem]">
-                {testimonial.content}
+              <blockquote className="font-body text-sm text-foreground/85 leading-relaxed mb-6 min-h-[80px]">
+                {t.content}
               </blockquote>
 
-              <div className="flex items-center gap-3 pt-4 border-t border-border">
-                {testimonial.author_avatar_url ? (
+              {/* Author */}
+              <div className="flex items-center gap-3 pt-4 border-t border-border/60">
+                {t.author_avatar_url ? (
                   <img
-                    src={testimonial.author_avatar_url}
-                    alt={testimonial.author_name}
-                    className="w-10 h-10 rounded-full object-cover ring-1 ring-gold/40 ring-offset-2 ring-offset-card"
+                    src={t.author_avatar_url}
+                    alt={t.author_name}
+                    className="w-9 h-9 rounded-full object-cover ring-1 ring-gold/35 ring-offset-2 ring-offset-card flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gold/15 ring-1 ring-gold/40 ring-offset-2 ring-offset-card flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-gold-dark">
-                      {testimonial.author_name.charAt(0).toUpperCase()}
+                  <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 ring-1 ring-gold/25 ring-offset-2 ring-offset-card">
+                    <span className="text-xs font-bold text-primary">
+                      {t.author_name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-foreground tracking-wide truncate">
-                    {testimonial.author_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {testimonial.author_role || testimonial.country || "Disciple du Règne"}
+                  <p className="font-semibold text-xs text-foreground tracking-wide truncate">{t.author_name}</p>
+                  <p className="text-[0.7rem] text-muted-foreground truncate">
+                    {t.author_role || t.country || "Disciple du Règne"}
                   </p>
                 </div>
-                <div className="flex gap-0.5 flex-shrink-0" aria-label={`${testimonial.rating} sur 5`}>
-                  {[...Array(5)].map((_, i) => (
+                {/* Rating dots */}
+                <div className="flex gap-1 flex-shrink-0" aria-label={`${t.rating} sur 5`}>
+                  {[...Array(5)].map((_, k) => (
                     <span
-                      key={i}
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        i < testimonial.rating ? "bg-gold" : "bg-border"
-                      }`}
+                      key={k}
+                      className={`w-1.5 h-1.5 rounded-full ${k < t.rating ? "bg-gold" : "bg-border"}`}
                     />
                   ))}
                 </div>
