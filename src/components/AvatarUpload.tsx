@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Upload, Trash2, Loader2 } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { uploadToCloudinary, isCloudinaryConfigured } from "@/lib/cloudinary";
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
@@ -54,26 +54,22 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       return;
     }
 
+    if (!isCloudinaryConfigured) {
+      toast({
+        title: "Configuration manquante",
+        description: "Ajoutez votre Cloudinary pour téléverser une photo de profil.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const filePath = `${userId}.${ext}`;
+      const url = await uploadToCloudinary(file, `le-royaume/avatars/${userId}`);
 
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-      const newUrl = `${data.publicUrl}?t=${Date.now()}`;
-
-      // Update in database if callback provided
       if (onAvatarChange) {
-        onAvatarChange(newUrl);
+        onAvatarChange(url);
       }
 
       toast({ title: "Photo de profil mise à jour ✓" });
@@ -97,17 +93,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
     setIsLoading(true);
 
     try {
-      // Try to delete common formats
-      const formats = ["jpg", "png", "webp", "gif"];
-      const promises = formats.map((fmt) =>
-        supabase.storage
-          .from("avatars")
-          .remove([`${userId}.${fmt}`])
-          .catch(() => null) // Ignore errors for non-existent files
-      );
-
-      await Promise.all(promises);
-
       if (onAvatarDelete) {
         onAvatarDelete();
       }

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Loader2, Mic, CircleStop } from "lucide-react";
+import { uploadToCloudinary, isCloudinaryConfigured } from "@/lib/cloudinary";
 
 type Props = {
   value: string | null;
@@ -32,21 +32,25 @@ const MediaUpload = ({ value, onChange, accept, label }: Props) => {
         variant: "destructive",
       });
     }
-    setUploading(true);
-    const ext = file.name.split(".").pop() || (accept === "audio" ? "webm" : "bin");
-    const path = `${accept}s/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from("teaching-media").upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-    if (error) {
-      setUploading(false);
-      return toast({ title: "Erreur d'upload", description: error.message, variant: "destructive" });
+
+    if (!isCloudinaryConfigured) {
+      return toast({
+        title: "Configuration manquante",
+        description: "Ajoutez votre Cloudinary pour téléverser des fichiers.",
+        variant: "destructive",
+      });
     }
-    const { data } = supabase.storage.from("teaching-media").getPublicUrl(path);
-    onChange(data.publicUrl);
-    setUploading(false);
-    toast({ title: "Fichier téléversé" });
+
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file, `le-royaume/${accept}s`);
+      onChange(url);
+      toast({ title: "Fichier téléversé" });
+    } catch (error: any) {
+      toast({ title: "Erreur d'upload", description: error.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const uploadBlob = async (blob: Blob, extension = "webm") => {
