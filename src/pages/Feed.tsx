@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import TeachingCard from "@/components/TeachingCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, Loader2, X, Grid, List, Filter, Calendar, MapPin, AudioLines, Video, ChevronRight, Layers, LayoutGrid } from "lucide-react";
+import { BookOpen, Loader2, X, Grid, List, Filter, Calendar, MapPin, AudioLines, Video, ChevronRight, Layers, LayoutGrid, ArrowUp } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import SEO from "@/components/SEO";
 
@@ -84,7 +84,8 @@ const Feed = () => {
   const [country, setCountry] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [layoutMode, setLayoutMode] = useState<"timeline" | "categories">("categories"); // Defaulting to organized category shelves
+  const [layoutMode, setLayoutMode] = useState<"timeline" | "categories">("timeline");
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
   const loadingMoreRef = useRef(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -101,6 +102,16 @@ const Feed = () => {
       if (cats) setCategories(cats);
     });
     document.title = "Bibliothèque des enseignements – MILLENIUM";
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const resetAndLoad = useCallback(() => {
@@ -377,8 +388,8 @@ const Feed = () => {
 
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           
-          {/* ── View & Layout Toggles (sticky toolbar) ── */}
-          <div className="sticky top-16 z-20 -mx-4 px-4 py-4 mb-8 bg-background/90 backdrop-blur-md border-b border-border/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* ── View & Layout Toggles ── */}
+          <div className="relative -mx-4 px-4 py-4 mb-8 bg-background/90 backdrop-blur-md border-b border-border/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex-1">
               <SearchBar
                 search={search}
@@ -801,6 +812,18 @@ const Feed = () => {
           )}
         </div>
       </main>
+
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Retour en haut"
+          className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-border/70 bg-background/95 text-foreground shadow-lg backdrop-blur transition hover:scale-105"
+        >
+          <ArrowUp className="h-4 w-4" />
+        </button>
+      )}
+
       <Footer />
     </div>
   );

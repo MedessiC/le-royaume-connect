@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/RichTextEditor";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -16,7 +15,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Shield, ShieldOff, Pencil, X, Award } from "lucide-react";
+import {
+  Trash2, Shield, ShieldOff, Pencil, X, Award,
+  Menu, LayoutGrid, Home as HomeIcon, Newspaper, BookOpen, Tags,
+  Quote, Sparkles, MessageSquareText, Users as UsersIcon,
+  Crown, Eye, EyeOff, Clock, TrendingUp,
+} from "lucide-react";
 import MediaUpload from "@/components/MediaUpload";
 import GoldBadge from "@/components/GoldBadge";
 import CountrySelect from "@/components/CountrySelect";
@@ -67,6 +71,103 @@ const emptyForm = {
   country: "", catId: "", published: true,
 };
 
+/* ------------------------------------------------------------------ */
+/* Admin navigation — drives the sidebar and the active section       */
+/* ------------------------------------------------------------------ */
+type SectionKey =
+  | "overview" | "home" | "publications" | "teachings"
+  | "categories" | "testimonials" | "stories" | "popups" | "users";
+
+const NAV: { key: SectionKey; label: string; icon: typeof LayoutGrid }[] = [
+  { key: "overview", label: "Aperçu", icon: LayoutGrid },
+  { key: "home", label: "Contenu d'accueil", icon: HomeIcon },
+  { key: "publications", label: "Publications", icon: Newspaper },
+  { key: "teachings", label: "Enseignements", icon: BookOpen },
+  { key: "categories", label: "Catégories", icon: Tags },
+  { key: "testimonials", label: "Témoignages", icon: Quote },
+  { key: "stories", label: "Histoires", icon: Sparkles },
+  { key: "popups", label: "Pop-ups", icon: MessageSquareText },
+  { key: "users", label: "Utilisateurs", icon: UsersIcon },
+];
+
+/* ------------------------------------------------------------------ */
+/* Small presentational helpers                                       */
+/* ------------------------------------------------------------------ */
+function CrownDivider() {
+  return (
+    <div className="flex items-center gap-3 my-6 text-gold/60" role="presentation">
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-gold/25 to-transparent" />
+      <Crown className="w-3.5 h-3.5" strokeWidth={1.5} />
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-gold/25 to-transparent" />
+    </div>
+  );
+}
+
+function useCountUp(target: number, active: boolean, duration = 800) {
+  const [value, setValue] = useState(0);
+  const raf = useRef<number>();
+  useEffect(() => {
+    if (!active) return;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(target * eased));
+      if (t < 1) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => raf.current && cancelAnimationFrame(raf.current);
+  }, [active, target, duration]);
+  return value;
+}
+
+function StatCard({
+  label, value, icon: Icon, index, active, ratio,
+}: { label: string; value: number; icon: typeof LayoutGrid; index: number; active: boolean; ratio: number }) {
+  const val = useCountUp(value, active, 650 + index * 100);
+  const circumference = 2 * Math.PI * 17;
+  return (
+    <Card
+      className="border-gold/15 animate-in fade-in slide-in-from-bottom-2 duration-500 hover:border-gold/30 hover:-translate-y-0.5 transition-all"
+      style={{ animationDelay: `${index * 70}ms` }}
+    >
+      <CardContent className="p-4 md:p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="relative w-10 h-10">
+            <svg viewBox="0 0 40 40" className="w-10 h-10 -rotate-90">
+              <circle cx="20" cy="20" r="17" className="fill-none stroke-border" strokeWidth="2.4" />
+              <circle
+                cx="20" cy="20" r="17"
+                className="fill-none stroke-gold transition-[stroke-dashoffset] duration-1000 ease-out"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={active ? circumference - circumference * Math.min(ratio, 1) : circumference}
+              />
+            </svg>
+            <Icon className="w-4 h-4 text-gold absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <TrendingUp className="w-3.5 h-3.5 text-muted-foreground/60" />
+        </div>
+        <div className="font-display text-2xl md:text-[26px] leading-none">{val.toLocaleString("fr-FR")}</div>
+        <div className="text-xs text-muted-foreground mt-1.5">{label}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PublishBadge({ published }: { published: boolean }) {
+  return published ? (
+    <Badge className="gap-1 bg-gold/15 text-gold border border-gold/25 hover:bg-gold/15">
+      <Eye className="w-3 h-3" /> Publié
+    </Badge>
+  ) : (
+    <Badge variant="secondary" className="gap-1">
+      <EyeOff className="w-3 h-3" /> Brouillon
+    </Badge>
+  );
+}
+
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
@@ -113,6 +214,10 @@ const Admin = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [usersPerPage] = useState(10);
   const [displayedUsersCount, setDisplayedUsersCount] = useState(10);
+
+  // --- new: sidebar shell state ---
+  const [activeSection, setActiveSection] = useState<SectionKey>("overview");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -219,7 +324,7 @@ const Admin = () => {
       return toast({ title: "Erreur", description: response.error.message, variant: "destructive" });
     }
 
-    toast({ title: "Paramètres d’accueil enregistrés" });
+    toast({ title: "Paramètres d'accueil enregistrés" });
     refresh();
   };
 
@@ -257,6 +362,7 @@ const Admin = () => {
   };
 
   const startEdit = (t: Teaching) => {
+    setActiveSection("teachings");
     setEditingId(t.id);
     setForm({
       title: t.title,
@@ -312,7 +418,6 @@ const Admin = () => {
     e.preventDefault();
     setSubmitting(true);
 
-    // Validation
     const titleTrimmed = form.title.trim();
     const contentTrimmed = form.content.trim();
 
@@ -427,711 +532,886 @@ const Admin = () => {
     refresh();
   };
 
+  // --- derived stats for the Overview section ---
+  const publishedCount = useMemo(() => teachings.filter((t) => t.published).length, [teachings]);
+  const draftCount = useMemo(() => teachings.filter((t) => !t.published).length, [teachings]);
+  const totalComments = useMemo(() => Object.values(commentCounts).reduce((a, b) => a + b, 0), [commentCounts]);
+  const maxForRing = Math.max(teachings.length, users.length, totalComments, badgeIds.size, 1);
+
   if (loading || !isAdmin) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Chargement…</div>;
   }
 
+  const activeLabel = NAV.find((n) => n.key === activeSection)?.label ?? "";
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 container mx-auto px-4 pt-20 md:pt-24 pb-16 max-w-7xl">
-        <header className="mb-6 md:mb-8">
-          <h1 className="font-display text-2xl md:text-4xl font-bold text-foreground">Panel d'administration</h1>
-          <p className="text-sm md:text-base text-muted-foreground font-body">Gérez le contenu et les permissions du site.</p>
-        </header>
 
-        <Tabs defaultValue="teachings" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 w-full h-auto gap-1 rounded-lg">
-            <TabsTrigger value="home" className="text-xs md:text-sm">Accueil</TabsTrigger>
-            <TabsTrigger value="publications" className="text-xs md:text-sm">Publications</TabsTrigger>
-            <TabsTrigger value="teachings" className="text-xs md:text-sm">Enseignements</TabsTrigger>
-            <TabsTrigger value="categories" className="text-xs md:text-sm">Catégories</TabsTrigger>
-            <TabsTrigger value="testimonials" className="text-xs md:text-sm">Témoignages</TabsTrigger>
-            <TabsTrigger value="stories" className="text-xs md:text-sm">Histoires</TabsTrigger>
-            <TabsTrigger value="popups" className="text-xs md:text-sm">Pop-ups</TabsTrigger>
-            <TabsTrigger value="users" className="text-xs md:text-sm">Utilisateurs</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="home" className="space-y-6">
-            <Card className="border-gold/20">
-              <CardHeader>
-                <CardTitle>Contenu d’accueil</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={saveHomeSettings} className="space-y-6">
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div>
-                      <Label>URL YouTube</Label>
-                      <Input
-                        value={homeForm.youtube_url}
-                        onChange={(e) => setHomeForm({ ...homeForm, youtube_url: e.target.value })}
-                        placeholder="https://youtu.be/..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Durée d’affichage (jours)</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={homeForm.youtube_duration_days}
-                        onChange={(e) => setHomeForm({ ...homeForm, youtube_duration_days: Number(e.target.value) || 1 })}
-                      />
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <Switch
-                        checked={homeForm.active}
-                        onCheckedChange={(active) => setHomeForm({ ...homeForm, active })}
-                        id="home-active"
-                      />
-                      <Label htmlFor="home-active">Activer la vidéo</Label>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label>Link TikTok</Label>
-                      <Input
-                        value={homeForm.tiktok_url}
-                        onChange={(e) => setHomeForm({ ...homeForm, tiktok_url: e.target.value })}
-                        placeholder="https://www.tiktok.com/..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Link YouTube</Label>
-                      <Input
-                        value={homeForm.youtube_channel_url}
-                        onChange={(e) => setHomeForm({ ...homeForm, youtube_channel_url: e.target.value })}
-                        placeholder="https://www.youtube.com/channel/..."
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
-                    <div>
-                      <Label>Communiqué défilant</Label>
-                      <Textarea
-                        value={homeForm.marquee_text}
-                        onChange={(e) => setHomeForm({ ...homeForm, marquee_text: e.target.value })}
-                        placeholder="Entrez le texte qui défilera en haut de l’accueil"
-                        rows={3}
-                      />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Le texte s’affichera en bandeau défilant en haut de la page d’accueil.
-                      </p>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="marquee-speed">Vitesse de défilement</Label>
-                      <div className="space-y-3 mt-2">
-                        <div className="flex items-center gap-3">
-                          <Input
-                            id="marquee-speed"
-                            type="number"
-                            min={8}
-                            max={60}
-                            step={1}
-                            value={homeForm.marquee_speed}
-                            onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
-                            placeholder="45"
-                            className="w-20"
-                          />
-                          <span className="text-sm text-muted-foreground">secondes</span>
-                        </div>
-                        <input
-                          type="range"
-                          id="marquee-range"
-                          min={8}
-                          max={60}
-                          step={1}
-                          value={homeForm.marquee_speed}
-                          onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
-                          className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-gold"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Plus bas = plus rapide. 8-30 sec recommandé.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label>Link WhatsApp</Label>
-                      <Input
-                        value={homeForm.whatsapp_url}
-                        onChange={(e) => setHomeForm({ ...homeForm, whatsapp_url: e.target.value })}
-                        placeholder="https://wa.me/..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Link Facebook</Label>
-                      <Input
-                        value={homeForm.facebook_url}
-                        onChange={(e) => setHomeForm({ ...homeForm, facebook_url: e.target.value })}
-                        placeholder="https://www.facebook.com/..."
-                      />
-                    </div>
-                  </div>
-
-                  {/* Texte éditable pour chaque image du carrousel (inline) */}
-
-                  <div className="border-t border-border pt-6">
-                    <h3 className="font-semibold text-foreground mb-4">Bouton « En direct »</h3>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="flex items-end gap-2">
-                        <Switch
-                          checked={homeForm.live_enabled}
-                          onCheckedChange={(live_enabled) => setHomeForm({ ...homeForm, live_enabled })}
-                          id="live-enabled"
-                        />
-                        <Label htmlFor="live-enabled">Activer le bouton en direct</Label>
-                      </div>
-                      <div>
-                        <Label>URL du direct (YouTube, TikTok, etc.)</Label>
-                        <Input
-                          value={homeForm.live_url}
-                          onChange={(e) => setHomeForm({ ...homeForm, live_url: e.target.value })}
-                          placeholder="https://www.youtube.com/watch?v=... ou https://www.tiktok.com/@..."
-                          disabled={!homeForm.live_enabled}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border pt-6">
-                    <h3 className="font-semibold text-foreground mb-4">Carrousel d’images</h3>
-                    <div className="space-y-4">
-                      {homeForm.carousel_images.map((image, index) => (
-                        <div key={index} className="p-3 border rounded-lg grid gap-4 md:grid-cols-[1fr,auto] items-start">
-                          <div>
-                            <Label>Image {index + 1}</Label>
-                            <MediaUpload
-                              value={image}
-                              onChange={(url) => {
-                                setCarouselImage(index, url);
-                                setCarouselSlideField(index, 'image_url', url);
-                              }}
-                              accept="image"
-                            />
-
-                            <div className="mt-3 grid gap-2">
-                              <div>
-                                <Label>Pré-titre</Label>
-                                <Input
-                                  value={homeForm.carousel_slides?.[index]?.pretitle || ''}
-                                  onChange={(e) => setCarouselSlideField(index, 'pretitle', e.target.value)}
-                                />
-                              </div>
-                              <div>
-                                <Label>Titre</Label>
-                                <Input
-                                  value={homeForm.carousel_slides?.[index]?.title || ''}
-                                  onChange={(e) => setCarouselSlideField(index, 'title', e.target.value)}
-                                />
-                              </div>
-                              <div>
-                                <Label>Description</Label>
-                                <Textarea
-                                  rows={2}
-                                  value={homeForm.carousel_slides?.[index]?.description || ''}
-                                  onChange={(e) => setCarouselSlideField(index, 'description', e.target.value)}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-end gap-2">
-                            <Button type="button" variant="destructive" size="sm" onClick={() => removeCarouselImage(index)} className="h-fit">
-                              <Trash2 className="w-4 h-4" /> Supprimer
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={addCarouselImage}
-                        disabled={homeForm.carousel_images.length >= 5}
-                      >
-                        Ajouter une image
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button type="submit" variant="hero">Enregistrer l’accueil</Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="publications" className="space-y-6">
-            <Card className="border-gold/20">
-              <CardHeader>
-                <CardTitle>Gestion des publications</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="lg:col-span-2">
-                    <Label>Recherche</Label>
-                    <Input
-                      value={publicationQuery}
-                      onChange={(e) => setPublicationQuery(e.target.value)}
-                      placeholder="Rechercher un titre, un extrait ou un passage..."
-                    />
-                  </div>
-                  <div>
-                    <Label>Statut</Label>
-                    <Select value={publicationStatusFilter} onValueChange={(value) => setPublicationStatusFilter(value as "all" | "published" | "draft") }>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tous</SelectItem>
-                        <SelectItem value="published">Publiés</SelectItem>
-                        <SelectItem value="draft">Brouillons</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Catégorie</Label>
-                    <Select value={publicationCategoryFilter} onValueChange={setPublicationCategoryFilter}>
-                      <SelectTrigger><SelectValue placeholder="Toutes" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Toutes</SelectItem>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Auteur</Label>
-                    <Select value={publicationAuthorFilter} onValueChange={setPublicationAuthorFilter}>
-                      <SelectTrigger><SelectValue placeholder="Tous" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tous</SelectItem>
-                        {users.map((u) => (
-                          <SelectItem key={u.id} value={u.id}>{u.full_name || "(sans nom)"}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-4">
-              {filteredPublications.length === 0 ? (
-                <Card>
-                  <CardContent className="p-6 text-center text-muted-foreground">
-                    Aucune publication ne correspond à vos filtres.
-                  </CardContent>
-                </Card>
-              ) : (
-                filteredPublications.map((t) => (
-                  <Card key={t.id}>
-                    <CardContent className="space-y-4 p-4">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0">
-                          <h3 className="font-display text-lg font-semibold truncate">{t.title}</h3>
-                          <p className="text-sm text-muted-foreground truncate">{t.excerpt ?? "Pas de description"}</p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {t.published ? <Badge>Publié</Badge> : <Badge variant="secondary">Brouillon</Badge>}
-                          {commentCounts[t.id] ? <Badge variant="outline">{commentCounts[t.id]} commentaire{commentCounts[t.id] === 1 ? "" : "s"}</Badge> : <Badge variant="outline">0 commentaire</Badge>}
-                          {t.category_id && <Badge variant="outline">{categories.find((c) => c.id === t.category_id)?.name ?? "Catégorie inconnue"}</Badge>}
-                        </div>
-                      </div>
-
-                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 text-xs text-muted-foreground">
-                        <span>Auteur : {getAuthorName(t.author_id)}</span>
-                        <span>Créé le : {new Date(t.created_at).toLocaleDateString("fr-FR")}</span>
-                        <span>Pays : {t.country || "—"}</span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" onClick={() => startEdit(t)} className="text-xs">Modifier</Button>
-                        <Button size="sm" variant="outline" onClick={() => loadTeachingComments(t)} className="text-xs">Voir commentaires</Button>
-                        <Button size="sm" variant="ghost" onClick={() => togglePublished(t)} className="text-xs">
-                          {t.published ? "Dépublier" : "Publier"}
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteTeaching(t.id)} className="text-xs">Supprimer</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+      <div className="flex-1 flex flex-col md:flex-row pt-16 md:pt-20">
+        {/* -------------------- SIDEBAR -------------------- */}
+        <aside
+          className={`fixed md:sticky top-0 md:top-20 left-0 z-40 h-screen md:h-[calc(100vh-5rem)] w-72 md:w-64 shrink-0
+            border-r border-gold/15 bg-gradient-to-b from-background to-muted/10
+            pt-20 md:pt-6 px-4 pb-6 flex flex-col
+            transition-transform duration-300 ease-out
+            ${mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+        >
+          <div className="flex items-center gap-3 px-2 pb-5 mb-2 border-b border-gold/10">
+            <div className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-gold to-gold/50 flex items-center justify-center shrink-0 overflow-hidden">
+              <Crown className="w-4.5 h-4.5 text-background relative z-10" strokeWidth={2} />
             </div>
+            <div className="min-w-0">
+              <div className="font-display text-sm tracking-wide leading-tight truncate">MILLENIUM</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Panel administrateur</div>
+            </div>
+            <Button
+              variant="ghost" size="icon" className="ml-auto md:hidden h-8 w-8"
+              onClick={() => setMobileNavOpen(false)} aria-label="Fermer le menu"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
 
-            {selectedTeaching && (
-              <Card className="border-gold/20">
-                <CardHeader>
-                  <CardTitle>Commentaires de la publication</CardTitle>
-                  <p className="text-sm text-muted-foreground">{selectedTeaching.title}</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="text-sm text-muted-foreground">
-                      {selectedTeachingComments.length} commentaire{selectedTeachingComments.length === 1 ? "" : "s"}
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedTeaching(null)}>
-                      Fermer
-                    </Button>
-                  </div>
+          <nav className="flex flex-col gap-1 flex-1 overflow-y-auto">
+            {NAV.map((n) => {
+              const Icon = n.icon;
+              const isActive = activeSection === n.key;
+              return (
+                <button
+                  key={n.key}
+                  onClick={() => { setActiveSection(n.key); setMobileNavOpen(false); }}
+                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-left transition-all
+                    ${isActive
+                      ? "bg-gold/10 text-gold border border-gold/25"
+                      : "border border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:translate-x-0.5"}`}
+                >
+                  {isActive && <span className="absolute -left-4 top-1/2 -translate-y-1/2 h-4 w-[3px] rounded-full bg-gold" />}
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{n.label}</span>
+                </button>
+              );
+            })}
+          </nav>
 
-                  {loadingComments ? (
-                    <div className="p-4 text-center text-muted-foreground">Chargement des commentaires…</div>
-                  ) : selectedTeachingComments.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">Aucun commentaire pour cette publication.</div>
-                  ) : (
-                    <div className="space-y-3">
-                      {selectedTeachingComments.map((comment) => {
-                        const author = users.find((u) => u.id === comment.user_id)?.full_name || "Membre";
-                        return (
-                          <div key={comment.id} className="rounded-3xl border border-border p-4">
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                              <div>
-                                <p className="font-semibold">{author}</p>
-                                <p className="text-xs text-muted-foreground">{new Date(comment.created_at).toLocaleString("fr-FR")}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {comment.parent_id && <Badge variant="outline">Réponse</Badge>}
-                                <Button size="sm" variant="ghost" onClick={() => deleteTeachingComment(comment.id)}>Supprimer</Button>
-                              </div>
-                            </div>
-                            <p className="mt-3 text-sm text-foreground">{comment.content}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+          <div className="mt-4 pt-4 border-t border-gold/10 flex items-center gap-2 px-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold/30 to-muted flex items-center justify-center text-[11px] font-semibold text-gold border border-gold/20 shrink-0">
+              {(user?.email?.[0] ?? "A").toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-medium truncate">{user?.email}</div>
+              <div className="text-[10px] text-muted-foreground">Administrateur</div>
+            </div>
+          </div>
+        </aside>
 
-          {/* TEACHINGS */}
-          <TabsContent value="teachings" className="space-y-6">
-            <Card className="border-gold/20">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  {editingId ? "Modifier l'enseignement" : "Nouvel enseignement"}
-                  {editingId && (
-                    <Button size="sm" variant="ghost" onClick={cancelEdit}>
-                      <X className="w-4 h-4" /> Annuler
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={submitTeaching} className="space-y-4">
+        {mobileNavOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/60 md:hidden animate-in fade-in duration-200"
+            onClick={() => setMobileNavOpen(false)}
+          />
+        )}
+
+        {/* -------------------- MAIN COLUMN -------------------- */}
+        <main className="flex-1 min-w-0 flex flex-col">
+          <div className="sticky top-16 md:top-20 z-20 flex items-center gap-3 border-b border-border/60 bg-background/85 backdrop-blur px-4 md:px-8 py-3">
+            <Button
+              variant="ghost" size="icon" className="md:hidden h-9 w-9"
+              onClick={() => setMobileNavOpen(true)} aria-label="Ouvrir le menu"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="font-display text-lg md:text-xl font-bold text-foreground">{activeLabel}</h1>
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                <Clock className="w-3 h-3" /> Panel de gestion MILLENIUM
+              </p>
+            </div>
+          </div>
+
+          <div className="flex-1 px-4 md:px-8 py-6 md:py-8 max-w-6xl w-full mx-auto">
+
+            {/* -------------------- OVERVIEW -------------------- */}
+            {activeSection === "overview" && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
-                    <Label>Titre</Label>
-                    <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required maxLength={200} />
+                    <h2 className="font-display text-xl font-semibold">Vue d'ensemble</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Résumé de l'activité de la plateforme</p>
                   </div>
-                  <div>
-                    <Label>Extrait</Label>
-                    <Input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} maxLength={300} />
-                  </div>
-                  <div>
-                    <Label>Contenu</Label>
-                    <RichTextEditor
-                      value={form.content}
-                      onChange={(content) => setForm({ ...form, content })}
-                      placeholder="Écrivez le contenu de l'enseignement ici..."
-                    />
-                  </div>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div>
-                      <Label>Image de couverture</Label>
-                      <MediaUpload value={form.cover} onChange={(v) => setForm({ ...form, cover: v })} accept="image" />
-                    </div>
-                    <div>
-                      <Label>Vidéo (optionnel)</Label>
-                      <MediaUpload value={form.video} onChange={(v) => setForm({ ...form, video: v })} accept="video" />
-                    </div>
-                    <div>
-                      <Label>Audio (optionnel)</Label>
-                      <MediaUpload value={form.audio} onChange={(v) => setForm({ ...form, audio: v })} accept="audio" />
-                    </div>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Pays</Label>
-                      <CountrySelect value={form.country} onChange={(v) => setForm({ ...form, country: v })} placeholder="Sélectionner un pays..." />
-                    </div>
-                    <div>
-                      <Label>Catégorie</Label>
-                      <Select value={form.catId} onValueChange={(v) => setForm({ ...form, catId: v })}>
-                        <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                        <SelectContent>
-                          {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch checked={form.published} onCheckedChange={(v) => setForm({ ...form, published: v })} id="pub" />
-                    <Label htmlFor="pub">Publié</Label>
-                  </div>
-                  <Button type="submit" variant="hero" disabled={submitting}>
-                    {submitting ? "Traitement en cours..." : editingId ? "Enregistrer" : "Publier"}
+                  <Button variant="hero" onClick={() => { setActiveSection("teachings"); cancelEdit(); }}>
+                    Nouvel enseignement
                   </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-2">
-              {teachings.map((t) => (
-                <Card key={t.id} className={`${editingId === t.id ? "border-gold" : ""} hover:shadow-md transition-shadow`}>
-                  <CardContent className="p-3 md:p-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 md:gap-4 items-start">
-                      {t.cover_image_url && (
-                        <img src={t.cover_image_url} alt="" className="w-20 h-14 object-cover rounded shrink-0 sm:order-1" />
-                      )}
-                      <div className="flex-1 min-w-0 sm:order-2">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h3 className="font-display font-semibold truncate text-sm">{t.title}</h3>
-                          {t.published ? <Badge className="text-xs">Publié</Badge> : <Badge variant="secondary" className="text-xs">Brouillon</Badge>}
-                          {t.video_url && <Badge variant="outline" className="text-xs">Vidéo</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">{t.excerpt}</p>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0 sm:order-3">
-                        <Switch checked={t.published} onCheckedChange={() => togglePublished(t)} className="scale-75" />
-                        <Button size="icon" variant="ghost" onClick={() => startEdit(t)} aria-label="Modifier" className="h-8 w-8">
-                          <Pencil className="w-3 h-3" />
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => deleteTeaching(t.id)} aria-label="Supprimer" className="h-8 w-8">
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* CATEGORIES */}
-          <TabsContent value="categories" className="space-y-6">
-            <Card>
-              <CardHeader><CardTitle>Nouvelle catégorie</CardTitle></CardHeader>
-              <CardContent>
-                <form onSubmit={createCategory} className="space-y-3">
-                  <div><Label>Nom</Label><Input value={catName} onChange={(e) => setCatName(e.target.value)} required maxLength={50} /></div>
-                  <div><Label>Description</Label><Input value={catDesc} onChange={(e) => setCatDesc(e.target.value)} maxLength={200} /></div>
-                  <Button type="submit" variant="hero">Créer</Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-3">
-              {categories.map((c) => (
-                <Card key={c.id}>
-                  <CardContent className="p-3 md:p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold truncate">{c.name}</h3>
-                      <p className="text-xs text-muted-foreground">{c.description}</p>
-                    </div>
-                    <Button size="icon" variant="ghost" onClick={() => deleteCategory(c.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* USERS */}
-          <TabsContent value="users" className="space-y-4">
-            <Card className="border-gold/20">
-              <CardHeader>
-                <CardTitle className="text-lg md:text-2xl">Utilisateurs inscrits</CardTitle>
-                <p className="text-sm text-muted-foreground mt-2">Total : {filteredUsers.length} utilisateur{filteredUsers.length !== 1 ? "s" : ""}</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  <div className="md:col-span-2 lg:col-span-2">
-                    <Label>Rechercher un utilisateur</Label>
-                    <Input
-                      value={userQuery}
-                      onChange={(e) => {
-                        setUserQuery(e.target.value);
-                        setDisplayedUsersCount(10);
-                      }}
-                      placeholder="Nom, prénom ou ID"
-                      className="rounded-full"
-                    />
-                  </div>
-                  <div className="flex gap-2 items-end">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => {
-                        setUserQuery("");
-                        setDisplayedUsersCount(10);
-                      }}
-                      className="flex-1"
-                    >
-                      Effacer
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="hero" 
-                      onClick={() => setSelectedUserId(null)}
-                      className="flex-1"
-                    >
-                      Tous
-                    </Button>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {selectedUser && (
-              <Card className="border-gold/20">
-                <CardHeader>
-                  <CardTitle>Utilisateur sélectionné</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Nom</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-foreground">{selectedUser.full_name || "(sans nom)"}</p>
-                        <GoldBadge hasGoldBadge={badgeIds.has(selectedUser.id)} />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Pays</p>
-                      <p className="font-semibold text-foreground">{selectedUser.country || "—"}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {adminIds.has(selectedUser.id) ? (
-                        <Badge>Admin</Badge>
-                      ) : (
-                        <Badge variant="secondary">Membre</Badge>
-                      )}
-                      {badgeIds.has(selectedUser.id) ? (
-                        <Badge className="bg-gold text-gold-foreground">Badge doré</Badge>
-                      ) : null}
-                      <Button size="sm" variant="ghost" onClick={() => setSelectedUserId(null)}>Désélectionner</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                  <StatCard label="Enseignements publiés" value={publishedCount} icon={BookOpen} index={0} active ratio={publishedCount / maxForRing} />
+                  <StatCard label="Brouillons en attente" value={draftCount} icon={Pencil} index={1} active ratio={draftCount / maxForRing} />
+                  <StatCard label="Utilisateurs inscrits" value={users.length} icon={UsersIcon} index={2} active ratio={users.length / maxForRing} />
+                  <StatCard label="Commentaires" value={totalComments} icon={MessageSquareText} index={3} active ratio={totalComments / maxForRing} />
+                </div>
 
-            <div className="space-y-2">
-              {filteredUsers.length === 0 ? (
-                <Card>
-                  <CardContent className="p-6 text-center text-muted-foreground">
-                    Aucun utilisateur trouvé.
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  {filteredUsers.slice(0, displayedUsersCount).map((u) => {
-                    const isUserAdmin = adminIds.has(u.id);
-                    const hasGoldBadge = badgeIds.has(u.id);
-                    return (
-                      <Card key={u.id} className={`${selectedUserId === u.id ? "border-gold" : ""} hover:shadow-md transition-shadow`}>
-                        <CardContent className="p-3 md:p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 md:gap-4">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-semibold truncate">{u.full_name || "(sans nom)"}</h3>
-                                <GoldBadge hasGoldBadge={hasGoldBadge} />
-                              </div>
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <p className="text-xs text-muted-foreground">{u.country || "—"}</p>
-                                {isUserAdmin && <Badge className="text-xs">Admin</Badge>}
-                              </div>
+                <CrownDivider />
+
+                <div>
+                  <h3 className="font-display text-base font-semibold mb-3">Dernières publications</h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {teachings.slice(0, 4).map((t, i) => (
+                      <Card
+                        key={t.id}
+                        className="border-gold/15 hover:border-gold/30 hover:-translate-y-0.5 transition-all animate-in fade-in slide-in-from-bottom-2 duration-500"
+                        style={{ animationDelay: `${i * 60}ms` }}
+                      >
+                        <CardContent className="p-4 flex items-start gap-3">
+                          {t.cover_image_url ? (
+                            <img src={t.cover_image_url} alt="" className="w-14 h-14 rounded-md object-cover shrink-0" />
+                          ) : (
+                            <div className="w-14 h-14 rounded-md bg-gradient-to-br from-gold/20 to-muted shrink-0" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-sm font-semibold truncate">{t.title}</h4>
+                              <PublishBadge published={t.published} />
                             </div>
-                            <div className="flex flex-wrap gap-2 justify-start md:justify-end">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => setSelectedUserId(u.id)}
-                                className="text-xs"
-                              >
-                                Voir
-                              </Button>
-                              {u.id === user!.id ? (
-                                <span className="text-xs text-muted-foreground flex items-center">vous</span>
-                              ) : (
-                                <>
-                                  {isUserAdmin ? (
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      onClick={() => toggleAdmin(u.id, false)}
-                                      className="text-xs"
-                                    >
-                                      <ShieldOff className="w-3 h-3" /> Retirer
-                                    </Button>
-                                  ) : (
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      onClick={() => toggleAdmin(u.id, true)}
-                                      className="text-xs"
-                                    >
-                                      <Shield className="w-3 h-3" /> Promouvoir
-                                    </Button>
-                                  )}
-                                  {hasGoldBadge ? (
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      onClick={() => toggleGoldBadge(u.id, false)}
-                                      className="text-xs"
-                                    >
-                                      <Award className="w-3 h-3" /> Retirer
-                                    </Button>
-                                  ) : (
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      onClick={() => toggleGoldBadge(u.id, true)}
-                                      className="text-xs"
-                                    >
-                                      <Award className="w-3 h-3" /> Ajouter
-                                    </Button>
-                                  )}
-                                </>
-                              )}
-                            </div>
+                            <p className="text-xs text-muted-foreground truncate mt-1">{t.excerpt || "Pas de description"}</p>
                           </div>
                         </CardContent>
                       </Card>
-                    );
-                  })}
+                    ))}
+                    {teachings.length === 0 && (
+                      <p className="text-sm text-muted-foreground">Aucun enseignement pour le moment.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
-                  {displayedUsersCount < filteredUsers.length && (
-                    <div className="flex justify-center pt-4">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setDisplayedUsersCount(displayedUsersCount + usersPerPage)}
-                        className="w-full md:w-auto"
-                      >
-                        Charger plus ({displayedUsersCount} / {filteredUsers.length})
-                      </Button>
+            {/* -------------------- HOME (site homepage settings) -------------------- */}
+            {activeSection === "home" && (
+              <div className="animate-in fade-in duration-500">
+                <Card className="border-gold/20">
+                  <CardHeader>
+                    <CardTitle>Contenu d'accueil</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={saveHomeSettings} className="space-y-6">
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div>
+                          <Label>URL YouTube</Label>
+                          <Input
+                            value={homeForm.youtube_url}
+                            onChange={(e) => setHomeForm({ ...homeForm, youtube_url: e.target.value })}
+                            placeholder="https://youtu.be/..."
+                          />
+                        </div>
+                        <div>
+                          <Label>Durée d'affichage (jours)</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={homeForm.youtube_duration_days}
+                            onChange={(e) => setHomeForm({ ...homeForm, youtube_duration_days: Number(e.target.value) || 1 })}
+                          />
+                        </div>
+                        <div className="flex items-end gap-2">
+                          <Switch
+                            checked={homeForm.active}
+                            onCheckedChange={(active) => setHomeForm({ ...homeForm, active })}
+                            id="home-active"
+                          />
+                          <Label htmlFor="home-active">Activer la vidéo</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <Label>Link TikTok</Label>
+                          <Input
+                            value={homeForm.tiktok_url}
+                            onChange={(e) => setHomeForm({ ...homeForm, tiktok_url: e.target.value })}
+                            placeholder="https://www.tiktok.com/..."
+                          />
+                        </div>
+                        <div>
+                          <Label>Link YouTube</Label>
+                          <Input
+                            value={homeForm.youtube_channel_url}
+                            onChange={(e) => setHomeForm({ ...homeForm, youtube_channel_url: e.target.value })}
+                            placeholder="https://www.youtube.com/channel/..."
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
+                        <div>
+                          <Label>Communiqué défilant</Label>
+                          <Textarea
+                            value={homeForm.marquee_text}
+                            onChange={(e) => setHomeForm({ ...homeForm, marquee_text: e.target.value })}
+                            placeholder="Entrez le texte qui défilera en haut de l'accueil"
+                            rows={3}
+                          />
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Le texte s'affichera en bandeau défilant en haut de la page d'accueil.
+                          </p>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="marquee-speed">Vitesse de défilement</Label>
+                          <div className="space-y-3 mt-2">
+                            <div className="flex items-center gap-3">
+                              <Input
+                                id="marquee-speed"
+                                type="number"
+                                min={8}
+                                max={60}
+                                step={1}
+                                value={homeForm.marquee_speed}
+                                onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
+                                placeholder="45"
+                                className="w-20"
+                              />
+                              <span className="text-sm text-muted-foreground">secondes</span>
+                            </div>
+                            <input
+                              type="range"
+                              id="marquee-range"
+                              min={8}
+                              max={60}
+                              step={1}
+                              value={homeForm.marquee_speed}
+                              onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
+                              className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-gold"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Plus bas = plus rapide. 8-30 sec recommandé.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label>Link WhatsApp</Label>
+                          <Input
+                            value={homeForm.whatsapp_url}
+                            onChange={(e) => setHomeForm({ ...homeForm, whatsapp_url: e.target.value })}
+                            placeholder="https://wa.me/..."
+                          />
+                        </div>
+                        <div>
+                          <Label>Link Facebook</Label>
+                          <Input
+                            value={homeForm.facebook_url}
+                            onChange={(e) => setHomeForm({ ...homeForm, facebook_url: e.target.value })}
+                            placeholder="https://www.facebook.com/..."
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border pt-6">
+                        <h3 className="font-semibold text-foreground mb-4">Bouton « En direct »</h3>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="flex items-end gap-2">
+                            <Switch
+                              checked={homeForm.live_enabled}
+                              onCheckedChange={(live_enabled) => setHomeForm({ ...homeForm, live_enabled })}
+                              id="live-enabled"
+                            />
+                            <Label htmlFor="live-enabled">Activer le bouton en direct</Label>
+                          </div>
+                          <div>
+                            <Label>URL du direct (YouTube, TikTok, etc.)</Label>
+                            <Input
+                              value={homeForm.live_url}
+                              onChange={(e) => setHomeForm({ ...homeForm, live_url: e.target.value })}
+                              placeholder="https://www.youtube.com/watch?v=... ou https://www.tiktok.com/@..."
+                              disabled={!homeForm.live_enabled}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border pt-6">
+                        <h3 className="font-semibold text-foreground mb-4">Carrousel d'images</h3>
+                        <div className="space-y-4">
+                          {homeForm.carousel_images.map((image, index) => (
+                            <div key={index} className="p-3 border rounded-lg grid gap-4 md:grid-cols-[1fr,auto] items-start">
+                              <div>
+                                <Label>Image {index + 1}</Label>
+                                <MediaUpload
+                                  value={image}
+                                  onChange={(url) => {
+                                    setCarouselImage(index, url);
+                                    setCarouselSlideField(index, 'image_url', url);
+                                  }}
+                                  accept="image"
+                                />
+
+                                <div className="mt-3 grid gap-2">
+                                  <div>
+                                    <Label>Pré-titre</Label>
+                                    <Input
+                                      value={homeForm.carousel_slides?.[index]?.pretitle || ''}
+                                      onChange={(e) => setCarouselSlideField(index, 'pretitle', e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Titre</Label>
+                                    <Input
+                                      value={homeForm.carousel_slides?.[index]?.title || ''}
+                                      onChange={(e) => setCarouselSlideField(index, 'title', e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Description</Label>
+                                    <Textarea
+                                      rows={2}
+                                      value={homeForm.carousel_slides?.[index]?.description || ''}
+                                      onChange={(e) => setCarouselSlideField(index, 'description', e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col items-end gap-2">
+                                <Button type="button" variant="destructive" size="sm" onClick={() => removeCarouselImage(index)} className="h-fit">
+                                  <Trash2 className="w-4 h-4" /> Supprimer
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={addCarouselImage}
+                            disabled={homeForm.carousel_images.length >= 5}
+                          >
+                            Ajouter une image
+                          </Button>
+                        </div>
+                      </div>
+
+                      <Button type="submit" variant="hero">Enregistrer l'accueil</Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* -------------------- PUBLICATIONS -------------------- */}
+            {activeSection === "publications" && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <Card className="border-gold/20">
+                  <CardHeader>
+                    <CardTitle>Gestion des publications</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="lg:col-span-2">
+                        <Label>Recherche</Label>
+                        <Input
+                          value={publicationQuery}
+                          onChange={(e) => setPublicationQuery(e.target.value)}
+                          placeholder="Rechercher un titre, un extrait ou un passage..."
+                        />
+                      </div>
+                      <div>
+                        <Label>Statut</Label>
+                        <Select value={publicationStatusFilter} onValueChange={(value) => setPublicationStatusFilter(value as "all" | "published" | "draft") }>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tous</SelectItem>
+                            <SelectItem value="published">Publiés</SelectItem>
+                            <SelectItem value="draft">Brouillons</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Catégorie</Label>
+                        <Select value={publicationCategoryFilter} onValueChange={setPublicationCategoryFilter}>
+                          <SelectTrigger><SelectValue placeholder="Toutes" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Toutes</SelectItem>
+                            {categories.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Auteur</Label>
+                        <Select value={publicationAuthorFilter} onValueChange={setPublicationAuthorFilter}>
+                          <SelectTrigger><SelectValue placeholder="Tous" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tous</SelectItem>
+                            {users.map((u) => (
+                              <SelectItem key={u.id} value={u.id}>{u.full_name || "(sans nom)"}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-3">
+                  {filteredPublications.length === 0 ? (
+                    <Card>
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                        Aucune publication ne correspond à vos filtres.
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    filteredPublications.map((t, i) => (
+                      <Card
+                        key={t.id}
+                        className="border-gold/10 hover:border-gold/25 transition-colors animate-in fade-in slide-in-from-bottom-1 duration-500"
+                        style={{ animationDelay: `${i * 40}ms` }}
+                      >
+                        <CardContent className="space-y-4 p-4">
+                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0">
+                              <h3 className="font-display text-lg font-semibold truncate">{t.title}</h3>
+                              <p className="text-sm text-muted-foreground truncate">{t.excerpt ?? "Pas de description"}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <PublishBadge published={t.published} />
+                              {commentCounts[t.id] ? <Badge variant="outline">{commentCounts[t.id]} commentaire{commentCounts[t.id] === 1 ? "" : "s"}</Badge> : <Badge variant="outline">0 commentaire</Badge>}
+                              {t.category_id && <Badge variant="outline">{categories.find((c) => c.id === t.category_id)?.name ?? "Catégorie inconnue"}</Badge>}
+                            </div>
+                          </div>
+
+                          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 text-xs text-muted-foreground">
+                            <span>Auteur : {getAuthorName(t.author_id)}</span>
+                            <span>Créé le : {new Date(t.created_at).toLocaleDateString("fr-FR")}</span>
+                            <span>Pays : {t.country || "—"}</span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Button size="sm" variant="outline" onClick={() => startEdit(t)} className="text-xs">Modifier</Button>
+                            <Button size="sm" variant="outline" onClick={() => loadTeachingComments(t)} className="text-xs">Voir commentaires</Button>
+                            <Button size="sm" variant="ghost" onClick={() => togglePublished(t)} className="text-xs">
+                              {t.published ? "Dépublier" : "Publier"}
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteTeaching(t.id)} className="text-xs">Supprimer</Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
                   )}
-                </>
-              )}
-            </div>
-          </TabsContent>
+                </div>
 
-          <TabsContent value="testimonials" className="space-y-6">
-            <TestimonialsAdmin />
-          </TabsContent>
+                {selectedTeaching && (
+                  <Card className="border-gold/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <CardHeader>
+                      <CardTitle>Commentaires de la publication</CardTitle>
+                      <p className="text-sm text-muted-foreground">{selectedTeaching.title}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="text-sm text-muted-foreground">
+                          {selectedTeachingComments.length} commentaire{selectedTeachingComments.length === 1 ? "" : "s"}
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedTeaching(null)}>
+                          Fermer
+                        </Button>
+                      </div>
 
-          <TabsContent value="stories" className="space-y-6">
-            <StoriesAdmin />
-          </TabsContent>
-        </Tabs>
-      </main>
+                      {loadingComments ? (
+                        <div className="p-4 text-center text-muted-foreground">Chargement des commentaires…</div>
+                      ) : selectedTeachingComments.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">Aucun commentaire pour cette publication.</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {selectedTeachingComments.map((comment) => {
+                            const author = users.find((u) => u.id === comment.user_id)?.full_name || "Membre";
+                            return (
+                              <div key={comment.id} className="rounded-3xl border border-border p-4">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                  <div>
+                                    <p className="font-semibold">{author}</p>
+                                    <p className="text-xs text-muted-foreground">{new Date(comment.created_at).toLocaleString("fr-FR")}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {comment.parent_id && <Badge variant="outline">Réponse</Badge>}
+                                    <Button size="sm" variant="ghost" onClick={() => deleteTeachingComment(comment.id)}>Supprimer</Button>
+                                  </div>
+                                </div>
+                                <p className="mt-3 text-sm text-foreground">{comment.content}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* -------------------- TEACHINGS -------------------- */}
+            {activeSection === "teachings" && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <Card className="border-gold/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      {editingId ? "Modifier l'enseignement" : "Nouvel enseignement"}
+                      {editingId && (
+                        <Button size="sm" variant="ghost" onClick={cancelEdit}>
+                          <X className="w-4 h-4" /> Annuler
+                        </Button>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={submitTeaching} className="space-y-4">
+                      <div>
+                        <Label>Titre</Label>
+                        <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required maxLength={200} />
+                      </div>
+                      <div>
+                        <Label>Extrait</Label>
+                        <Input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} maxLength={300} />
+                      </div>
+                      <div>
+                        <Label>Contenu</Label>
+                        <RichTextEditor
+                          value={form.content}
+                          onChange={(content) => setForm({ ...form, content })}
+                          placeholder="Écrivez le contenu de l'enseignement ici..."
+                        />
+                      </div>
+                      <div className="rounded-3xl border border-border/70 bg-gradient-to-br from-background via-background/95 to-muted/20 p-4 md:p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <h3 className="font-semibold text-foreground">Médias de la publication</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              Ajoutez une couverture, une vidéo ou un audio avec un rendu plus fluide et plus moderne.
+                            </p>
+                          </div>
+                          <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
+                            Multi-format
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                          <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
+                            <Label className="mb-2 block text-sm font-medium">Image de couverture</Label>
+                            <MediaUpload value={form.cover} onChange={(v) => setForm({ ...form, cover: v })} accept="image" />
+                          </div>
+                          <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
+                            <Label className="mb-2 block text-sm font-medium">Vidéo (optionnel)</Label>
+                            <MediaUpload value={form.video} onChange={(v) => setForm({ ...form, video: v })} accept="video" />
+                          </div>
+                          <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
+                            <Label className="mb-2 block text-sm font-medium">Audio (optionnel)</Label>
+                            <MediaUpload value={form.audio} onChange={(v) => setForm({ ...form, audio: v })} accept="audio" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Pays</Label>
+                          <CountrySelect value={form.country} onChange={(v) => setForm({ ...form, country: v })} placeholder="Sélectionner un pays..." />
+                        </div>
+                        <div>
+                          <Label>Catégorie</Label>
+                          <Select value={form.catId} onValueChange={(v) => setForm({ ...form, catId: v })}>
+                            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                            <SelectContent>
+                              {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch checked={form.published} onCheckedChange={(v) => setForm({ ...form, published: v })} id="pub" />
+                        <Label htmlFor="pub">Publié</Label>
+                      </div>
+                      <Button type="submit" variant="hero" disabled={submitting}>
+                        {submitting ? "Traitement en cours..." : editingId ? "Enregistrer" : "Publier"}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-2">
+                  {teachings.map((t, i) => (
+                    <Card
+                      key={t.id}
+                      className={`${editingId === t.id ? "border-gold" : "border-gold/10"} hover:shadow-md hover:border-gold/25 transition-all animate-in fade-in slide-in-from-bottom-1 duration-500`}
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    >
+                      <CardContent className="p-3 md:p-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 md:gap-4 items-start">
+                          {t.cover_image_url && (
+                            <img src={t.cover_image_url} alt="" className="w-20 h-14 object-cover rounded shrink-0 sm:order-1" />
+                          )}
+                          <div className="flex-1 min-w-0 sm:order-2">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <h3 className="font-display font-semibold truncate text-sm">{t.title}</h3>
+                              <PublishBadge published={t.published} />
+                              {t.video_url && <Badge variant="outline" className="text-xs">Vidéo</Badge>}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">{t.excerpt}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0 sm:order-3">
+                            <Switch checked={t.published} onCheckedChange={() => togglePublished(t)} className="scale-75" />
+                            <Button size="icon" variant="ghost" onClick={() => startEdit(t)} aria-label="Modifier" className="h-8 w-8">
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => deleteTeaching(t.id)} aria-label="Supprimer" className="h-8 w-8">
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* -------------------- CATEGORIES -------------------- */}
+            {activeSection === "categories" && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <Card className="border-gold/20">
+                  <CardHeader><CardTitle>Nouvelle catégorie</CardTitle></CardHeader>
+                  <CardContent>
+                    <form onSubmit={createCategory} className="space-y-3">
+                      <div><Label>Nom</Label><Input value={catName} onChange={(e) => setCatName(e.target.value)} required maxLength={50} /></div>
+                      <div><Label>Description</Label><Input value={catDesc} onChange={(e) => setCatDesc(e.target.value)} maxLength={200} /></div>
+                      <Button type="submit" variant="hero">Créer</Button>
+                    </form>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-3">
+                  {categories.map((c, i) => (
+                    <Card
+                      key={c.id}
+                      className="border-gold/10 hover:border-gold/25 transition-colors animate-in fade-in slide-in-from-bottom-1 duration-500"
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    >
+                      <CardContent className="p-3 md:p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold truncate">{c.name}</h3>
+                          <p className="text-xs text-muted-foreground">{c.description}</p>
+                        </div>
+                        <Button size="icon" variant="ghost" onClick={() => deleteCategory(c.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* -------------------- USERS -------------------- */}
+            {activeSection === "users" && (
+              <div className="space-y-4 animate-in fade-in duration-500">
+                <Card className="border-gold/20">
+                  <CardHeader>
+                    <CardTitle className="text-lg md:text-2xl">Utilisateurs inscrits</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-2">Total : {filteredUsers.length} utilisateur{filteredUsers.length !== 1 ? "s" : ""}</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      <div className="md:col-span-2 lg:col-span-2">
+                        <Label>Rechercher un utilisateur</Label>
+                        <Input
+                          value={userQuery}
+                          onChange={(e) => {
+                            setUserQuery(e.target.value);
+                            setDisplayedUsersCount(10);
+                          }}
+                          placeholder="Nom, prénom ou ID"
+                          className="rounded-full"
+                        />
+                      </div>
+                      <div className="flex gap-2 items-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setUserQuery("");
+                            setDisplayedUsersCount(10);
+                          }}
+                          className="flex-1"
+                        >
+                          Effacer
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="hero"
+                          onClick={() => setSelectedUserId(null)}
+                          className="flex-1"
+                        >
+                          Tous
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {selectedUser && (
+                  <Card className="border-gold/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <CardHeader>
+                      <CardTitle>Utilisateur sélectionné</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Nom</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-foreground">{selectedUser.full_name || "(sans nom)"}</p>
+                            <GoldBadge hasGoldBadge={badgeIds.has(selectedUser.id)} />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Pays</p>
+                          <p className="font-semibold text-foreground">{selectedUser.country || "—"}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {adminIds.has(selectedUser.id) ? (
+                            <Badge>Admin</Badge>
+                          ) : (
+                            <Badge variant="secondary">Membre</Badge>
+                          )}
+                          {badgeIds.has(selectedUser.id) ? (
+                            <Badge className="bg-gold text-gold-foreground">Badge doré</Badge>
+                          ) : null}
+                          <Button size="sm" variant="ghost" onClick={() => setSelectedUserId(null)}>Désélectionner</Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <div className="space-y-2">
+                  {filteredUsers.length === 0 ? (
+                    <Card>
+                      <CardContent className="p-6 text-center text-muted-foreground">
+                        Aucun utilisateur trouvé.
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <>
+                      {filteredUsers.slice(0, displayedUsersCount).map((u, i) => {
+                        const isUserAdmin = adminIds.has(u.id);
+                        const hasGoldBadge = badgeIds.has(u.id);
+                        return (
+                          <Card
+                            key={u.id}
+                            className={`${selectedUserId === u.id ? "border-gold" : "border-gold/10"} hover:shadow-md hover:border-gold/25 transition-all animate-in fade-in slide-in-from-bottom-1 duration-500`}
+                            style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+                          >
+                            <CardContent className="p-3 md:p-4">
+                              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 md:gap-4">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="font-semibold truncate">{u.full_name || "(sans nom)"}</h3>
+                                    <GoldBadge hasGoldBadge={hasGoldBadge} />
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                    <p className="text-xs text-muted-foreground">{u.country || "—"}</p>
+                                    {isUserAdmin && <Badge className="text-xs">Admin</Badge>}
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2 justify-start md:justify-end">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setSelectedUserId(u.id)}
+                                    className="text-xs"
+                                  >
+                                    Voir
+                                  </Button>
+                                  {u.id === user!.id ? (
+                                    <span className="text-xs text-muted-foreground flex items-center">vous</span>
+                                  ) : (
+                                    <>
+                                      {isUserAdmin ? (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => toggleAdmin(u.id, false)}
+                                          className="text-xs"
+                                        >
+                                          <ShieldOff className="w-3 h-3" /> Retirer
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => toggleAdmin(u.id, true)}
+                                          className="text-xs"
+                                        >
+                                          <Shield className="w-3 h-3" /> Promouvoir
+                                        </Button>
+                                      )}
+                                      {hasGoldBadge ? (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => toggleGoldBadge(u.id, false)}
+                                          className="text-xs"
+                                        >
+                                          <Award className="w-3 h-3" /> Retirer
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => toggleGoldBadge(u.id, true)}
+                                          className="text-xs"
+                                        >
+                                          <Award className="w-3 h-3" /> Ajouter
+                                        </Button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+
+                      {displayedUsersCount < filteredUsers.length && (
+                        <div className="flex justify-center pt-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => setDisplayedUsersCount(displayedUsersCount + usersPerPage)}
+                            className="w-full md:w-auto"
+                          >
+                            Charger plus ({displayedUsersCount} / {filteredUsers.length})
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeSection === "testimonials" && (
+              <div className="animate-in fade-in duration-500"><TestimonialsAdmin /></div>
+            )}
+
+            {activeSection === "stories" && (
+              <div className="animate-in fade-in duration-500"><StoriesAdmin /></div>
+            )}
+
+            {activeSection === "popups" && (
+              <div className="animate-in fade-in duration-500"><PopupsAdmin /></div>
+            )}
+          </div>
+        </main>
+      </div>
+
       <Footer />
     </div>
   );
