@@ -566,7 +566,7 @@ const Admin = () => {
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Panel administrateur</div>
             </div>
             <Button
-              variant="ghost" size="icon" className="ml-auto md:hidden h-8 w-8"
+              variant="ghost" size="icon" className="ml-auto md:hidden h-8 w-8 bg-card/60 border border-border/60 shadow-sm"
               onClick={() => setMobileNavOpen(false)} aria-label="Fermer le menu"
             >
               <X className="w-4 h-4" />
@@ -616,7 +616,7 @@ const Admin = () => {
         <main className="flex-1 min-w-0 flex flex-col">
           <div className="sticky top-16 md:top-20 z-20 flex items-center gap-3 border-b border-border/60 bg-background/85 backdrop-blur px-4 md:px-8 py-3">
             <Button
-              variant="ghost" size="icon" className="md:hidden h-9 w-9"
+              variant="ghost" size="icon" className="md:hidden h-9 w-9 bg-card/60 border border-border/60 shadow-sm"
               onClick={() => setMobileNavOpen(true)} aria-label="Ouvrir le menu"
             >
               <Menu className="w-5 h-5" />
