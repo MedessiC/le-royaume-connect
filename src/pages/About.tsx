@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
@@ -114,16 +115,71 @@ const About = () => {
       <main className="flex-1 pt-16">
 
         {/* HERO */}
-        <section className="bg-gradient-hero text-primary-foreground py-24">
-          <div className="container mx-auto px-4 text-center max-w-3xl">
-            <Crown className="w-14 h-14 mx-auto text-gold mb-6" />
+        <section className="relative overflow-hidden bg-about-hero text-primary-foreground py-20 md:py-24">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute left-0 top-10 h-72 w-72 rounded-full bg-white/15 blur-3xl animate-blob-slow" />
+            <div className="absolute right-[-5%] top-28 h-64 w-64 rounded-full bg-gold/20 blur-3xl animate-blob-slow" />
+            <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-100/10 blur-3xl animate-blob-slow" />
+            <div className="absolute inset-0 bg-hero-grid opacity-40" />
+          </div>
+          <div className="relative z-10 container mx-auto px-4 max-w-5xl text-center">
+            <Crown className="w-16 h-16 mx-auto text-gold mb-6" />
+            <span className="inline-flex items-center justify-center rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-gold mb-4">
+              À propos du Millenium
+            </span>
             <h1 className="font-display text-4xl md:text-6xl font-bold mb-6 text-white">
-              Notre <span className="text-gradient-gold">Histoire</span>
+              Le mouvement Millenium <br /> entre vision, héritage et avenir
             </h1>
-            <p className="text-lg md:text-xl text-white/85 font-body leading-relaxed">
-              Du cœur de Banikoara aux quatre coins du monde — l'épopée d'une communauté
-              spirituelle souveraine, fondée sur la foi, l'unité et la transmission.
+            <p className="mx-auto max-w-3xl text-lg md:text-xl text-white/85 font-body leading-relaxed mb-8">
+              Un récit spirituel ancré à Banikoara, révélant la mission de ZOVIZO, la structure des trois périodes divines,
+              et l'appel à rassembler une communauté mondiale autour du Royaume millénaire.
             </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                to="/feed"
+                className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-gold/20 transition hover:shadow-xl"
+              >
+                Explorer les enseignements
+              </Link>
+              <Link
+                to="/community"
+                className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                Rejoindre la communauté
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16 container mx-auto px-4 max-w-6xl">
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              {
+                title: "Vision",
+                text: "Rassembler et élever les enfants de Dieu vers un règne millénaire de paix.",
+                icon: Globe,
+              },
+              {
+                title: "Mission",
+                text: "Proposer des enseignements, un guide spirituel et une communauté unie.",
+                icon: Sparkles,
+              },
+              {
+                title: "Impact",
+                text: "Faire de Banikoara le cœur spirituel d'une nouvelle ère mondiale.",
+                icon: Users,
+              },
+            ].map((item) => (
+              <Card key={item.title} className="border-gold/20">
+                <CardContent className="p-8">
+                  <div className="mb-4 h-12 w-12 rounded-full bg-gold/15 text-gold flex items-center justify-center">
+                    <item.icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-display text-xl font-bold text-foreground mb-3">{item.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{item.text}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
 
@@ -606,7 +662,21 @@ const About = () => {
               en Europe, en Amérique du Nord, dans les Caraïbes et au-delà. Cette plateforme est
               le pont qui les relie tous — convergés vers Sion, Banikoara, Bénin.
             </p>
-            <Heart className="w-8 h-8 mx-auto text-gold" />
+            <Heart className="w-8 h-8 mx-auto text-gold mb-8" />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                to="/community"
+                className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                Rejoindre la communauté
+              </Link>
+              <Link
+                to="/feed"
+                className="inline-flex items-center justify-center rounded-full bg-gold px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-gold/20 transition hover:shadow-xl"
+              >
+                Voir les enseignements
+              </Link>
+            </div>
           </div>
         </section>
 
