@@ -20,7 +20,7 @@ const defaultSlides: Slide[] = [
     color: "from-slate-950 via-slate-900 to-indigo-950",
     pretitle: "Mouvement Mondial · Banikoara",
     title: "Destruction de la grande Babylone ",
-    description: "Effacement des frontières issues de la conférence de Berlin. Rome, qui n’aura désormais que ses yeux pour pleurer.",
+    description: "Suppression des frontières issues de la conférence de Berlin. Rome, qui n’aura désormais que ses yeux pour pleurer.",
     ctaText: "Rejoindre la communauté",
     ctaLink: "/community",
   },
