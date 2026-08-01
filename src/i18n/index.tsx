@@ -1036,9 +1036,9 @@ const setGoogleTranslateCookie = (locale: SupportedLocale) => {
   document.cookie = `googtrans=${cookieValue}; path=/; domain=${window.location.hostname}`;
   document.cookie = `googtrans=${cookieValue}; path=/`;
 
-  // Trigger Google Translate widget element if loaded
+  // Trigger Google Translate widget element only if value actually changes
   const selectElem = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
-  if (selectElem) {
+  if (selectElem && selectElem.value !== targetLang) {
     selectElem.value = targetLang;
     selectElem.dispatchEvent(new Event("change"));
   }
@@ -1051,13 +1051,6 @@ export const LocaleProvider = ({ children }: { children: ReactNode }) => {
     window.localStorage.setItem(STORAGE_KEY, locale);
     document.documentElement.lang = locale;
     setGoogleTranslateCookie(locale);
-
-    if (locale !== "fr") {
-      const interval = setInterval(() => {
-        setGoogleTranslateCookie(locale);
-      }, 2500);
-      return () => clearInterval(interval);
-    }
   }, [locale]);
 
   const value = useMemo(() => ({ locale, setLocale }), [locale]);
