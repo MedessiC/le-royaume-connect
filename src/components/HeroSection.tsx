@@ -16,7 +16,7 @@ type Slide = {
 
 const defaultSlides: Slide[] = [
   {
-    src: "/hero-1.webp",
+    src: "/hero-1-optimized.webp",
     alt: "Vision Millenium",
     color: "from-slate-950 via-slate-900 to-indigo-950",
     pretitle: "Mouvement Mondial · Banikoara",
@@ -26,6 +26,7 @@ const defaultSlides: Slide[] = [
     ctaLink: "/community",
   },
   {
+    src: "/hero-2-optimized.webp",
     alt: "Communauté & Service",
     color: "from-slate-950 via-slate-900 to-blue-950",
     pretitle: "Fraternité & Engagement",
@@ -107,17 +108,19 @@ const HeroSection = ({ slides }: HeroSectionProps) => {
                 isActive ? "opacity-100 z-0" : "opacity-0 -z-10"
               }`}
             >
+              <div className={`absolute inset-0 bg-gradient-to-br ${slide.color || "from-slate-950 to-slate-900"}`} />
               {slide.src ? (
                 <img
                   src={slide.src}
                   alt={slide.alt}
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
                   className={`w-full h-full object-cover transition-transform duration-[8000ms] ease-out ${
                     isActive ? "scale-105" : "scale-100"
                   }`}
                 />
-              ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${slide.color || "from-slate-950 to-slate-900"}`} />
-              )}
+              ) : null}
               
               {/* Microsoft-style clean gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/70 to-slate-950/30" />
