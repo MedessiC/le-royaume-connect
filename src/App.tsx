@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { LocaleProvider } from "@/i18n";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import FloatingAudioPlayer from "@/components/FloatingAudioPlayer";
+import PageTransitionLoader from "@/components/PageTransitionLoader";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { initVersionCheck } from "@/lib/versionCheck";
@@ -44,6 +45,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <PageTransitionLoader />
             <AuthProvider>
               <LocaleProvider>
                 <AudioPlayerProvider>
