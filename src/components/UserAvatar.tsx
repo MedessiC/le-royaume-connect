@@ -8,6 +8,8 @@ interface UserAvatarProps {
 }
 
 const UserAvatar = ({ src, name, className = "" }: UserAvatarProps) => {
+  const avatarSrc = src || (name === "Le Règne Millénaire" || name === "@leregnemillenaire" ? "/android-chrome-512x512.png" : null);
+
   const initials = name
     .split(/\s+/)
     .map((part) => part[0])
@@ -17,7 +19,7 @@ const UserAvatar = ({ src, name, className = "" }: UserAvatarProps) => {
 
   return (
     <Avatar className={className}>
-      {src ? <AvatarImage src={src} alt={name} /> : null}
+      {avatarSrc ? <AvatarImage src={avatarSrc} alt={name} className="object-cover" /> : null}
       <AvatarFallback className="bg-gradient-to-br from-gold via-gold-dark to-midnight-deep text-slate-900 dark:text-white font-bold border border-gold/30">
         {initials}
       </AvatarFallback>

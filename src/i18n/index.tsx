@@ -173,6 +173,33 @@ const translations: Record<SupportedLocale, TranslationMap> = {
       description: "Aide à maintenir la plateforme active et à diffuser les enseignements plus loin.",
       donateButton: "Faire un don",
       thankYou: "Merci pour votre soutien.",
+      contactTitle: "Parlons directement.",
+      contactEyebrow: "Soutenir la mission",
+      contactDescription: "Pour faire un don, demander les modalités de soutien ou poser une question, contactez l'organisation par le moyen qui vous convient le mieux.",
+      officialContacts: "Coordonnées officielles",
+      chooseChannel: "Choisissez votre canal",
+      contactDescriptionShort: "Notre équipe peut vous renseigner sur les dons directs, les besoins de la mission et les différentes manières de contribuer.",
+      email: "Email",
+      whatsapp: "WhatsApp de l'organisation",
+      whatsappResponse: "Réponse directe de l'équipe",
+      callDirectly: "Nous appeler directement",
+      phoneNumbersSoon: "Les numéros de téléphone seront bientôt disponibles.",
+      formEyebrow: "Formulaire de contact",
+      writeUs: "Écrivez-nous",
+      formDescription: "Votre messagerie s'ouvrira avec un message déjà préparé.",
+      namePlaceholder: "Votre nom",
+      emailPlaceholder: "Votre adresse email",
+      phonePlaceholder: "Votre numéro de téléphone",
+      subjectPlaceholder: "Objet",
+      messagePlaceholder: "Votre message",
+      defaultSubject: "Soutenir le Règne Millénaire",
+      defaultMessage: "Bonjour, je souhaite soutenir la mission du Règne Millénaire. Je voudrais échanger avec votre équipe au sujet des modalités de soutien.",
+      prepareEmail: "Préparer mon email",
+      mailOpening: "Votre messagerie va s'ouvrir",
+      mailOpeningDescription: "Vérifiez le message puis envoyez-le à l'organisation.",
+      teamListening: "Une équipe à votre écoute",
+      clearModalities: "Des modalités expliquées clairement",
+      supportDifference: "Un soutien qui fait la différence",
     },
     about: {
       title: "À propos de MILLENIUM",
@@ -389,6 +416,33 @@ const translations: Record<SupportedLocale, TranslationMap> = {
       description: "Help keep the platform active and spread teachings farther.",
       donateButton: "Donate",
       thankYou: "Thank you for your support.",
+      contactTitle: "Let's talk directly.",
+      contactEyebrow: "Support the mission",
+      contactDescription: "To donate, ask about support options or ask a question, contact the organization through the channel that suits you best.",
+      officialContacts: "Official contacts",
+      chooseChannel: "Choose your channel",
+      contactDescriptionShort: "Our team can explain direct donations, the mission's needs and the different ways to contribute.",
+      email: "Email",
+      whatsapp: "Organization WhatsApp",
+      whatsappResponse: "Direct response from the team",
+      callDirectly: "Call us directly",
+      phoneNumbersSoon: "Phone numbers will be available soon.",
+      formEyebrow: "Contact form",
+      writeUs: "Write to us",
+      formDescription: "Your email app will open with a prepared message.",
+      namePlaceholder: "Your name",
+      emailPlaceholder: "Your email address",
+      phonePlaceholder: "Your phone number",
+      subjectPlaceholder: "Subject",
+      messagePlaceholder: "Your message",
+      defaultSubject: "Support the Millenium Kingdom",
+      defaultMessage: "Hello, I would like to support the Millenium Kingdom mission. I would like to speak with your team about support options.",
+      prepareEmail: "Prepare my email",
+      mailOpening: "Your email app will open",
+      mailOpeningDescription: "Review the message and send it to the organization.",
+      teamListening: "A team ready to listen",
+      clearModalities: "Clear support options",
+      supportDifference: "Support that makes a difference",
     },
     about: {
       title: "About MILLENIUM",
@@ -605,6 +659,33 @@ const translations: Record<SupportedLocale, TranslationMap> = {
       description: "Ayuda a mantener la plataforma activa y a difundir las enseñanzas más lejos.",
       donateButton: "Donar",
       thankYou: "Gracias por tu apoyo.",
+      contactTitle: "Hablemos directamente.",
+      contactEyebrow: "Apoyar la misión",
+      contactDescription: "Para hacer una donación, solicitar información o hacer una pregunta, contacta con la organización por el medio que prefieras.",
+      officialContacts: "Datos oficiales",
+      chooseChannel: "Elige tu canal",
+      contactDescriptionShort: "Nuestro equipo puede informarte sobre las donaciones directas, las necesidades de la misión y las formas de contribuir.",
+      email: "Correo electrónico",
+      whatsapp: "WhatsApp de la organización",
+      whatsappResponse: "Respuesta directa del equipo",
+      callDirectly: "Llámanos directamente",
+      phoneNumbersSoon: "Los números de teléfono estarán disponibles pronto.",
+      formEyebrow: "Formulario de contacto",
+      writeUs: "Escríbenos",
+      formDescription: "Tu aplicación de correo se abrirá con un mensaje preparado.",
+      namePlaceholder: "Tu nombre",
+      emailPlaceholder: "Tu correo electrónico",
+      phonePlaceholder: "Tu número de teléfono",
+      subjectPlaceholder: "Asunto",
+      messagePlaceholder: "Tu mensaje",
+      defaultSubject: "Apoyar el Reino Milenario",
+      defaultMessage: "Hola, deseo apoyar la misión del Reino Milenario. Quisiera hablar con el equipo sobre las modalidades de apoyo.",
+      prepareEmail: "Preparar mi correo",
+      mailOpening: "Tu aplicación de correo se abrirá",
+      mailOpeningDescription: "Revisa el mensaje y envíalo a la organización.",
+      teamListening: "Un equipo dispuesto a escucharte",
+      clearModalities: "Modalidades explicadas claramente",
+      supportDifference: "Un apoyo que marca la diferencia",
     },
     about: {
       title: "Acerca de MILLENIUM",
@@ -821,6 +902,33 @@ const translations: Record<SupportedLocale, TranslationMap> = {
       description: "帮助保持平台运作并将教导传播得更远。",
       donateButton: "捐献",
       thankYou: "感谢您的支持。",
+      contactTitle: "让我们直接交流。",
+      contactEyebrow: "支持使命",
+      contactDescription: "如需捐赠、了解支持方式或提出问题，请通过最适合您的方式联系组织。 ",
+      officialContacts: "官方联系方式",
+      chooseChannel: "选择联系方式",
+      contactDescriptionShort: "我们的团队可以为您介绍直接捐赠、使命需求以及不同的支持方式。",
+      email: "电子邮件",
+      whatsapp: "组织 WhatsApp",
+      whatsappResponse: "团队直接回复",
+      callDirectly: "直接致电我们",
+      phoneNumbersSoon: "电话号码即将提供。",
+      formEyebrow: "联系表单",
+      writeUs: "给我们留言",
+      formDescription: "您的邮件应用将打开并显示已准备好的消息。",
+      namePlaceholder: "您的姓名",
+      emailPlaceholder: "您的电子邮件地址",
+      phonePlaceholder: "您的电话号码",
+      subjectPlaceholder: "主题",
+      messagePlaceholder: "您的消息",
+      defaultSubject: "支持千年王国",
+      defaultMessage: "您好，我希望支持千年王国的使命。我想与团队交流支持方式。",
+      prepareEmail: "准备邮件",
+      mailOpening: "您的邮件应用即将打开",
+      mailOpeningDescription: "请检查消息后发送给组织。",
+      teamListening: "随时倾听的团队",
+      clearModalities: "清晰说明支持方式",
+      supportDifference: "让支持产生改变",
     },
     about: {
       title: "关于 MILLENIUM",
@@ -892,18 +1000,28 @@ const getDefaultLocale = (): SupportedLocale => {
 };
 
 const lookup = (locale: SupportedLocale, key: string): string => {
-  const keys = key.split(".");
-  let current: string | TranslationMap | undefined = translations[locale];
-
-  for (const part of keys) {
-    if (typeof current === "object" && current !== null && part in current) {
-      current = current[part] as string | TranslationMap;
-    } else {
-      return key;
+  const findInLocale = (loc: SupportedLocale): string | null => {
+    const keys = key.split(".");
+    let current: string | TranslationMap | undefined = translations[loc];
+    for (const part of keys) {
+      if (typeof current === "object" && current !== null && part in current) {
+        current = current[part] as string | TranslationMap;
+      } else {
+        return null;
+      }
     }
+    return typeof current === "string" ? current : null;
+  };
+
+  const translated = findInLocale(locale);
+  if (translated !== null) return translated;
+
+  if (locale !== "fr") {
+    const fallback = findInLocale("fr");
+    if (fallback !== null) return fallback;
   }
 
-  return typeof current === "string" ? current : key;
+  return key;
 };
 
 const interpolate = (value: string, params?: Record<string, string | number>) => {
@@ -911,11 +1029,35 @@ const interpolate = (value: string, params?: Record<string, string | number>) =>
   return Object.entries(params).reduce((acc, [param, replacement]) => acc.replace(new RegExp(`\\{\\{\\s*${param}\\s*\\}\\}`, "g"), String(replacement)), value);
 };
 
+const setGoogleTranslateCookie = (locale: SupportedLocale) => {
+  if (typeof window === "undefined") return;
+  const targetLang = locale === "fr" ? "fr" : locale;
+  const cookieValue = `/fr/${targetLang}`;
+  document.cookie = `googtrans=${cookieValue}; path=/; domain=${window.location.hostname}`;
+  document.cookie = `googtrans=${cookieValue}; path=/`;
+
+  // Trigger Google Translate widget element if loaded
+  const selectElem = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
+  if (selectElem) {
+    selectElem.value = targetLang;
+    selectElem.dispatchEvent(new Event("change"));
+  }
+};
+
 export const LocaleProvider = ({ children }: { children: ReactNode }) => {
   const [locale, setLocale] = useState<SupportedLocale>(getDefaultLocale);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, locale);
+    document.documentElement.lang = locale;
+    setGoogleTranslateCookie(locale);
+
+    if (locale !== "fr") {
+      const interval = setInterval(() => {
+        setGoogleTranslateCookie(locale);
+      }, 2500);
+      return () => clearInterval(interval);
+    }
   }, [locale]);
 
   const value = useMemo(() => ({ locale, setLocale }), [locale]);

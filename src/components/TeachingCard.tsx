@@ -190,7 +190,7 @@ export const TeachingCard = ({
         <div className="space-y-0">
           {/* Header */}
           <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-            <UserAvatar name="Le Règne Millénaire" className="h-10 w-10 border-2 border-gold/40 flex-shrink-0" />
+            <UserAvatar src="/android-chrome-512x512.png" name="Le Règne Millénaire" className="h-10 w-10 border-2 border-gold/40 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-semibold text-sm text-foreground flex items-center gap-1">
@@ -312,7 +312,7 @@ export const TeachingCard = ({
             {/* Header / Meta */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-2 pb-2 border-b border-border/40">
               <div className="flex items-center gap-2">
-                <UserAvatar name="Le Règne Millénaire" className="h-6 w-6 border border-gold/40 flex-shrink-0" />
+                <UserAvatar src="/android-chrome-512x512.png" name="Le Règne Millénaire" className="h-6 w-6 border border-gold/40 flex-shrink-0" />
                 <span className="font-semibold text-xs text-foreground flex items-center gap-1">
                   {officialName}
                   <GoldBadge hasGoldBadge={true} className="w-3 h-3 flex-shrink-0" />

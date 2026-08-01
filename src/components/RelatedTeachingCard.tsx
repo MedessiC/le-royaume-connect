@@ -98,7 +98,7 @@ export const RelatedTeachingCard = ({
         <div className="space-y-3 border-t border-border/50 pt-3">
           {/* Author */}
           <div className="flex items-center gap-2">
-            <UserAvatar name="Le Règne Millénaire" className="h-7 w-7 border border-gold/30" />
+            <UserAvatar src="/android-chrome-512x512.png" name="Le Règne Millénaire" className="h-7 w-7 border border-gold/30" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-foreground truncate flex items-center gap-1">
                 {officialName}

@@ -597,7 +597,7 @@ const TeachingDetail = () => {
           {/* ── Publisher + Action bar ── */}
           <div className="flex items-center justify-between gap-4 py-4 border-y border-border mb-8">
             <div className="flex items-center gap-3">
-              <UserAvatar name="Le Règne Millénaire" className="h-10 w-10 border-2 border-gold/40" />
+              <UserAvatar src="/android-chrome-512x512.png" name="Le Règne Millénaire" className="h-10 w-10 border-2 border-gold/40" />
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-bold text-sm text-foreground">@leregnemillenaire</span>

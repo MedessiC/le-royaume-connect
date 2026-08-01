@@ -111,7 +111,18 @@ const Navbar = () => {
 
   const handleNavClick = () => setPageLoading(true);
   const handleSignOut = async () => { await signOut(); navigate("/"); };
-  const translatePage = (lang: "fr" | "en" | "es" | "zh") => { setLocale(lang); setLanguageOpen(false); };
+  const translatePage = (lang: "fr" | "en" | "es" | "zh") => {
+    setLocale(lang);
+    setLanguageOpen(false);
+    const targetLang = lang === "fr" ? "fr" : lang;
+    document.cookie = `googtrans=/fr/${targetLang}; path=/`;
+    document.cookie = `googtrans=/fr/${targetLang}; path=/; domain=${window.location.hostname}`;
+    const selectElem = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
+    if (selectElem) {
+      selectElem.value = targetLang;
+      selectElem.dispatchEvent(new Event("change"));
+    }
+  };
 
   const languages = [
     { code: "fr", name: "Français", countryCode: "FR" },
