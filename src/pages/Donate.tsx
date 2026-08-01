@@ -1,458 +1,215 @@
-import { useState } from "react";
-import { FeexPayProvider, FeexPayButton } from "@feexpay/react-sdk";
-import "@feexpay/react-sdk/style.css";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormEvent, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  CheckCircle,
+  Heart,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Send,
+  X,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Heart, Gift, Users, TrendingUp, CheckCircle } from "lucide-react";
 import SEO from "@/components/SEO";
+import { useToast } from "@/hooks/use-toast";
+
+type ContactNumber = {
+  country: "Bénin" | "Côte d'Ivoire";
+  number: string;
+  tone: "gold" | "green";
+};
+
+const contactEmail = import.meta.env.VITE_CONTACT_EMAIL ?? "contact@leregnemillenaire.com";
+const contactNumbers: ContactNumber[] = [
+  { country: "Bénin", number: import.meta.env.VITE_BENIN_PHONE_1 ?? "", tone: "gold" },
+  { country: "Bénin", number: import.meta.env.VITE_BENIN_PHONE_2 ?? "", tone: "gold" },
+  { country: "Bénin", number: import.meta.env.VITE_BENIN_PHONE_3 ?? "", tone: "gold" },
+  { country: "Côte d'Ivoire", number: import.meta.env.VITE_CI_PHONE_1 ?? "", tone: "green" },
+  { country: "Côte d'Ivoire", number: import.meta.env.VITE_CI_PHONE_2 ?? "", tone: "green" },
+];
+const whatsappUrl = import.meta.env.VITE_WHATSAPP_URL ?? "";
+
+const phoneHref = (number: string) => `tel:${number.replace(/[^\d+]/g, "")}`;
+const whatsappHref = (number: string) => {
+  const normalized = number.replace(/\D/g, "");
+  return normalized ? `https://wa.me/${normalized}` : whatsappUrl;
+};
 
 const Donate = () => {
   const { toast } = useToast();
-  const [amount, setAmount] = useState<number>(10000);
-  const [showCustomAmount, setShowCustomAmount] = useState(false);
-  const [customAmount, setCustomAmount] = useState<string>("");
-  const [donorName, setDonorName] = useState<string>("");
-  const [donorEmail, setDonorEmail] = useState<string>("");
-  const [donorPhone, setDonorPhone] = useState<string>("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [subject, setSubject] = useState("Soutenir le Règne Millénaire");
+  const [message, setMessage] = useState(
+    "Bonjour, je souhaite soutenir la mission du Règne Millénaire. Je voudrais échanger avec votre équipe au sujet des modalités de soutien.",
+  );
+  const [phonePanelOpen, setPhonePanelOpen] = useState(false);
 
-  const quickAmounts = [5000, 10000, 20000, 50000, 100000];
+  const availableNumbers = contactNumbers.filter((contact) => contact.number);
 
-  // FeexPay configuration
-  const SANDBOX_SHOP_ID = "Ayg9lkjkhurIvNp";
-  const SANDBOX_TOKEN = "fp_HHNoQGt9Vn8KpZoLaBkG3uEeKpLUYBaHUZIZXJE3Xgv0OKG2tK3A7PtlytctikrT";
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const body = [`Nom : ${name}`, `Email : ${email}`, `Téléphone : ${phone}`, "", message].join("\n");
+    const destination = contactEmail || "contact@votre-organisation.com";
 
-  const envShopId = import.meta.env.VITE_FEEXPAY_SHOP_ID ?? "";
-  const envToken = import.meta.env.VITE_FEEXPAY_TOKEN ?? "";
-  const feexpayMode = (
-    (import.meta.env.VITE_FEEXPAY_MODE as string | undefined) ??
-    (import.meta.env.DEV ? "SANDBOX" : "LIVE")
-  ).toUpperCase() as "SANDBOX" | "LIVE";
-
-  const usingSandbox = feexpayMode === "SANDBOX";
-  const feexpayShopId = envShopId || (usingSandbox ? SANDBOX_SHOP_ID : "");
-  const feexpayToken = envToken || (usingSandbox ? SANDBOX_TOKEN : "");
-
-  const handleQuickAmount = (value: number) => {
-    setAmount(value);
-    setShowCustomAmount(false);
-    setCustomAmount("");
+    window.location.href = `mailto:${destination}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    toast({
+      title: "Votre messagerie va s'ouvrir",
+      description: "Vérifiez le message puis envoyez-le à l'organisation.",
+    });
   };
-
-  const handleCustomAmount = () => {
-    if (customAmount && Number(customAmount) > 0) {
-      setAmount(Number(customAmount));
-      setShowCustomAmount(false);
-      setCustomAmount("");
-    } else {
-      toast({
-        title: "Montant invalide",
-        description: "Veuillez entrer un montant valide",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePaymentCallback = (response: any) => {
-    console.log("FeexPay Response:", response);
-
-    const status = response?.status?.toString().toUpperCase();
-    const isSuccess = status === "SUCCESSFUL" || status === "SUCCESS" || response?.success === true;
-    const isPending = status === "PENDING" || response?.pending === true;
-
-    if (isSuccess) {
-      toast({
-        title: "✅ Merci pour votre donation!",
-        description: `Donation de ${amount.toLocaleString()} XOF confirmée avec succès.`,
-        duration: 5000,
-      });
-      setAmount(10000);
-      setDonorName("");
-      setDonorEmail("");
-      setDonorPhone("");
-    } else if (isPending) {
-      toast({
-        title: "⏳ Paiement en attente",
-        description: "Votre paiement est en cours de traitement.",
-      });
-    } else {
-      toast({
-        title: "Paiement non confirmé",
-        description:
-          response?.message || "La transaction n'a pas pu être finalisée. Veuillez réessayer.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const generateCustomId = () => {
-    return `donation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  };
-
-  const benefits = [
-    {
-      icon: Heart,
-      title: "Impact Direct",
-      description: "Votre donation soutient directement nos enseignements",
-    },
-    {
-      icon: Users,
-      title: "Communauté",
-      description: "Rejoignez des milliers de donateurs engagés",
-    },
-    {
-      icon: TrendingUp,
-      title: "Croissance",
-      description: "Aidez le Royaume à grandir et se développer",
-    },
-    {
-      icon: Gift,
-      title: "Reconnaissance",
-      description: "Recevez des remerciements et des privilèges",
-    },
-  ];
-
-  const steps = [
-    {
-      number: 1,
-      title: "Choisir le montant",
-      description: "Sélectionnez parmi les montants prédéfinis ou entrez un montant personnalisé",
-    },
-    {
-      number: 2,
-      title: "Remplir vos données",
-      description: "Entrez votre nom, email et numéro de téléphone",
-    },
-    {
-      number: 3,
-      title: "Sécuriser le paiement",
-      description: "Cliquez sur le bouton FeexPay pour effectuer le paiement",
-    },
-    {
-      number: 4,
-      title: "Confirmation",
-      description: "Recevez immédiatement une confirmation de votre donation",
-    },
-  ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       <SEO
-        title="Soutenir MILLENIUM — Faire un don | ZOVIZO"
-        description="Soutenez la vision de ZOVIZO et le mouvement MILLENIUM. Faites un don pour contribuer à l’expansion du Règne Millénaire et à l’enseignement biblique mondial."
+        title="Contacter MILLENIUM | Soutenir la mission"
+        description="Contactez directement l'organisation MILLENIUM par email, téléphone, WhatsApp ou formulaire pour soutenir la mission."
         path="/donate"
-        keywords={["don MILLENIUM", "soutenir ZOVIZO", "offrir pour le Règne Millénaire", "offrande Bénin", "soutien mouvement spirituel"]}
+        keywords={["contact MILLENIUM", "soutenir ZOVIZO", "WhatsApp Règne Millénaire", "contact Bénin", "contact Côte d'Ivoire"]}
       />
       <Navbar />
 
-      <main className="flex-1 container max-w-5xl mx-auto px-4 py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-6">
-            <Heart className="w-16 h-16 text-gold" />
-          </div>
-          <h1 className="text-5xl md:text-6xl font-display font-bold text-foreground mb-4">
-            Soutenez le Royaume
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-body">
-            Votre générosité nous aide à propager les enseignements et à renforcer notre 
-            communauté dans toute l'Afrique de l'Ouest. Chaque donation, même petite, 
-            fait une grande différence.
-          </p>
-        </div>
-
-        {/* Steps Section */}
-        <div className="grid md:grid-cols-4 gap-6 mb-16">
-          {steps.map((step) => (
-            <div key={step.number} className="text-center p-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gold/20 border-2 border-gold text-gold font-bold text-lg mx-auto mb-4">
-                {step.number}
+      <main className="flex-1">
+        <section className="relative overflow-hidden bg-slate-950 px-4 pb-16 pt-20 text-white md:pb-24 md:pt-28">
+          <img
+            src="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=1800&q=90&v=4"
+            alt="Personnes noires réunies pour soutenir une mission solidaire"
+            loading="eager"
+            className="absolute inset-0 z-0 h-full w-full object-cover object-[center_40%] opacity-80"
+          />
+          <div className="absolute inset-0 z-0 bg-slate-950/25" />
+          <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_75%_20%,hsl(43_92%_50%_/_0.12),transparent_32%),linear-gradient(135deg,hsl(228_72%_16%_/_0.45),hsl(222_40%_8%_/_0.65))]" />
+          <div className="relative mx-auto max-w-5xl">
+            <Link to="/" className="mb-10 inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-gold">
+              <ArrowLeft className="h-4 w-4" /> Retour à l'accueil
+            </Link>
+            <div className="max-w-3xl">
+              <div className="mb-5 flex items-center gap-3 text-gold">
+                <Heart className="h-8 w-8 fill-current" />
+                <span className="text-xs font-bold uppercase tracking-[0.22em]">Soutenir la mission</span>
               </div>
-              <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
-              <p className="text-sm text-muted-foreground">{step.description}</p>
+              <h1 className="font-display text-4xl font-extrabold leading-tight text-white md:text-6xl">Parlons directement.</h1>
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/80 md:text-lg">
+                Pour faire un don, demander les modalités de soutien ou poser une question, contactez l'organisation par le moyen qui vous convient le mieux.
+              </p>
             </div>
-          ))}
-        </div>
+          </div>
+        </section>
 
-        {/* Main Donation Card */}
-        <div className="bg-card border border-gold/20 rounded-2xl shadow-lg p-10 mb-16">
-          <FeexPayProvider>
-            <div className="space-y-10">
-              {/* Amount Selection */}
-              <div>
-                <Label className="text-lg font-bold text-foreground mb-6 block">
-                  Choisissez un montant de donation
-                </Label>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                  {quickAmounts.map((value) => (
-                    <button
-                      key={value}
-                      onClick={() => handleQuickAmount(value)}
-                      className={`p-4 rounded-xl font-bold transition-all transform duration-200 ${
-                        amount === value && !showCustomAmount
-                          ? "bg-gold text-white shadow-lg scale-105 ring-2 ring-gold/50"
-                          : "bg-secondary text-foreground hover:bg-secondary/80 hover:scale-105"
-                      }`}
-                    >
-                      <div className="text-sm">{(value / 1000).toFixed(0)}K</div>
-                      <div className="text-xs">XOF</div>
-                    </button>
-                  ))}
-                </div>
+        <section className="mx-auto grid max-w-5xl gap-8 px-4 py-12 md:grid-cols-[0.85fr_1.15fr] md:py-20">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-gold">Coordonnées officielles</p>
+            <h2 className="font-display text-3xl font-bold text-foreground">Choisissez votre canal</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Notre équipe peut vous renseigner sur les dons directs, les besoins de la mission et les différentes manières de contribuer.
+            </p>
 
-                {/* Custom Amount Toggle */}
-                <button
-                  onClick={() => {
-                    setShowCustomAmount(!showCustomAmount);
-                    setCustomAmount("");
-                  }}
-                  className={`w-full p-4 rounded-xl font-bold transition-all ${
-                    showCustomAmount
-                      ? "bg-gold/20 text-gold border-2 border-gold"
-                      : "bg-secondary text-foreground hover:bg-secondary/80 border-2 border-transparent"
-                  }`}
-                >
-                  {showCustomAmount ? "✏️ Montant personnalisé" : "➕ Montant personnalisé"}
-                </button>
+            <div className="mt-7 space-y-3">
+              {contactEmail && (
+                <a href={`mailto:${contactEmail}`} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-gold/50 hover:bg-gold/5">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/15 text-gold"><Mail className="h-5 w-5" /></span>
+                  <span><strong className="block text-sm text-foreground">Email</strong><span className="text-xs text-muted-foreground">{contactEmail}</span></span>
+                </a>
+              )}
 
-                {/* Custom Amount Input */}
-                {showCustomAmount && (
-                  <div className="mt-4 space-y-3">
-                    <Input
-                      type="number"
-                      placeholder="Entrez le montant en XOF"
-                      value={customAmount}
-                      onChange={(e) => setCustomAmount(e.target.value)}
-                      className="text-lg py-3"
-                      min="100"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleCustomAmount}
-                        className="flex-1 bg-gold hover:bg-gold/90 text-white font-bold py-3"
-                      >
-                        Valider
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setShowCustomAmount(false);
-                          setCustomAmount("");
-                        }}
-                        variant="outline"
-                        className="flex-1 py-3"
-                      >
-                        Annuler
-                      </Button>
-                    </div>
+              {whatsappUrl && (
+                <a href={whatsappUrl} target="_blank" rel="noreferrer noopener" className="flex items-center gap-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 transition-colors hover:bg-emerald-500/10">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600"><MessageCircle className="h-5 w-5" /></span>
+                  <span><strong className="block text-sm text-foreground">WhatsApp de l'organisation</strong><span className="text-xs text-muted-foreground">Réponse directe de l'équipe</span></span>
+                </a>
+              )}
+
+              {availableNumbers.map((contact) => (
+                <div key={`${contact.country}-${contact.number}`} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
+                  <div className="flex items-center gap-4">
+                    <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${contact.tone === "gold" ? "bg-gold/15 text-gold" : "bg-emerald-500/15 text-emerald-600"}`}><Phone className="h-5 w-5" /></span>
+                    <span><strong className="block text-sm text-foreground">{contact.country}</strong><span className="text-sm text-muted-foreground">{contact.number}</span></span>
                   </div>
-                )}
-              </div>
-
-              {/* Amount Display */}
-              <div className="bg-secondary border border-gold/20 rounded-xl p-8">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">Montant à donner</p>
-                  <p className="text-5xl font-display font-bold text-gold">
-                    {amount.toLocaleString()}
-                  </p>
-                  <p className="text-xl text-foreground mt-2">XOF</p>
-                </div>
-              </div>
-
-              {/* Donor Information */}
-              <div className="space-y-4">
-                <Label className="text-lg font-bold text-foreground block">
-                  Informations du donateur
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="Votre nom"
-                  value={donorName}
-                  onChange={(e) => setDonorName(e.target.value)}
-                  className="py-3"
-                />
-                <Input
-                  type="email"
-                  placeholder="Votre email"
-                  value={donorEmail}
-                  onChange={(e) => setDonorEmail(e.target.value)}
-                  className="py-3"
-                />
-                <Input
-                  type="tel"
-                  placeholder="Votre numéro de téléphone"
-                  value={donorPhone}
-                  onChange={(e) => setDonorPhone(e.target.value)}
-                  className="py-3"
-                />
-              </div>
-
-              {/* Payment Methods Available */}
-              <div className="bg-secondary border border-gold/20 rounded-xl p-6">
-                <p className="text-sm font-bold text-foreground mb-4">
-                  Méthodes de paiement disponibles:
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {["MTN Mobile Money", "Moov Africa", "Celtiis", "Carte Bancaire"].map((method) => (
-                    <div
-                      key={method}
-                      className="inline-flex items-center gap-2 bg-card px-4 py-2 rounded-lg border border-gold/20"
-                    >
-                      <CheckCircle className="w-4 h-4 text-gold" />
-                      <span className="text-sm font-medium text-foreground">{method}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* FeexPay Button */}
-              <div className="flex flex-col items-center pt-6">
-                {usingSandbox ? (
-                  <div className="mb-2 text-xs px-3 py-1 rounded-full bg-gold/10 text-gold">Mode SANDBOX (test)</div>
-                ) : null}
-
-                {feexpayShopId && feexpayToken ? (
-                  <FeexPayButton
-                    amount={amount}
-                    description="Donation pour le Royaume"
-                    token={feexpayToken}
-                    id={feexpayShopId}
-                    customId={generateCustomId()}
-                    mode={feexpayMode}
-                    currency="XOF"
-                    callback={handlePaymentCallback}
-                    callback_info={{
-                      fullname: donorName || "Donateur",
-                      email: donorEmail || "donation@royaume.com",
-                      phone: donorPhone || "00000",
-                    }}
-                    buttonClass="bg-gold hover:bg-gold/90 text-white font-bold py-4 px-12 rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl text-lg"
-                    buttonText="🔐 Procéder au paiement FeexPay"
-                  />
-                ) : (
-                  <div className="text-center">
-                    <button disabled className="bg-muted text-muted-foreground py-3 px-6 rounded-lg" title="FeexPay non configuré">
-                      FeexPay non configuré
-                    </button>
-                    <p className="text-xs text-muted-foreground mt-2">Contactez l'administrateur pour configurer les identifiants FeexPay.</p>
+                  <div className="flex items-center gap-1">
+                    <a href={phoneHref(contact.number)} aria-label={`Appeler le ${contact.number}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><Phone className="h-4 w-4" /></a>
+                    <a href={whatsappHref(contact.number)} target="_blank" rel="noreferrer noopener" aria-label={`Contacter le ${contact.number} par WhatsApp`} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-500/10"><MessageCircle className="h-4 w-4" /></a>
                   </div>
-                )}
-              </div>
-
-              {/* Security Info */}
-              <div className="text-center text-sm text-muted-foreground bg-secondary rounded-lg p-4 border border-gold/20">
-                <p className="font-semibold text-foreground">
-                  ✅ Paiement 100% sécurisé via FeexPay
-                </p>
-                <p className="text-xs mt-1">Vos données bancaires sont cryptées et protégées</p>
-              </div>
-            </div>
-          </FeexPayProvider>
-        </div>
-
-        {/* Benefits Section */}
-        <div className="mb-16">
-          <h2 className="text-4xl font-display font-bold text-foreground mb-12 text-center">
-            Pourquoi soutenir le Royaume?
-          </h2>
-          <div className="grid md:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => {
-              const Icon = benefit.icon;
-              return (
-                <div
-                  key={index}
-                  className="bg-card border border-gold/20 rounded-xl shadow-lg p-8 text-center hover:shadow-2xl transition-shadow transform hover:scale-105"
-                >
-                  <Icon className="w-16 h-16 text-gold mx-auto mb-6" />
-                  <h3 className="text-xl font-bold text-foreground mb-3">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-muted-foreground">{benefit.description}</p>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+              ))}
+            </div>
 
-        {/* FAQ Section */}
-        <div className="bg-card border border-gold/20 rounded-2xl shadow-lg p-10 mb-16">
-          <h2 className="text-3xl font-display font-bold text-foreground mb-8 text-center">
-            ❓ Questions fréquentes
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-bold text-foreground mb-3">
-                Puis-je modifier mon montant?
-              </h3>
-              <p className="text-muted-foreground">
-                Bien sûr! Vous pouvez choisir parmi les montants proposés ou entrer 
-                un montant personnalisé avant de procéder au paiement.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-foreground mb-3">
-                Quelles méthodes acceptez-vous?
-              </h3>
-              <p className="text-muted-foreground">
-                Nous acceptons MTN Mobile Money, Moov Africa, Celtiis et les 
-                cartes bancaires via FeexPay.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-foreground mb-3">
-                Ma donation est-elle sécurisée?
-              </h3>
-              <p className="text-muted-foreground">
-                Oui! Tous les paiements sont sécurisés par FeexPay avec le 
-                chiffrement SSL 256-bit.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-foreground mb-3">
-                Quand reçoive-je une confirmation?
-              </h3>
-              <p className="text-muted-foreground">
-                Vous recevez une confirmation immédiate par email et SMS après 
-                le paiement réussi.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-foreground mb-3">
-                Mes données sont-elles confidentielles?
-              </h3>
-              <p className="text-muted-foreground">
-                Absolument! Vos informations personnelles ne sont jamais stockées 
-                sur nos serveurs.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-foreground mb-3">
-                Comment puis-je faire un paiement récurrent?
-              </h3>
-              <p className="text-muted-foreground">
-                Contactez-nous directement pour mettre en place un don récurrent 
-                via email ou téléphone.
-              </p>
-            </div>
+            {!contactEmail && !whatsappUrl && availableNumbers.length === 0 && (
+              <div className="mt-7 rounded-xl border border-gold/20 bg-gold/5 p-4 text-sm text-muted-foreground">
+                <MapPin className="mb-2 h-5 w-5 text-gold" />
+                Les coordonnées officielles seront bientôt disponibles. Le formulaire ci-contre reste utilisable dès que l'adresse email sera configurée.
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Call to Action */}
-        <div className="bg-gold rounded-2xl shadow-lg p-12 text-center text-white mb-12">
-          <h2 className="text-3xl font-display font-bold mb-4">Prêt à faire la différence?</h2>
-          <p className="text-lg mb-8 opacity-90">
-            Chaque donation, peu importe la taille, nous aide à continuer notre mission. 
-            Merci pour votre soutien!
-          </p>
-          <p className="text-sm opacity-75">
-            Vos dons aident le Royaume à créer un impact durable dans les communautés
-          </p>
-        </div>
+          <form onSubmit={handleSubmit} className="rounded-2xl border border-gold/20 bg-card p-6 shadow-lg md:p-8">
+            <div className="mb-6">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-gold">Formulaire de contact</p>
+              <h2 className="font-display text-2xl font-bold text-foreground">Écrivez-nous</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Votre messagerie s'ouvrira avec un message déjà préparé.</p>
+            </div>
+            <div className="space-y-4">
+              <input required value={name} onChange={(event) => setName(event.target.value)} placeholder="Votre nom" className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-gold" />
+              <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Votre adresse email" className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-gold" />
+              <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Votre numéro de téléphone" className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-gold" />
+              <input required value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Objet" className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-gold" />
+              <textarea required value={message} onChange={(event) => setMessage(event.target.value)} rows={6} placeholder="Votre message" className="w-full resize-y rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-gold" />
+              <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gold px-6 py-3.5 text-sm font-bold text-slate-950 transition-colors hover:bg-gold-light">
+                <Send className="h-4 w-4" /> Préparer mon email
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section className="border-t border-border bg-muted/30 px-4 py-12">
+          <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-3">
+            {["Une équipe à votre écoute", "Des modalités expliquées clairement", "Un soutien qui fait la différence"].map((title) => (
+              <div key={title} className="flex items-start gap-3">
+                <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-gold" />
+                <p className="text-sm font-semibold text-foreground">{title}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
-
+      <div className="fixed bottom-24 right-5 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+        {phonePanelOpen && (
+          <div className="w-72 rounded-2xl border border-emerald-500/20 bg-card/95 p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="mb-3 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-emerald-600">
+              <span className="flex items-center gap-2"><Phone className="h-4 w-4" /> Nous appeler directement</span>
+              <button type="button" onClick={() => setPhonePanelOpen(false)} aria-label="Fermer les numéros" className="rounded-full p-1 hover:bg-muted">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid gap-2">
+              {availableNumbers.length > 0 ? availableNumbers.map((contact) => (
+                <a
+                  key={`${contact.country}-${contact.number}`}
+                  href={phoneHref(contact.number)}
+                  className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-emerald-500/40 hover:text-emerald-600"
+                >
+                  <span><span className="mr-2 text-xs text-muted-foreground">{contact.country}</span>{contact.number}</span>
+                  <Phone className="h-4 w-4" />
+                </a>
+              )) : (
+                <p className="text-xs leading-relaxed text-muted-foreground">Les numéros de téléphone seront bientôt disponibles.</p>
+              )}
+            </div>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setPhonePanelOpen((open) => !open)}
+          aria-label="Nous appeler directement"
+          title="Nous appeler directement"
+          className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-background bg-emerald-600 text-white shadow-xl shadow-emerald-600/30 transition-transform hover:scale-110 hover:bg-emerald-700 active:scale-95"
+        >
+          {phonePanelOpen ? <X className="h-5 w-5" /> : <Phone className="h-5 w-5" />}
+        </button>
+      </div>
       <Footer />
     </div>
   );

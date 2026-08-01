@@ -3,6 +3,14 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import TeachingCard from "@/components/TeachingCard";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import { BookOpen, ArrowRight } from "lucide-react";
 
 type Profile = { id: string; full_name: string | null; has_gold_badge?: boolean };
@@ -38,6 +46,7 @@ const getYoutubeEmbedUrl = (url: string) => {
 const LatestTeachingsSection = () => {
   const [teachings, setTeachings] = useState<Teaching[]>([]);
   const [loading, setLoading] = useState(true);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
 
   useEffect(() => {
     const loadTeachings = async () => {
@@ -72,6 +81,16 @@ const LatestTeachingsSection = () => {
     loadTeachings();
   }, []);
 
+  useEffect(() => {
+    if (!carouselApi || teachings.length < 2) return;
+
+    const interval = window.setInterval(() => {
+      carouselApi.scrollNext();
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [carouselApi, teachings.length]);
+
   if (loading) {
     return (
       <section className="py-12 md:py-24 bg-background">
@@ -97,17 +116,30 @@ const LatestTeachingsSection = () => {
           </p>
         </div>
 
-        {/* Mobile: Horizontal Snap Carousel · Desktop: Grid */}
-        <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-4 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 mb-8">
-          {teachings.map((teaching) => (
-            <div key={teaching.id} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-auto snap-center">
-              <TeachingCard
-                {...teaching}
-                getYoutubeEmbedUrl={getYoutubeEmbedUrl}
-              />
-            </div>
-          ))}
-        </div>
+        <Carousel
+          setApi={setCarouselApi}
+          opts={{ loop: teachings.length > 2, align: "start" }}
+          className="mx-auto mb-8 w-full max-w-6xl px-10 sm:px-12"
+        >
+          <CarouselContent className="-ml-3 sm:-ml-4">
+            {teachings.map((teaching) => (
+              <CarouselItem key={teaching.id} className="pl-3 sm:pl-4 sm:basis-1/2 lg:basis-1/3">
+                <TeachingCard
+                  {...teaching}
+                  getYoutubeEmbedUrl={getYoutubeEmbedUrl}
+                />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious
+            aria-label="Enseignement précédent"
+            className="border-gold/30 bg-background text-gold hover:bg-gold hover:text-slate-950"
+          />
+          <CarouselNext
+            aria-label="Enseignement suivant"
+            className="border-gold/30 bg-background text-gold hover:bg-gold hover:text-slate-950"
+          />
+        </Carousel>
 
         <div className="text-center">
           <Link to="/feed">

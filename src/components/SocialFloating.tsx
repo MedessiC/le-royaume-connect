@@ -21,7 +21,7 @@ const SocialFloating = ({
   live = false,
   live_url = null,
 }: Props) => {
-  const [open, setOpen] = useState(false);
+  const [socialOpen, setSocialOpen] = useState(false);
 
   const links: Array<{
     label: string;
@@ -68,6 +68,7 @@ const SocialFloating = ({
     bgColor: string;
   }>;
 
+
   return (
     <aside
       className="fixed bottom-24 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6"
@@ -93,7 +94,7 @@ const SocialFloating = ({
       )}
 
       {/* Popover Menu Réseaux */}
-      {open && (
+      {socialOpen && (
         <div className="w-64 rounded-3xl border border-border/80 bg-card/95 p-4 shadow-2xl backdrop-blur-xl transition-all animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="mb-3 flex items-center justify-between px-1">
             <span className="text-xs font-bold uppercase tracking-wider text-gold">
@@ -101,7 +102,7 @@ const SocialFloating = ({
             </span>
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => setSocialOpen(false)}
               className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               aria-label="Fermer"
             >
@@ -147,23 +148,24 @@ const SocialFloating = ({
       {/* Main Floating Trigger Button */}
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setSocialOpen((prev) => !prev)}
         className={`group relative flex h-13 w-13 items-center justify-center rounded-full bg-gold text-slate-950 shadow-xl shadow-gold/30 transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-background ${
-          open ? "rotate-90 bg-slate-900 text-gold border-gold" : ""
+          socialOpen ? "rotate-90 bg-slate-900 text-gold border-gold" : ""
         }`}
-        aria-label={open ? "Fermer les réseaux sociaux" : "Ouvrir les réseaux sociaux"}
+        aria-label={socialOpen ? "Fermer les réseaux sociaux" : "Ouvrir les réseaux sociaux"}
       >
         {/* Subtle Pulse Aura */}
-        {!open && (
+        {!socialOpen && (
           <span className="absolute -inset-1 rounded-full bg-gold/25 animate-ping opacity-75 pointer-events-none" />
         )}
 
-        {open ? (
+        {socialOpen ? (
           <X className="h-5 w-5 transition-transform" />
         ) : (
           <MessageCircle className="h-5.5 w-5.5 transition-transform group-hover:scale-110" />
         )}
       </button>
+
     </aside>
   );
 };

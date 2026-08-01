@@ -116,11 +116,18 @@ const About = () => {
 
         {/* HERO */}
         <section className="relative overflow-hidden bg-about-hero text-primary-foreground py-20 md:py-24">
+          <img
+            src="https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1800&q=85"
+            alt="Famille africaine réunie dans un moment de partage"
+            loading="eager"
+            className="absolute inset-0 z-0 h-full w-full object-cover opacity-65"
+          />
+          <div className="absolute inset-0 z-0 bg-slate-950/35" />
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute left-0 top-10 h-72 w-72 rounded-full bg-white/15 blur-3xl animate-blob-slow" />
             <div className="absolute right-[-5%] top-28 h-64 w-64 rounded-full bg-gold/20 blur-3xl animate-blob-slow" />
             <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-100/10 blur-3xl animate-blob-slow" />
-            <div className="absolute inset-0 bg-hero-grid opacity-40" />
+            <div className="absolute inset-0 bg-hero-grid opacity-15" />
           </div>
           <div className="relative z-10 container mx-auto px-4 max-w-5xl text-center">
             <Crown className="w-16 h-16 mx-auto text-gold mb-6" />

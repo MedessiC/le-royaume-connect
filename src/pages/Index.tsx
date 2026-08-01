@@ -18,6 +18,7 @@ import LiveSection from "@/components/LiveSection";
 import Footer from "@/components/Footer";
 import FeaturedVideo from "@/components/FeaturedVideo";
 import SocialFloating from "@/components/SocialFloating";
+import DonationPopup from "@/components/DonationPopup";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -172,6 +173,7 @@ const Index = () => {
         live={isLive}
         live_url={homeSettings?.live_url ?? null}
       />
+      <DonationPopup />
     </div>
   );
 };

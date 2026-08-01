@@ -364,7 +364,14 @@ const Feed = () => {
       <main className="flex-1 pt-16">
         {/* ── Header Hero banner ── */}
         <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground py-16 md:py-24">
-          <div className="absolute inset-0 hero-grid-overlay opacity-30 pointer-events-none" />
+          <img
+            src="https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1800&q=85"
+            alt="Jeunes Africains réunis pour apprendre et échanger"
+            loading="eager"
+            className="absolute inset-0 z-0 h-full w-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 z-0 bg-slate-950/40" />
+          <div className="absolute inset-0 hero-grid-overlay opacity-10 pointer-events-none" />
           <div className="absolute top-1/2 left-1/4 w-72 h-72 rounded-full bg-gold/5 blur-[90px] pointer-events-none" />
           
           <div className="container mx-auto px-4 text-center max-w-3xl relative z-10 space-y-4">
