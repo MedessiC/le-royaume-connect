@@ -7,17 +7,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/i18n";
+import LanguageSelector from "@/components/LanguageSelector";
+import useTheme from "@/hooks/useTheme";
 import BottomNav from "@/components/BottomNav";
 import UserAvatar from "@/components/UserAvatar";
-import useTheme from "@/hooks/useTheme";
 
 const Navbar = () => {
   const { user, profile, isAdmin, signOut } = useAuth();
-  const { t, locale, setLocale } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [pageLoading, setPageLoading] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [notifications, setNotifications] = useState<{
@@ -156,36 +156,7 @@ const Navbar = () => {
 
   const iconBtn = "inline-flex items-center justify-center h-9 w-9 rounded-xl border border-border/60 bg-card/60 text-foreground/75 transition-all duration-200 hover:border-gold/50 hover:text-gold hover:bg-gold/10";
 
-  const langPicker = (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setLanguageOpen((prev) => !prev)}
-        className={`${iconBtn} gap-1.5 w-auto px-2.5 text-[0.725rem] font-semibold tracking-wider uppercase`}
-        aria-expanded={languageOpen}
-        aria-label={t("common.changeLanguage")}
-      >
-        <ReactCountryFlag svg countryCode={languages.find((l) => l.code === locale)?.countryCode || "FR"} style={{ width: "14px", height: "14px" }} />
-        <span>{locale.toUpperCase()}</span>
-        <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${languageOpen ? "rotate-180" : ""}`} />
-      </button>
-      {languageOpen && (
-        <div className="absolute right-0 mt-2 w-40 z-50 overflow-hidden rounded-xl border border-border bg-popover/98 shadow-xl backdrop-blur-xl">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              type="button"
-              onClick={() => translatePage(lang.code as "fr" | "en" | "es" | "zh")}
-              className={`flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[0.8rem] transition-colors hover:bg-gold/10 ${locale === lang.code ? "text-gold font-bold" : "text-foreground/80"}`}
-            >
-              <ReactCountryFlag svg countryCode={lang.countryCode} style={{ width: "16px", height: "16px" }} />
-              <span>{lang.name}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const langPicker = <LanguageSelector variant="navbar" />;
 
   const notifPopover = (
     <Popover onOpenChange={(open) => { setNotificationOpen(open); if (open) markAllRead(); }}>

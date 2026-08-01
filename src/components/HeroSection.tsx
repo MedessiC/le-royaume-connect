@@ -16,6 +16,7 @@ type Slide = {
 
 const defaultSlides: Slide[] = [
   {
+    src: "/hero-1.webp",
     alt: "Vision Millenium",
     color: "from-slate-950 via-slate-900 to-indigo-950",
     pretitle: "Mouvement Mondial · Banikoara",

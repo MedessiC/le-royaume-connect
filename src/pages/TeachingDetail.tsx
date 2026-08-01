@@ -18,7 +18,7 @@ import UserAvatar from "@/components/UserAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
-import { Calendar, MapPin, ArrowLeft, BookOpen, Heart, Bookmark, Plus, Check, Music, Play, Pause } from "lucide-react";
+import { Calendar, MapPin, ArrowLeft, BookOpen, Heart, Bookmark, Plus, Check, Music, Play, Pause, FileDown, Printer } from "lucide-react";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null; has_gold_badge?: boolean };
 
@@ -517,6 +517,60 @@ const TeachingDetail = () => {
   // ── Reading time estimate ─────────────────────────────────────────
   const readingTime = Math.max(1, Math.ceil(teaching.content.replace(/<[^>]+>/g, "").split(/\s+/).length / 200));
 
+  // ── PDF Export ────────────────────────────────────────────────────
+  const handleExportPdf = () => {
+    const printStyle = document.createElement("style");
+    printStyle.id = "pdf-print-style";
+    printStyle.textContent = `
+      @media print {
+        body > *:not(#pdf-print-content) { display: none !important; }
+        #pdf-print-content { display: block !important; }
+        @page { margin: 2cm; }
+      }
+      #pdf-print-content {
+        display: none;
+        font-family: 'Georgia', serif;
+        line-height: 1.8;
+        color: #1e293b;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      #pdf-print-content h1 { font-size: 2em; font-weight: 800; margin-bottom: 0.5em; color: #0f172a; }
+      #pdf-print-content .pdf-meta { font-size: 0.85em; color: #64748b; border-bottom: 2px solid #d4af37; padding-bottom: 0.75em; margin-bottom: 1.5em; }
+      #pdf-print-content .pdf-excerpt { font-style: italic; border-left: 4px solid #d4af37; padding-left: 1em; color: #475569; margin-bottom: 1.5em; font-size: 1.05em; }
+      #pdf-print-content p { margin-bottom: 1em; }
+      #pdf-print-content h2, #pdf-print-content h3 { font-weight: 700; margin: 1.5em 0 0.5em; color: #0f172a; }
+      #pdf-print-content .pdf-footer { margin-top: 2em; padding-top: 1em; border-top: 1px solid #e2e8f0; font-size: 0.8em; color: #94a3b8; text-align: center; }
+    `;
+    document.head.appendChild(printStyle);
+
+    let printDiv = document.getElementById("pdf-print-content");
+    if (!printDiv) {
+      printDiv = document.createElement("div");
+      printDiv.id = "pdf-print-content";
+      document.body.appendChild(printDiv);
+    }
+    const date = new Date(teaching.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    printDiv.innerHTML = `
+      <h1>${teaching.title}</h1>
+      <div class="pdf-meta">
+        <strong>@leregnemillenaire</strong> &nbsp;·&nbsp; ${teaching.categories?.name ?? "Enseignement"} &nbsp;·&nbsp; ${date} &nbsp;·&nbsp; ${readingTime} min de lecture
+      </div>
+      ${teaching.excerpt ? `<div class="pdf-excerpt">${teaching.excerpt}</div>` : ""}
+      <div class="pdf-body">${teaching.content}</div>
+      <div class="pdf-footer">Fiche d'Enseignement — Le Règne Millénaire · leregnemillenaire.com</div>
+    `;
+
+    window.print();
+
+    setTimeout(() => {
+      document.head.removeChild(printStyle);
+      if (printDiv && printDiv.parentNode) {
+        printDiv.parentNode.removeChild(printDiv);
+      }
+    }, 1000);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TeachingSEO
@@ -582,16 +636,35 @@ const TeachingDetail = () => {
             </span>
           </div>
 
-          {/* ── Title ── */}
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground leading-tight mt-5 mb-4">
-            {teaching.title}
-          </h1>
+          {/* ── Title Block — redesigned ── */}
+          <div className="mt-6 mb-6">
+            {/* Decorative golden rule */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-[3px] w-10 rounded-full bg-gradient-to-r from-gold to-amber-400" />
+              <div className="h-[3px] w-4 rounded-full bg-gold/40" />
+              <div className="h-[3px] w-2 rounded-full bg-gold/20" />
+            </div>
+
+            <h1 className="font-display text-[1.85rem] sm:text-4xl md:text-5xl font-extrabold leading-[1.12] tracking-tight mb-0">
+              <span className="bg-gradient-to-br from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+                {teaching.title}
+              </span>
+            </h1>
+
+            {/* Bottom decorative accent */}
+            <div className="mt-4 flex items-center gap-2">
+              <div className="h-px flex-1 bg-gradient-to-r from-gold/50 to-transparent" />
+              <div className="w-1.5 h-1.5 rounded-full bg-gold" />
+            </div>
+          </div>
 
           {/* ── Excerpt / Lead ── */}
           {teaching.excerpt && (
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed border-l-[3px] border-gold pl-4 mb-8 italic">
-              {teaching.excerpt}
-            </p>
+            <div className="relative mb-8 pl-5 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] before:rounded-full before:bg-gradient-to-b before:from-gold before:to-amber-300">
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed italic font-serif">
+                {teaching.excerpt}
+              </p>
+            </div>
           )}
 
           {/* ── Publisher + Action bar ── */}
@@ -701,6 +774,16 @@ const TeachingDetail = () => {
                 size="md"
                 variant="outline"
               />
+              {/* PDF Export */}
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                title="Exporter en PDF"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border bg-secondary border-border text-muted-foreground hover:border-gold/40 hover:text-gold transition-all"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                <span>Fiche PDF</span>
+              </button>
             </div>
           </div>
 
@@ -771,44 +854,88 @@ const TeachingDetail = () => {
           {/* ── Article Content ── */}
           <div className={`prose prose-lg max-w-none mb-8
             text-foreground font-body leading-[1.9] tracking-[0.01em]
-            prose-headings:font-display prose-headings:text-foreground prose-headings:leading-tight prose-headings:font-bold
-            prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
-            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
-            prose-p:text-foreground prose-p:leading-[1.9] prose-p:mb-5
-            prose-a:text-gold prose-a:no-underline hover:prose-a:underline
+            prose-headings:font-display prose-headings:leading-tight prose-headings:font-bold prose-headings:relative
+            prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-gold/25 prose-h2:text-foreground
+            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-foreground prose-h3:pl-3 prose-h3:border-l-2 prose-h3:border-gold
+            prose-p:text-foreground prose-p:leading-[1.95] prose-p:mb-5 prose-p:text-[0.975rem] sm:prose-p:text-[1rem]
+            prose-a:text-gold prose-a:no-underline prose-a:font-semibold hover:prose-a:underline
             prose-strong:text-foreground prose-strong:font-bold
-            prose-ul:list-disc prose-ul:pl-5 prose-li:text-foreground prose-li:mb-1
-            prose-blockquote:border-l-4 prose-blockquote:border-gold prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground
+            prose-ul:list-disc prose-ul:pl-5 prose-li:text-foreground prose-li:mb-1.5 prose-li:marker:text-gold
+            prose-ol:pl-5 prose-ol:list-decimal prose-ol:marker:text-gold prose-ol:marker:font-bold
+            prose-blockquote:border-l-4 prose-blockquote:border-gold prose-blockquote:bg-gold/5 prose-blockquote:rounded-r-xl prose-blockquote:pl-5 prose-blockquote:py-3 prose-blockquote:pr-4 prose-blockquote:italic prose-blockquote:text-muted-foreground prose-blockquote:not-italic
+            prose-code:text-gold prose-code:bg-gold/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
             dark:prose-invert dark:prose-p:text-foreground dark:prose-headings:text-foreground dark:prose-strong:text-foreground dark:prose-li:text-foreground
           `}>
-            {!teaching.video_url && !teaching.audio_url && !showFullContent ? (
-              <>
-                <div className="line-clamp-[12]">
-                  {renderTeachingContent(teaching.content)}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowFullContent(true)}
-                  className="not-prose mt-4 inline-flex items-center gap-2 rounded-full border border-gold bg-gold/10 px-5 py-2.5 text-sm font-semibold text-gold transition hover:bg-gold/20"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  Lire l'intégralité
-                </button>
-              </>
-            ) : (
-              <>
-                {renderTeachingContent(teaching.content)}
-                {!teaching.video_url && !teaching.audio_url && showFullContent && (
-                  <button
-                    type="button"
-                    onClick={() => setShowFullContent(false)}
-                    className="not-prose mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-5 py-2 text-sm font-medium text-muted-foreground transition hover:border-gold/30 hover:text-gold"
-                  >
-                    Réduire
-                  </button>
-                )}
-              </>
+            {/* Drop cap style injection for text-only teachings */}
+            {!teaching.video_url && !teaching.audio_url && (
+              <style>{`
+                .teaching-prose > div > p:first-child::first-letter {
+                  float: left;
+                  font-size: 3.8em;
+                  line-height: 0.75;
+                  margin: 0.06em 0.08em 0 0;
+                  font-family: var(--font-display, serif);
+                  font-weight: 800;
+                  color: #d4af37;
+                }
+              `}</style>
             )}
+            <div className="teaching-prose">
+              {!teaching.video_url && !teaching.audio_url && !showFullContent ? (
+                <>
+                  <div className="line-clamp-[12]">
+                    {renderTeachingContent(teaching.content)}
+                  </div>
+                  <div className="not-prose mt-8 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/5 to-amber-500/5 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-foreground mb-0.5">Lire l'intégralité de cet enseignement</p>
+                      <p className="text-xs text-muted-foreground">Environ {readingTime} min de lecture · Cours d'étude biblique</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowFullContent(true)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gold bg-gold text-slate-950 px-5 py-2.5 text-sm font-bold transition hover:bg-gold/90 shadow-gold"
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        Lire l'intégralité
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleExportPdf}
+                        className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary text-muted-foreground px-4 py-2.5 text-sm font-semibold transition hover:border-gold/40 hover:text-gold"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        PDF
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {renderTeachingContent(teaching.content)}
+                  {!teaching.video_url && !teaching.audio_url && showFullContent && (
+                    <div className="not-prose mt-10 flex items-center justify-between gap-4 pt-6 border-t border-border">
+                      <button
+                        type="button"
+                        onClick={() => setShowFullContent(false)}
+                        className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-5 py-2 text-sm font-medium text-muted-foreground transition hover:border-gold/30 hover:text-gold"
+                      >
+                        Réduire
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleExportPdf}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gold/40 bg-gold/10 text-gold px-5 py-2 text-sm font-bold transition hover:bg-gold/20"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        Exporter en PDF
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           {/* ── Mobile Action Bar (sticky) ── */}
@@ -844,6 +971,15 @@ const TeachingDetail = () => {
                 url={`/teachings/${id}`}
                 size="sm"
               />
+              <div className="w-px h-4 bg-border" />
+              <button
+                type="button"
+                onClick={handleExportPdf}
+                title="Exporter fiche PDF"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold text-muted-foreground hover:text-gold transition-all"
+              >
+                <FileDown className="w-4 h-4" />
+              </button>
             </div>
           </div>
 

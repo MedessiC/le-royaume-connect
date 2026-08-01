@@ -18,9 +18,9 @@ const UserAvatar = ({ src, name, className = "" }: UserAvatarProps) => {
     .toUpperCase();
 
   return (
-    <Avatar className={className}>
+    <Avatar className={`${className} notranslate`} translate="no">
       {avatarSrc ? <AvatarImage src={avatarSrc} alt={name} className="object-cover" /> : null}
-      <AvatarFallback className="bg-gradient-to-br from-gold via-gold-dark to-midnight-deep text-slate-900 dark:text-white font-bold border border-gold/30">
+      <AvatarFallback className="bg-gradient-to-br from-gold via-gold-dark to-midnight-deep text-slate-900 dark:text-white font-bold border border-gold/30 notranslate">
         {initials}
       </AvatarFallback>
     </Avatar>

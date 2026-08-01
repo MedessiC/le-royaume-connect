@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 
+import LanguageSelector from "@/components/LanguageSelector";
+
 const Footer = () => {
   const year = new Date().getFullYear();
   return (
@@ -46,10 +48,11 @@ const Footer = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-border/50 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="border-t border-border/50 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-[0.75rem] text-muted-foreground">
             © {year} Millenium. Tous droits réservés.
           </p>
+          <LanguageSelector variant="footer" />
           <p className="text-[0.75rem] text-muted-foreground flex items-center gap-1">
             Fait avec <Heart className="w-3.5 h-3.5 text-gold fill-gold/30" /> depuis Banikoara
           </p>

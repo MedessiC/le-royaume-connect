@@ -142,7 +142,7 @@ const Index = () => {
       ) : null}
       <HeroSection
         slides={homeSettings?.carousel_images?.filter(Boolean).map((src, index) => ({
-          src,
+          src: index === 0 ? "/hero-1.webp" : src,
           alt: `Image ${index + 1}`,
           pretitle: homeSettings?.carousel_slides?.[index]?.pretitle,
           title: homeSettings?.carousel_slides?.[index]?.title,

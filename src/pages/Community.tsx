@@ -424,25 +424,28 @@ const Community = () => {
         return null;
       }
       
-      // If active, render an ultra-slim row
+      // If active, render a luminous slim row
       return (
-        <div className="flex flex-col sm:flex-row gap-2 border-b border-border bg-muted/40 p-2 text-xs">
+        <div className="flex flex-col sm:flex-row gap-2 border-b border-gold/20 bg-gradient-to-r from-slate-900/60 to-slate-950/60 backdrop-blur-md p-2.5 text-xs">
           {callActive && (
-            <div className="flex-grow flex items-center justify-between bg-card border border-green-500/20 rounded-xl px-3 py-2 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="font-semibold text-foreground">Appel général en cours</span>
+            <div className="flex-grow flex items-center justify-between bg-emerald-950/80 border border-emerald-500/30 rounded-2xl px-3.5 py-2.5 shadow-lg shadow-emerald-900/20">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                </span>
+                <span className="font-semibold text-emerald-100">Appel général en cours</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Button 
-                  size="sm" 
-                  className="h-8 px-3 text-[11px] rounded-lg bg-green-600 hover:bg-green-700 text-white" 
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  className="h-8 px-3 text-[11px] rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold shadow-md shadow-emerald-700/40"
                   onClick={() => startLiveKitSession("call")}
                 >
                   Rejoindre
                 </Button>
                 {isAdmin && (
-                  <Button size="icon" variant="outline" className="h-8 w-8 rounded-lg" onClick={markCallEnded} aria-label="Terminer l'appel">
+                  <Button size="icon" variant="outline" className="h-8 w-8 rounded-xl border-emerald-500/30 hover:bg-emerald-900 text-emerald-400" onClick={markCallEnded} aria-label="Terminer l'appel">
                     <Square className="h-3.5 w-3.5" />
                   </Button>
                 )}
@@ -450,21 +453,24 @@ const Community = () => {
             </div>
           )}
           {liveActive && (
-            <div className="flex-grow flex items-center justify-between bg-card border border-red-500/20 rounded-xl px-3 py-2 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="font-semibold text-foreground">Live communautaire actif</span>
+            <div className="flex-grow flex items-center justify-between bg-red-950/80 border border-red-500/30 rounded-2xl px-3.5 py-2.5 shadow-lg shadow-red-900/20">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                </span>
+                <span className="font-semibold text-red-100">Live communautaire actif</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Button 
-                  size="sm" 
-                  className="h-8 px-3 text-[11px] rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20" 
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  className="h-8 px-3 text-[11px] rounded-xl bg-red-500 hover:bg-red-400 text-white font-bold shadow-md shadow-red-700/40"
                   onClick={() => startLiveKitSession(isAdmin ? "live-host" : "viewer")}
                 >
                   {isAdmin ? "Entrer" : "Suivre"}
                 </Button>
                 {isAdmin && (
-                  <Button size="icon" variant="outline" className="h-8 w-8 rounded-lg" onClick={endLive} aria-label="Terminer le live">
+                  <Button size="icon" variant="outline" className="h-8 w-8 rounded-xl border-red-500/30 hover:bg-red-900 text-red-400" onClick={endLive} aria-label="Terminer le live">
                     <Square className="h-3.5 w-3.5" />
                   </Button>
                 )}
@@ -475,69 +481,86 @@ const Community = () => {
       );
     }
 
-    // Desktop sidebar compact layout (always show triggers)
+    // Desktop sidebar — premium card design
     return (
-      <div className="space-y-2">
-        <div className="min-w-0 rounded-lg border border-border bg-background p-2.5 shadow-sm sm:p-3">
-          <div className="mb-2.5 flex items-center justify-between gap-2 sm:mb-3 sm:gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-600 sm:h-9 sm:w-9">
+      <div className="space-y-3">
+        {/* ── Group Call Card ── */}
+        <div className={`rounded-2xl border p-3 transition-all ${
+          callActive
+            ? "border-emerald-500/40 bg-gradient-to-br from-emerald-950/70 to-slate-900/80 shadow-lg shadow-emerald-900/20"
+            : "border-border bg-card/60"
+        }`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                callActive ? "bg-emerald-500/20 text-emerald-400" : "bg-muted text-muted-foreground"
+              }`}>
                 <PhoneCall className="h-4 w-4" />
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">Appel général</p>
-                <p className="text-xs text-muted-foreground">
-                  {callActive ? "En cours maintenant" : isAdmin ? "Prêt à lancer" : "En attente d'un admin"}
+              <div>
+                <p className="text-sm font-bold leading-tight">Appel groupe</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {callActive ? "En cours" : isAdmin ? "Prêt" : "En attente"}
                 </p>
               </div>
             </div>
-            <span
-              className={
-                callActive
-                  ? "h-2.5 w-2.5 shrink-0 rounded-full bg-green-500"
-                  : "h-2.5 w-2.5 shrink-0 rounded-full bg-muted"
-              }
-            />
+            {callActive ? (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+              </span>
+            ) : (
+              <span className="h-2.5 w-2.5 rounded-full bg-muted" />
+            )}
           </div>
           <div className="flex gap-2">
             <Button
               type="button"
               size="sm"
-              className="min-w-0 flex-1"
+              className={`flex-1 rounded-xl font-semibold text-xs ${
+                callActive
+                  ? "bg-emerald-500 hover:bg-emerald-400 text-white shadow-md shadow-emerald-800/40"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
               disabled={startingSession === "call" || (!isAdmin && !callActive)}
               onClick={() => startLiveKitSession("call")}
             >
-              <Video className="h-4 w-4" />
+              <Video className="h-3.5 w-3.5 mr-1" />
               {callActive ? "Rejoindre" : isAdmin ? "Démarrer" : "En attente"}
             </Button>
             {isAdmin && callActive && (
-              <Button type="button" size="icon" variant="outline" onClick={markCallEnded} aria-label="Terminer l'appel">
-                <Square className="h-4 w-4" />
+              <Button type="button" size="icon" variant="outline" className="rounded-xl border-emerald-500/30 hover:bg-emerald-900 h-8 w-8" onClick={markCallEnded} aria-label="Terminer l'appel">
+                <Square className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
         </div>
 
-        <div className="min-w-0 rounded-lg border border-border bg-background p-2.5 shadow-sm sm:p-3">
-          <div className="mb-2.5 flex items-center justify-between gap-2 sm:mb-3 sm:gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive sm:h-9 sm:w-9">
+        {/* ── Live Stream Card ── */}
+        <div className={`rounded-2xl border p-3 transition-all ${
+          liveActive
+            ? "border-red-500/40 bg-gradient-to-br from-red-950/70 to-slate-900/80 shadow-lg shadow-red-900/20"
+            : "border-border bg-card/60"
+        }`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                liveActive ? "bg-red-500/20 text-red-400" : "bg-muted text-muted-foreground"
+              }`}>
                 <Radio className="h-4 w-4" />
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">Live communautaire</p>
-                <p className="text-xs text-muted-foreground">
-                  {liveActive ? "Diffusion en direct" : isAdmin ? "Prêt à lancer" : "Aucun live actif"}
+              <div>
+                <p className="text-sm font-bold leading-tight">Live communauté</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {liveActive ? "En diffusion" : isAdmin ? "Prêt" : "Hors ligne"}
                 </p>
               </div>
             </div>
-            <span
-              className={
-                liveActive
-                  ? "shrink-0 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground"
-                  : "shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
-              }
-            >
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-black tracking-widest ${
+              liveActive
+                ? "bg-red-500 text-white shadow shadow-red-700/50"
+                : "bg-muted text-muted-foreground"
+            }`}>
               {liveActive ? "LIVE" : "OFF"}
             </span>
           </div>
@@ -546,28 +569,28 @@ const Community = () => {
               <Button
                 type="button"
                 size="sm"
-                className="min-w-0 flex-1"
+                className="flex-1 rounded-xl font-semibold text-xs bg-red-500 hover:bg-red-400 text-white shadow-md shadow-red-800/40"
                 disabled={startingSession === "viewer"}
                 onClick={() => startLiveKitSession(isAdmin ? "live-host" : "viewer")}
               >
-                <Radio className="h-4 w-4" />
+                <Radio className="h-3.5 w-3.5 mr-1 animate-pulse" />
                 {isAdmin ? "Entrer" : "Suivre"}
               </Button>
             ) : (
               <Button
                 type="button"
                 size="sm"
-                className="min-w-0 flex-1"
+                className="flex-1 rounded-xl font-semibold text-xs"
                 disabled={!isAdmin || startingSession === "live-host"}
                 onClick={() => startLiveKitSession("live-host")}
               >
-                <Radio className="h-4 w-4" />
-                {isAdmin ? "Lancer" : "En attente"}
+                <Radio className="h-3.5 w-3.5 mr-1" />
+                {isAdmin ? "Lancer le live" : "En attente"}
               </Button>
             )}
             {isAdmin && liveActive && (
-              <Button type="button" size="icon" variant="outline" onClick={endLive} aria-label="Terminer le live">
-                <Square className="h-4 w-4" />
+              <Button type="button" size="icon" variant="outline" className="rounded-xl border-red-500/30 hover:bg-red-900 h-8 w-8" onClick={endLive} aria-label="Terminer le live">
+                <Square className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>

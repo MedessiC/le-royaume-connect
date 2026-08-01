@@ -1031,12 +1031,25 @@ const interpolate = (value: string, params?: Record<string, string | number>) =>
 
 const setGoogleTranslateCookie = (locale: SupportedLocale) => {
   if (typeof window === "undefined") return;
-  const targetLang = locale === "fr" ? "fr" : locale;
+
+  if (locale === "fr") {
+    // Clear googtrans cookies so original French text is preserved untouched
+    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+    
+    const selectElem = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
+    if (selectElem && selectElem.value && selectElem.value !== "fr") {
+      selectElem.value = "fr";
+      selectElem.dispatchEvent(new Event("change"));
+    }
+    return;
+  }
+
+  const targetLang = locale;
   const cookieValue = `/fr/${targetLang}`;
   document.cookie = `googtrans=${cookieValue}; path=/; domain=${window.location.hostname}`;
   document.cookie = `googtrans=${cookieValue}; path=/`;
 
-  // Trigger Google Translate widget element only if value actually changes
   const selectElem = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
   if (selectElem && selectElem.value !== targetLang) {
     selectElem.value = targetLang;
