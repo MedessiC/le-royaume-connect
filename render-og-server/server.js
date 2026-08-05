@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import { buildSocialPreviewHtml } from "./preview.js";
 
 dotenv.config();
 
@@ -95,53 +96,18 @@ app.get(["/teachings/:slugOrId", "/t/:slugOrId", "/share/teaching/:slugOrId"], a
       return res.redirect(302, targetUrl);
     }
 
-    // Default Fallbacks
-    const title = escapeHtml(teaching.title || "Enseignement – MILLENIUM");
-    const description = escapeHtml(
-      teaching.excerpt || teaching.content?.replace(/<[^>]*>?/gm, "").substring(0, 160) || "Découvrez cet enseignement sur la plateforme MILLENIUM."
-    );
+    const title = teaching.title || "Enseignement – MILLENIUM";
+    const description = teaching.excerpt || teaching.content?.replace(/<[^>]*>?/gm, "").substring(0, 160) || "Découvrez cet enseignement sur la plateforme MILLENIUM.";
     const imageUrl = teaching.cover_image_url || `${FRONTEND_URL}/og-default-cover.jpg`;
     const videoUrl = teaching.video_url || null;
 
-    // Generate Dynamic OpenGraph HTML for Social Bots
-    const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>${title}</title>
-  <meta name="description" content="${description}">
-
-  <!-- Open Graph / Facebook / WhatsApp -->
-  <meta property="og:type" content="${videoUrl ? "video.other" : "article"}">
-  <meta property="og:url" content="${targetUrl}">
-  <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${imageUrl}">
-  <meta property="og:image:secure_url" content="${imageUrl}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:site_name" content="MILLENIUM – Le Règne Millénaire">
-  ${videoUrl ? `<meta property="og:video" content="${videoUrl}">\n  <meta property="og:video:type" content="text/html">` : ""}
-
-  <!-- Twitter / X -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="${targetUrl}">
-  <meta name="twitter:title" content="${title}">
-  <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${imageUrl}">
-
-  <!-- Automatic JavaScript fallback redirect if bot executes JS -->
-  <script>
-    window.location.href = "${targetUrl}";
-  </script>
-</head>
-<body>
-  <h1>${title}</h1>
-  <p>${description}</p>
-  <img src="${imageUrl}" alt="${title}">
-  <p><a href="${targetUrl}">Cliquer ici pour accéder à l'enseignement</a></p>
-</body>
-</html>`;
+    const html = buildSocialPreviewHtml({
+      title,
+      description,
+      targetUrl,
+      imageUrl,
+      videoUrl,
+    });
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=86400");

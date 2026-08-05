@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +9,9 @@ const corsHeaders = {
 
 type CreateVideoRequest = {
   title?: string;
+  fingerprint?: string;
+  fileName?: string;
+  mimeType?: string;
 };
 
 type BunnyCreateVideoResponse = {
@@ -62,6 +66,9 @@ serve(async (req) => {
   }
 
   const title = payload.title?.trim() || "video";
+  const fingerprint = payload.fingerprint?.trim();
+  const fileName = payload.fileName?.trim();
+  const mimeType = payload.mimeType?.trim();
 
   const createResponse = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos`, {
     method: "POST",
@@ -92,6 +99,26 @@ serve(async (req) => {
 
   const expire = Math.floor(Date.now() / 1000) + 3600;
   const signature = await createTusSignature(libraryId, apiKey, expire, videoId);
+
+  if (fingerprint) {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (supabaseUrl && supabaseServiceKey) {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      await supabase.from("bunny_media_files").upsert(
+        {
+          fingerprint,
+          file_name: fileName || title,
+          mime_type: mimeType || null,
+          video_id: videoId,
+          library_id: libraryId,
+          embed_url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}`,
+        },
+        { onConflict: "fingerprint" }
+      );
+    }
+  }
 
   return json({
     videoId,

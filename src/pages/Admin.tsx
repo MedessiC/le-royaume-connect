@@ -20,6 +20,7 @@ import {
   Menu, LayoutGrid, Home as HomeIcon, Newspaper, BookOpen, Tags,
   Quote, Sparkles, MessageSquareText, Users as UsersIcon,
   Crown, Eye, EyeOff, Clock, TrendingUp,
+  Mail,
   FileText, Clock4, Hash, AlignLeft, Save, SendHorizonal, BookMarked,
 } from "lucide-react";
 import MediaUpload from "@/components/MediaUpload";
@@ -30,6 +31,7 @@ import CountrySelect from "@/components/CountrySelect";
 import TestimonialsAdmin from "@/components/admin/TestimonialsAdmin";
 import StoriesAdmin from "@/components/admin/StoriesAdmin";
 import PopupsAdmin from "@/components/admin/PopupsAdmin";
+import NewsletterCampaigns from "@/components/admin/NewsletterCampaigns";
 
 type Category = { id: string; name: string; slug: string; description: string | null };
 type Teaching = {
@@ -79,7 +81,7 @@ const emptyForm = {
 /* ------------------------------------------------------------------ */
 type SectionKey =
   | "overview" | "home" | "publications" | "teachings"
-  | "categories" | "testimonials" | "stories" | "popups" | "users";
+  | "categories" | "testimonials" | "stories" | "popups" | "users" | "newsletter";
 
 const NAV: { key: SectionKey; label: string; icon: typeof LayoutGrid }[] = [
   { key: "overview", label: "Aperçu", icon: LayoutGrid },
@@ -90,6 +92,7 @@ const NAV: { key: SectionKey; label: string; icon: typeof LayoutGrid }[] = [
   { key: "testimonials", label: "Témoignages", icon: Quote },
   { key: "stories", label: "Histoires", icon: Sparkles },
   { key: "popups", label: "Pop-ups", icon: MessageSquareText },
+  { key: "newsletter", label: "Campagnes", icon: Mail },
   { key: "users", label: "Utilisateurs", icon: UsersIcon },
 ];
 
@@ -1380,6 +1383,11 @@ const Admin = () => {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* -------------------- NEWSLETTER -------------------- */}
+            {activeSection === "newsletter" && (
+              <NewsletterCampaigns />
             )}
 
             {/* -------------------- USERS -------------------- */}

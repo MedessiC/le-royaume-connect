@@ -1,3 +1,5 @@
+const FALLBACK_VIDEO_POSTER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675' viewBox='0 0 1200 675'%3E%3Crect width='1200' height='675' fill='%230f172a'/%3E%3Crect x='0' y='0' width='1200' height='675' fill='url(%23a)' opacity='0.55'/%3E%3Cpath d='M520 225c0-32 26-58 58-58h44c32 0 58 26 58 58v225c0 32-26 58-58 58h-44c-32 0-58-26-58-58z' fill='%23d4af37'/%3E%3Cpath d='M620 337l96-54v162l-96-54z' fill='%230f172a'/%3E%3C/svg%3E";
+
 const YOUTUBE_ID_PATTERNS = [
   /(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/live\/|youtube\.com\/embed\/|youtube\.com\/watch\?v=)([A-Za-z0-9_-]{11})/i,
   /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?[^#\s]*v=([A-Za-z0-9_-]{11})/i,
@@ -37,13 +39,7 @@ export const getBunnyVideoIds = (url: string | null | undefined): { libraryId: s
   return { libraryId: match[1], videoId: match[2] };
 };
 
-export const getBunnyThumbnailUrl = (libraryId: string, videoId: string): string => {
-  const cdnHostname = import.meta.env.VITE_BUNNY_CDN_HOSTNAME as string | undefined;
-  if (cdnHostname) {
-    return `https://${cdnHostname}/${videoId}/thumbnail.jpg`;
-  }
-  return `https://thumb.mediadelivery.net/${libraryId}/${videoId}`;
-};
+export const getBunnyThumbnailUrl = (_libraryId: string, _videoId: string): string => FALLBACK_VIDEO_POSTER;
 
 export const isBunnyVideoUrl = (url: string | null | undefined): boolean =>
   Boolean(getBunnyVideoIds(url));

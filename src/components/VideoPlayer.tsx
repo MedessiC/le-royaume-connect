@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize, Pause, Play, Video, Volume2, VolumeX } from "lucide-react";
 import {
   formatVideoTime,
@@ -61,16 +61,28 @@ const VideoPoster = ({
   title?: string;
   overlay?: "light" | "medium" | "dark";
 }) => {
+  const [resolvedPoster, setResolvedPoster] = useState<string | null>(poster);
+
+  useEffect(() => {
+    setResolvedPoster(poster);
+  }, [poster]);
+
   const overlayClass = {
     light: "bg-black/20",
     medium: "bg-black/35",
     dark: "bg-black/50",
   }[overlay];
 
-  if (poster) {
+  if (resolvedPoster) {
     return (
       <>
-        <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+        <img
+          src={resolvedPoster}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+          onError={() => setResolvedPoster(null)}
+        />
         <div className={cn("absolute inset-0", overlayClass)} aria-hidden="true" />
       </>
     );

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Link } from "@tiptap/extension-link";
@@ -235,6 +235,17 @@ const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) =
       },
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const nextContent = value || "";
+    const currentContent = editor.getHTML();
+
+    if (currentContent !== nextContent) {
+      editor.commands.setContent(nextContent, { emitUpdate: false });
+    }
+  }, [editor, value]);
 
   /* Link handlers */
   const openLinkDialog = useCallback(() => setLinkOpen(true), []);

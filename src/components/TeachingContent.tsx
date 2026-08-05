@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Play } from "lucide-react";
 import { createRoot, type Root } from "react-dom/client";
 import { getVideoPosterUrl } from "@/lib/video";
@@ -8,28 +8,42 @@ const sanitizeHtml = (html: string) =>
     .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
     .replace(/on\w+="[^"]*"/gi, "");
 
-const LazyFacade = ({ poster, onActivate }: { poster: string | null; onActivate: () => void }) => (
-  <button
-    type="button"
-    onClick={onActivate}
-    className="lazy-video-facade group absolute inset-0 flex items-center justify-center overflow-hidden bg-black"
-    aria-label="Lire la vidéo"
-  >
-    {poster ? (
-      <>
-        <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-        <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
-      </>
-    ) : (
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-royal/60 to-slate-950" aria-hidden="true" />
-    )}
-    <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gold/20 backdrop-blur-sm motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-110">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold text-slate-950 shadow-gold">
-        <Play className="ml-0.5 h-5 w-5 fill-current" />
+const LazyFacade = ({ poster, onActivate }: { poster: string | null; onActivate: () => void }) => {
+  const [resolvedPoster, setResolvedPoster] = useState<string | null>(poster);
+
+  useEffect(() => {
+    setResolvedPoster(poster);
+  }, [poster]);
+
+  return (
+    <button
+      type="button"
+      onClick={onActivate}
+      className="lazy-video-facade group absolute inset-0 flex items-center justify-center overflow-hidden bg-black"
+      aria-label="Lire la vidéo"
+    >
+      {resolvedPoster ? (
+        <>
+          <img
+            src={resolvedPoster}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            onError={() => setResolvedPoster(null)}
+          />
+          <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-royal/60 to-slate-950" aria-hidden="true" />
+      )}
+      <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gold/20 backdrop-blur-sm motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-110">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold text-slate-950 shadow-gold">
+          <Play className="ml-0.5 h-5 w-5 fill-current" />
+        </div>
       </div>
-    </div>
-  </button>
-);
+    </button>
+  );
+};
 
 const enhanceEmbeds = (container: HTMLElement) => {
   const roots: Root[] = [];
