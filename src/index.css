@@ -617,3 +617,66 @@
   color: hsl(var(--muted-foreground) / 0.5);
   font-weight: 400;
 }
+
+/* ================================================================
+   Teaching content — prevent long links from breaking layout
+   ================================================================ */
+
+/* Conteneur principal du contenu */
+.teaching-prose,
+.tiptap,
+[class*="teaching"] {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  word-wrap: break-word;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Liens longs dans le corps de l'enseignement */
+.teaching-prose a,
+.tiptap a,
+.tiptap p,
+.tiptap li,
+.tiptap blockquote {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+/* Liens en bleu gold, toujours lisibles */
+.teaching-prose a,
+.tiptap a {
+  color: hsl(var(--gold));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.teaching-prose a:hover,
+.tiptap a:hover {
+  opacity: 0.8;
+}
+
+/* Images, vidéos, iframes et tableaux — jamais plus larges que le conteneur */
+.teaching-prose img,
+.teaching-prose iframe,
+.teaching-prose video,
+.teaching-prose table,
+.tiptap img,
+.tiptap iframe,
+.tiptap video,
+.tiptap table {
+  max-width: 100% !important;
+  height: auto;
+  display: block;
+}
+
+/* Blocs de code — scroll horizontal plutôt que débordement */
+.teaching-prose pre,
+.tiptap pre {
+  overflow-x: auto;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

@@ -61,9 +61,9 @@ const sanitizeHtml = (html: string) =>
 
 const renderTeachingContent = (content: string) => {
   if (/<[a-z][\s\S]*>/i.test(content)) {
-    return <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }} />;
+    return <div className="break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }} />;
   }
-  return <div className="whitespace-pre-wrap">{content}</div>;
+  return <div className="whitespace-pre-wrap break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]">{content}</div>;
 };
 
 const getYoutubeEmbedUrl = (url: string) => {

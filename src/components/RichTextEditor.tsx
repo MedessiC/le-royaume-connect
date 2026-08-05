@@ -79,28 +79,49 @@ function ToolSep() {
 
 /* ── Link dialog ─────────────────────────────────────────────────── */
 function LinkDialog({
-  open, onClose, onInsert, initialUrl = "",
+  open, onClose, onInsert, initialUrl = "", initialText = "",
 }: {
   open: boolean;
   onClose: () => void;
-  onInsert: (url: string, newTab: boolean) => void;
+  onInsert: (url: string, newTab: boolean, linkText: string) => void;
   initialUrl?: string;
+  initialText?: string;
 }) {
   const [url, setUrl] = useState(initialUrl);
+  const [linkText, setLinkText] = useState(initialText);
   const [newTab, setNewTab] = useState(true);
+
+  // Reset when dialog opens
+  const handleOpenChange = (v: boolean) => {
+    if (!v) { onClose(); }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader><DialogTitle>Insérer un lien</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
           <div>
-            <Label>URL</Label>
+            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
+              Texte affiché
+            </Label>
             <Input
               autoFocus
+              value={linkText}
+              onChange={(e) => setLinkText(e.target.value)}
+              placeholder="Ex: Cliquez ici, En savoir plus…"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">Laissez vide pour afficher l'URL directement</p>
+          </div>
+          <div>
+            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
+              URL du lien
+            </Label>
+            <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://..."
-              onKeyDown={(e) => e.key === "Enter" && url && onInsert(url, newTab)}
+              onKeyDown={(e) => e.key === "Enter" && url && onInsert(url, newTab, linkText)}
             />
           </div>
           <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
@@ -110,7 +131,7 @@ function LinkDialog({
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Annuler</Button>
-          <Button variant="hero" disabled={!url} onClick={() => onInsert(url, newTab)}>Insérer</Button>
+          <Button variant="hero" disabled={!url} onClick={() => onInsert(url, newTab, linkText)}>Insérer</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -217,9 +238,27 @@ const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) =
 
   /* Link handlers */
   const openLinkDialog = useCallback(() => setLinkOpen(true), []);
-  const insertLink = useCallback((url: string, newTab: boolean) => {
+  const insertLink = useCallback((url: string, newTab: boolean, linkText: string) => {
     if (!editor) return;
-    editor.chain().focus().extendMarkToNextWord().setLink({ href: url, target: newTab ? "_blank" : "_self" }).run();
+    const { from, to, empty } = editor.state.selection;
+    if (!empty) {
+      // Text is selected → apply link on the selected text
+      editor.chain().focus().setLink({ href: url, target: newTab ? "_blank" : "_self" }).run();
+    } else if (linkText.trim()) {
+      // No selection, but a display text was provided → insert it as a link
+      editor
+        .chain()
+        .focus()
+        .insertContent(`<a href="${url}" target="${newTab ? "_blank" : "_self"}" rel="noopener noreferrer">${linkText.trim()}</a>&nbsp;`)
+        .run();
+    } else {
+      // No selection, no display text → insert the URL as a link
+      editor
+        .chain()
+        .focus()
+        .insertContent(`<a href="${url}" target="${newTab ? "_blank" : "_self"}" rel="noopener noreferrer">${url}</a>&nbsp;`)
+        .run();
+    }
     setLinkOpen(false);
   }, [editor]);
   const removeLink = useCallback(() => editor?.chain().focus().unsetLink().run(), [editor]);
@@ -248,7 +287,13 @@ const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) =
 
   return (
     <>
-      <LinkDialog open={linkOpen} onClose={() => setLinkOpen(false)} onInsert={insertLink} initialUrl={currentLinkUrl} />
+      <LinkDialog
+        open={linkOpen}
+        onClose={() => setLinkOpen(false)}
+        onInsert={insertLink}
+        initialUrl={currentLinkUrl}
+        initialText={editor.state.selection.empty ? "" : editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to)}
+      />
       <ImageDialog open={imageOpen} onClose={() => setImageOpen(false)} onInsert={insertImage} />
       <YoutubeDialog open={youtubeOpen} onClose={() => setYoutubeOpen(false)} onInsert={insertYoutube} />
 
