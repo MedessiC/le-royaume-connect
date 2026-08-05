@@ -16,6 +16,7 @@ import SaveButton from "@/components/SaveButton";
 import TTSButton from "@/components/TTSButton";
 import SocialFollowCTA from "@/components/SocialFollowCTA";
 import { getTeachingPath } from "@/lib/teachingUrl";
+import { getVideoEmbedUrl } from "@/lib/video";
 import UserAvatar from "@/components/UserAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -64,21 +65,6 @@ const renderTeachingContent = (content: string) => {
     return <div className="break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }} />;
   }
   return <div className="whitespace-pre-wrap break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]">{content}</div>;
-};
-
-const getYoutubeEmbedUrl = (url: string) => {
-  const patterns = [
-    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
-    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/,
-    /([A-Za-z0-9_-]{11})$/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
-  }
-
-  return null;
 };
 
 const TeachingDetail = () => {
@@ -877,11 +863,11 @@ const TeachingDetail = () => {
           {/* ── Video ── */}
           {teaching.video_url && (
             <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-secondary">
-              {getYoutubeEmbedUrl(teaching.video_url) ? (
+              {getVideoEmbedUrl(teaching.video_url) ? (
                 <div className="aspect-video w-full">
                   <iframe
                     className="h-full w-full"
-                    src={getYoutubeEmbedUrl(teaching.video_url)}
+                    src={getVideoEmbedUrl(teaching.video_url)!}
                     title={teaching.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen

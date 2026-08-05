@@ -2,3 +2,6 @@ project_id = "eqichukewcuqrzqmjkpj"
 
 [functions.livekit-token]
 verify_jwt = false
+
+[functions.bunny-stream-create]
+verify_jwt = false

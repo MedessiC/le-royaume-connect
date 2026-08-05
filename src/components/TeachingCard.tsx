@@ -7,6 +7,7 @@ import SaveButton from "@/components/SaveButton";
 import TTSButton from "@/components/TTSButton";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import { getTeachingPath } from "@/lib/teachingUrl";
+import { getVideoEmbedUrl } from "@/lib/video";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null; has_gold_badge?: boolean };
 
@@ -28,7 +29,6 @@ type TeachingCardProps = {
   is_liked?: boolean;
   is_admin?: boolean;
   onToggleLike?: () => void;
-  getYoutubeEmbedUrl?: (url: string) => string | null;
   collections?: Array<{ id: string; name: string }>;
   savedCollectionIds?: string[];
   onToggleCollection?: (collectionId: string) => void;
@@ -51,21 +51,6 @@ const formatDate = (dateString: string) => {
     return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   }
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-};
-
-const getYoutubeEmbedUrl = (url: string) => {
-  const patterns = [
-    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
-    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/,
-    /([A-Za-z0-9_-]{11})$/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
-  }
-
-  return null;
 };
 
 export const TeachingCard = ({
@@ -134,12 +119,13 @@ export const TeachingCard = ({
     }
 
     if (video_url) {
+      const embedUrl = getVideoEmbedUrl(video_url);
       return (
         <div className="relative bg-black aspect-video w-full h-full flex items-center justify-center">
-          {getYoutubeEmbedUrl(video_url) ? (
+          {embedUrl ? (
             <iframe
               className="w-full h-full pointer-events-none"
-              src={getYoutubeEmbedUrl(video_url)}
+              src={embedUrl}
               title={title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

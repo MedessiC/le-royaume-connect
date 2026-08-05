@@ -32,19 +32,6 @@ type Teaching = {
   comments_count?: number;
 };
 
-const getYoutubeEmbedUrl = (url: string) => {
-  const patterns = [
-    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
-    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/,
-    /([A-Za-z0-9_-]{11})$/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
-  }
-  return null;
-};
-
 const LatestTeachingsSection = () => {
   const [teachings, setTeachings] = useState<Teaching[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,7 +115,6 @@ const LatestTeachingsSection = () => {
               <CarouselItem key={teaching.id} className="pl-3 sm:pl-4 sm:basis-1/2 lg:basis-1/3">
                 <TeachingCard
                   {...teaching}
-                  getYoutubeEmbedUrl={getYoutubeEmbedUrl}
                 />
               </CarouselItem>
             ))}

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { siteMetadata, buildOrganizationSchema } from "@/lib/seo";
+import { getOgVideoType, getOgVideoUrl } from "@/lib/video";
 
 interface TeachingSEOProps {
   title: string;
@@ -15,47 +16,6 @@ interface TeachingSEOProps {
   country?: string;
   videoUrl?: string;
 }
-
-const getYoutubeEmbedUrl = (url: string) => {
-  const patterns = [
-    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
-    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/,
-    /([A-Za-z0-9_-]{11})$/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
-  }
-
-  return null;
-};
-
-const getVideoMimeType = (url: string) => {
-  const extension = url.split("?")[0].split(".").pop()?.toLowerCase();
-  switch (extension) {
-    case "mp4":
-      return "video/mp4";
-    case "webm":
-      return "video/webm";
-    case "ogg":
-    case "ogv":
-      return "video/ogg";
-    case "mov":
-      return "video/quicktime";
-    default:
-      return "video/mp4";
-  }
-};
-
-const getOgVideoUrl = (url: string) => {
-  const embedUrl = getYoutubeEmbedUrl(url);
-  return embedUrl || url;
-};
-
-const getOgVideoType = (url: string) => {
-  return getYoutubeEmbedUrl(url) ? "text/html" : getVideoMimeType(url);
-};
 
 const setMetaTag = (attrName: string, attrValue: string, content: string): HTMLMetaElement => {
   let element = document.head.querySelector<HTMLMetaElement>(`meta[${attrName}="${attrValue}"]`);

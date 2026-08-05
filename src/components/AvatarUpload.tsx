@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Upload, Trash2, Loader2 } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
 import { useToast } from "@/hooks/use-toast";
-import { uploadToCloudinary, isCloudinaryConfigured } from "@/lib/cloudinary";
+import { uploadToOracleStorage, isOracleStorageConfigured } from "@/lib/oracleStorage";
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
@@ -54,19 +54,18 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       return;
     }
 
-    if (!isCloudinaryConfigured) {
-      toast({
+    if (!isOracleStorageConfigured) {
+      return toast({
         title: "Configuration manquante",
-        description: "Ajoutez votre Cloudinary pour téléverser une photo de profil.",
+        description: "Ajoutez la configuration de téléversement pour les photos de profil.",
         variant: "destructive",
       });
-      return;
     }
 
     setIsLoading(true);
 
     try {
-      const url = await uploadToCloudinary(file, `le-royaume/avatars/${userId}`);
+      const url = await uploadToOracleStorage(file, `le-royaume/avatars/${userId}`);
 
       if (onAvatarChange) {
         onAvatarChange(url);

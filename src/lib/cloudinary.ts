@@ -9,7 +9,7 @@ const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | u
 
 export const isCloudinaryConfigured = Boolean(cloudName && uploadPreset);
 
-export async function uploadToCloudinary(file: File, folder: string) {
+export async function uploadToCloudinary(file: File, folder: string, chunked = false) {
   if (!isCloudinaryConfigured || !cloudName || !uploadPreset) {
     throw new Error(
       "Cloudinary n'est pas configuré. Ajoutez VITE_CLOUDINARY_CLOUD_NAME et VITE_CLOUDINARY_UPLOAD_PRESET."
@@ -19,13 +19,17 @@ export async function uploadToCloudinary(file: File, folder: string) {
   const resourceType = file.type.startsWith("video/")
     ? "video"
     : file.type.startsWith("audio/")
-      ? "video"
+      ? "audio"
       : "image";
 
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", uploadPreset);
   formData.append("folder", folder);
+  formData.append("resource_type", resourceType);
+  if (chunked) {
+    formData.append("chunk_size", "20000000");
+  }
 
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,

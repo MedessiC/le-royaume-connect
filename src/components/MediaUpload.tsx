@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Loader2, Mic, CircleStop } from "lucide-react";
-import { uploadToCloudinary, isCloudinaryConfigured } from "@/lib/cloudinary";
+import {
+  uploadToBunnyStream,
+  isBunnyStreamConfigured,
+} from "@/lib/bunny";
+import { uploadToOracleStorage, isOracleStorageConfigured } from "@/lib/oracleStorage";
+import { getVideoEmbedUrl } from "@/lib/video";
 
 type Props = {
   value?: string | null;
@@ -25,6 +30,7 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const canRecordAudio = accept === "audio" && typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== "undefined";
   const acceptLabel = accept === "image" ? "Image" : accept === "video" ? "Vidéo" : "Audio";
@@ -40,17 +46,42 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
       });
     }
 
-    if (!isCloudinaryConfigured) {
+    if (!isOracleStorageConfigured && accept !== "video") {
       return toast({
         title: "Configuration manquante",
-        description: "Ajoutez votre Cloudinary pour téléverser des fichiers.",
+        description: "Ajoutez la configuration de téléversement pour les fichiers.",
         variant: "destructive",
       });
     }
 
+    if (accept === "video" && !isBunnyStreamConfigured) {
+      return toast({
+        title: "Configuration vidéo manquante",
+        description: "Ajoutez la configuration Bunny Stream pour téléverser des vidéos.",
+        variant: "destructive",
+      });
+    }
+
+    const isLargeVideo = accept === "video" && file.size > 100 * 1024 * 1024;
+    if (isLargeVideo) {
+      toast({
+        title: "Vidéo volumineuse détectée",
+        description: "Le fichier sera téléversé via Bunny Stream.",
+      });
+    }
+
     setUploading(true);
+    setUploadProgress(0);
     try {
-      const url = await uploadToCloudinary(file, `le-royaume/${accept}s`);
+      let url: string;
+
+      if (accept === "video") {
+        const result = await uploadToBunnyStream(file, (percent) => setUploadProgress(percent));
+        url = result.embedUrl;
+      } else {
+        url = await uploadToOracleStorage(file, `le-royaume/${accept}s`);
+      }
+
       onChange?.(url);
       onUpload?.(url);
       toast({ title: "Fichier téléversé" });
@@ -58,6 +89,7 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
       toast({ title: "Erreur d'upload", description: error.message, variant: "destructive" });
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -146,7 +178,7 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
             </p>
           </div>
           <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-            {uploading ? "Chargement…" : recording ? "Enregistrement…" : "Prêt"}
+            {uploading ? `Chargement${uploadProgress ? ` • ${uploadProgress}%` : "…"}` : recording ? "Enregistrement…" : "Prêt"}
           </div>
         </div>
 
@@ -238,7 +270,17 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
       )}
       {resolvedValue && accept === "video" && (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-background/80 p-2">
-          <video src={resolvedValue!} controls className="h-48 w-full rounded-xl object-cover" />
+          {getVideoEmbedUrl(resolvedValue) ? (
+            <iframe
+              src={getVideoEmbedUrl(resolvedValue)!}
+              title="Aperçu vidéo"
+              className="aspect-video w-full min-h-[12rem]"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <video src={resolvedValue!} controls className="h-48 w-full rounded-xl object-cover" />
+          )}
         </div>
       )}
       {resolvedValue && accept === "audio" && (

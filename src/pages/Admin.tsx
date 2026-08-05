@@ -486,6 +486,30 @@ const Admin = () => {
     refresh();
   };
 
+  const handleSendNewsletter = async (teachingId: string) => {
+    if (!confirm("Envoyer la newsletter pour cet enseignement à tous les membres et abonnés ?")) return;
+    toast({ title: "Newsletter", description: "Envoi des emails en cours via Zoho Mail..." });
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-teaching-newsletter", {
+        body: { teaching_id: teachingId },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Newsletter envoyée ! ✉️",
+        description: data?.message || "Les abonnés ont reçu l'email.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erreur d'envoi",
+        description: err?.message || "Impossible d'envoyer la newsletter.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const setCarouselImage = (index: number, url: string | null) => {
     const images = [...homeForm.carousel_images];
     images[index] = url ?? "";
@@ -992,6 +1016,11 @@ const Admin = () => {
                           <div className="flex flex-wrap gap-2">
                             <Button size="sm" variant="outline" onClick={() => startEdit(t)} className="text-xs">Modifier</Button>
                             <Button size="sm" variant="outline" onClick={() => loadTeachingComments(t)} className="text-xs">Voir commentaires</Button>
+                            {t.published && (
+                              <Button size="sm" variant="outline" onClick={() => handleSendNewsletter(t.id)} className="text-xs border-gold/40 text-gold hover:bg-gold/10">
+                                ✉️ Envoyer Newsletter
+                              </Button>
+                            )}
                             <Button size="sm" variant="ghost" onClick={() => togglePublished(t)} className="text-xs">
                               {t.published ? "Dépublier" : "Publier"}
                             </Button>

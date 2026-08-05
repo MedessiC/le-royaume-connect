@@ -9,21 +9,7 @@ import { BookOpen, Loader2, X, Grid, List, Filter, Calendar, MapPin, AudioLines,
 import SearchBar from "@/components/SearchBar";
 import SEO from "@/components/SEO";
 import { getTeachingPath } from "@/lib/teachingUrl";
-
-const getYoutubeEmbedUrl = (url: string) => {
-  const patterns = [
-    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
-    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/,
-    /([A-Za-z0-9_-]{11})$/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
-  }
-
-  return null;
-};
+import { getVideoEmbedUrl } from "@/lib/video";
 
 type Profile = { id: string; full_name: string | null; has_gold_badge?: boolean };
 type Category = { id: string; name: string; slug: string };
@@ -680,10 +666,10 @@ const Feed = () => {
                         <div className="w-full lg:w-[55%] aspect-video lg:aspect-auto min-h-[300px] bg-muted relative overflow-hidden flex-shrink-0">
                           {featuredTeaching.video_url ? (
                             <div className="relative bg-black w-full h-full flex items-center justify-center aspect-video lg:aspect-auto">
-                              {getYoutubeEmbedUrl(featuredTeaching.video_url) ? (
+                              {getVideoEmbedUrl(featuredTeaching.video_url) ? (
                                 <iframe
                                   className="w-full h-full border-0"
-                                  src={getYoutubeEmbedUrl(featuredTeaching.video_url)!}
+                                  src={getVideoEmbedUrl(featuredTeaching.video_url)!}
                                   title={featuredTeaching.title}
                                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                   allowFullScreen

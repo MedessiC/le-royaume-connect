@@ -63,6 +63,17 @@ GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=xxx
 GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
 
+# Oracle Object Storage
+ORACLE_REGION=eu-frankfurt-1
+ORACLE_TENANCY_ID=ocid1.tenancy.oc1..exampleuniqueID
+ORACLE_USER_ID=ocid1.user.oc1..exampleuniqueID
+ORACLE_FINGERPRINT=ab:cd:ef:12:34:56:78:90:ab:cd:ef:12:34:56:78:90
+ORACLE_NAMESPACE=your_namespace
+ORACLE_BUCKET=your_bucket
+ORACLE_PRIVATE_KEY_PATH=/path/to/oci_api_key.pem
+# or use the private key directly in env:
+# ORACLE_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+
 # FeePay
 FEEPAY_API_KEY=xxx
 FEEPAY_SHOP_ID=xxx

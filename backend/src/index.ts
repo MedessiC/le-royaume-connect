@@ -14,6 +14,7 @@ import authRoutes from './routes/auth.js';
 import paymentRoutes from './routes/payments.js';
 import userRoutes from './routes/users.js';
 import teachingRoutes from './routes/teachings.js';
+import uploadRoutes from './routes/uploads.js';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use('/api/uploads', express.raw({ type: () => true, limit: '1024mb' }));
 
 // Rate limiting
 app.use('/api/', apiLimiter);
@@ -71,6 +73,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/teachings', teachingRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
