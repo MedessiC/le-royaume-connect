@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.bunny-stream-create]
 verify_jwt = false
+
+[functions.bunny-stream-dedup]
+verify_jwt = false
+
+[functions.send-teaching-newsletter]
+verify_jwt = false
+
+[functions.send-broadcast-newsletter]
+verify_jwt = false
