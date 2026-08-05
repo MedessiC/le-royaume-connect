@@ -14,6 +14,8 @@ import TeachingSEO from "@/components/TeachingSEO";
 import ShareButton from "@/components/ShareButton";
 import SaveButton from "@/components/SaveButton";
 import TTSButton from "@/components/TTSButton";
+import SocialFollowCTA from "@/components/SocialFollowCTA";
+import { getTeachingPath } from "@/lib/teachingUrl";
 import UserAvatar from "@/components/UserAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,6 +39,7 @@ type ReplyTo = { id: string; name: string } | null;
 
 type Teaching = {
   id: string;
+  slug: string | null;
   title: string;
   excerpt: string | null;
   content: string;
@@ -79,7 +82,7 @@ const getYoutubeEmbedUrl = (url: string) => {
 };
 
 const TeachingDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: slugOrId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { playTrack, currentTrack, isPlaying } = useAudioPlayer();
@@ -87,6 +90,7 @@ const TeachingDetail = () => {
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<Array<{
     id: string;
+    slug: string | null;
     title: string;
     excerpt: string | null;
     cover_image_url: string | null;
@@ -110,19 +114,32 @@ const TeachingDetail = () => {
   const [collectionSaving, setCollectionSaving] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!slugOrId) return;
     setLoading(true);
-    supabase
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+    let query = supabase
       .from("teachings")
-      .select("id, title, excerpt, content, cover_image_url, video_url, audio_url, country, author_id, created_at, category_id")
-      .eq("id", id)
+      .select("id, slug, title, excerpt, content, cover_image_url, video_url, audio_url, country, author_id, created_at, category_id");
+
+    if (isUuid) {
+      query = query.or(`id.eq.${slugOrId},slug.eq.${slugOrId}`);
+    } else {
+      query = query.eq("slug", slugOrId);
+    }
+
+    query
       .eq("published", true)
       .maybeSingle()
-      .then(async ({ data }) => {
+      .then(async ({ data, error }) => {
         if (!data) {
           setTeaching(null);
           setLoading(false);
           return;
+        }
+
+        if (data.slug && data.slug !== slugOrId) {
+          navigate(`${getTeachingPath(data)}${window.location.hash}`, { replace: true });
         }
 
         const categoryRes = data.category_id
@@ -206,7 +223,7 @@ const TeachingDetail = () => {
         document.title = `${data.title} – MILLENIUM`;
         supabase
           .from("teachings")
-          .select("id, title, excerpt, cover_image_url, country, author_id, created_at, category_id")
+          .select("id, slug, title, excerpt, cover_image_url, country, author_id, created_at, category_id")
           .eq("published", true)
           .neq("id", data.id)
           .order("created_at", { ascending: false })
@@ -252,7 +269,7 @@ const TeachingDetail = () => {
             setRelated(enrichedRel);
           });
       });
-  }, [id, user]);
+  }, [slugOrId, user]);
 
   useEffect(() => {
     const loadCollections = async () => {
@@ -365,6 +382,16 @@ const TeachingDetail = () => {
       setLikesCount((count) => count + 1);
     }
   };
+
+  useEffect(() => {
+    if (!teaching || window.location.hash !== "#comments") return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById("comments")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+
+    return () => window.clearTimeout(timer);
+  }, [teaching]);
 
   const handleSendComment = async () => {
     if (!user || !teaching || !commentText.trim()) return;
@@ -482,12 +509,26 @@ const TeachingDetail = () => {
   // ── Loading state ─────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-slate-950">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 rounded-full border-2 border-gold border-t-transparent animate-spin" />
-            <p className="text-muted-foreground text-sm">Chargement de l'enseignement…</p>
+        <main className="relative flex flex-1 items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(hsl(0_0%_100%_/_0.08)_1px,transparent_1px),linear-gradient(90deg,hsl(0_0%_100%_/_0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
+          <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/10 blur-3xl" />
+
+          <div className="relative flex flex-col items-center">
+            <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-gold/30 bg-white/5 shadow-[0_0_60px_hsl(43_92%_50%_/_0.18)]">
+              <span className="absolute inset-0 rounded-full border-2 border-transparent border-t-gold border-r-gold/30 animate-spin" />
+              <img
+                src="/android-chrome-512x512.png"
+                alt="Logo du Règne Millénaire"
+                className="h-16 w-16 object-contain animate-pulse"
+              />
+            </div>
+            <p className="mt-6 font-display text-xs font-bold uppercase tracking-[0.28em] text-white">MILLENIUM</p>
+            <p className="mt-2 text-xs text-white/55">Préparation de l'enseignement</p>
+            <div className="mt-5 h-1 w-40 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-transparent via-gold to-transparent animate-[loader-sweep_0.9s_ease-in-out_infinite]" />
+            </div>
           </div>
         </main>
         <Footer />
@@ -576,7 +617,7 @@ const TeachingDetail = () => {
       <TeachingSEO
         title={teaching.title}
         description={teaching.excerpt || teaching.content.substring(0, 160)}
-        path={`/teachings/${id}`}
+        path={getTeachingPath(teaching)}
         image={teaching.cover_image_url || undefined}
         keywords={[teaching.categories?.name, teaching.country].filter(Boolean) as string[]}
         author={{ name: "Le Règne Millénaire", id: "official" }}
@@ -585,6 +626,7 @@ const TeachingDetail = () => {
         content={teaching.content}
         categoryName={teaching.categories?.name}
         country={teaching.country || undefined}
+        videoUrl={teaching.video_url || undefined}
       />
       <Navbar />
 
@@ -770,7 +812,7 @@ const TeachingDetail = () => {
               <ShareButton
                 title={teaching.title}
                 description={teaching.excerpt || teaching.content.substring(0, 160)}
-                url={`/teachings/${id}`}
+                url={getTeachingPath(teaching)}
                 size="md"
                 variant="outline"
               />
@@ -968,7 +1010,7 @@ const TeachingDetail = () => {
               <ShareButton
                 title={teaching.title}
                 description={teaching.excerpt || teaching.content.substring(0, 160)}
-                url={`/teachings/${id}`}
+                url={getTeachingPath(teaching)}
                 size="sm"
               />
               <div className="w-px h-4 bg-border" />
@@ -983,8 +1025,11 @@ const TeachingDetail = () => {
             </div>
           </div>
 
+          {/* ── Social Follow CTA ── */}
+          <SocialFollowCTA />
+
           {/* ── Comments ── */}
-          <div className="mt-4 mb-16">
+          <div id="comments" className="mt-4 mb-16 scroll-mt-24">
             <CommentsSection
               comments={comments}
               commentText={commentText}

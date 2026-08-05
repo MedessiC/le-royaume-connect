@@ -47,6 +47,20 @@ export const siteMetadata = {
     "disciple de ZOVIZO",
     "prophète Bénin",
     "réveil spirituel Afrique",
+    // Variantes de recherche courantes, notamment sans accents ou avec fautes simples.
+    "milenium",
+    "millénium",
+    "regne millenaire",
+    "règne millénaire",
+    "enseignement spirituel",
+    "enseignements religieux",
+    "predication",
+    "prédication",
+    "eglise benin",
+    "église bénin",
+    "zoviso",
+    "zovizo benin",
+    "banikoira",
   ],
 };
 

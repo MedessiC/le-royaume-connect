@@ -1,0 +1,20 @@
+{
+  "name": "millenium-og-proxy",
+  "version": "1.0.0",
+  "description": "Render OpenGraph proxy server for social media preview cards (WhatsApp, Facebook, Twitter, LinkedIn)",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

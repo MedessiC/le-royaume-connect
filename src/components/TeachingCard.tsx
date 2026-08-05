@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Heart, MessageSquare, MapPin, Music, ArrowRight, Play, Pause } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
 import GoldBadge from "@/components/GoldBadge";
@@ -6,11 +6,13 @@ import ShareButton from "@/components/ShareButton";
 import SaveButton from "@/components/SaveButton";
 import TTSButton from "@/components/TTSButton";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null; has_gold_badge?: boolean };
 
 type TeachingCardProps = {
   id: string;
+  slug?: string | null;
   title: string;
   excerpt: string | null;
   cover_image_url: string | null;
@@ -68,6 +70,7 @@ const getYoutubeEmbedUrl = (url: string) => {
 
 export const TeachingCard = ({
   id,
+  slug,
   title,
   excerpt,
   cover_image_url,
@@ -86,6 +89,7 @@ export const TeachingCard = ({
   viewMode = "grid",
 }: TeachingCardProps) => {
   const { playTrack, currentTrack, isPlaying } = useAudioPlayer();
+  const navigate = useNavigate();
   const officialName = "@leregnemillenaire";
 
   const isCurrentAudioPlaying = currentTrack?.id === id && isPlaying;
@@ -96,6 +100,7 @@ export const TeachingCard = ({
     e.stopPropagation();
     playTrack({
       id,
+      slug,
       title,
       authorName: officialName,
       audioUrl: audio_url,
@@ -184,7 +189,7 @@ export const TeachingCard = ({
   if (viewMode === "grid") {
     return (
       <Link
-        to={`/teachings/${id}`}
+        to={getTeachingPath({ id, slug })}
         className="block group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-gold/30 hover:shadow-royal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <div className="space-y-0">
@@ -266,7 +271,11 @@ export const TeachingCard = ({
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(`${getTeachingPath({ id, slug })}#comments`);
+                }}
                 className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
@@ -283,7 +292,7 @@ export const TeachingCard = ({
                   collections={collections}
                   onToggleCollection={onToggleCollection}
                 />
-                <ShareButton title={title} description={excerpt || ""} url={`/teachings/${id}`} size="sm" />
+                <ShareButton title={title} description={excerpt || ""} url={getTeachingPath({ id, slug })} size="sm" />
               </div>
             </div>
           </div>
@@ -295,7 +304,7 @@ export const TeachingCard = ({
   // ── Render Premium List Row Card ──
   return (
     <Link
-      to={`/teachings/${id}`}
+      to={getTeachingPath({ id, slug })}
       className="block group overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-gold/30 hover:shadow-royal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
     >
       <div className="flex flex-col md:flex-row gap-0">
@@ -380,7 +389,7 @@ export const TeachingCard = ({
                 collections={collections}
                 onToggleCollection={onToggleCollection}
               />
-              <ShareButton title={title} description={excerpt || ""} url={`/teachings/${id}`} size="sm" />
+              <ShareButton title={title} description={excerpt || ""} url={getTeachingPath({ id, slug })} size="sm" />
               <span className="inline-flex items-center gap-0.5 text-xs font-bold text-gold hover:underline pl-2 border-l border-border/60">
                 Ouvrir <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </span>

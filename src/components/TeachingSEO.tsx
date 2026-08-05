@@ -13,7 +13,49 @@ interface TeachingSEOProps {
   content?: string;
   categoryName?: string;
   country?: string;
+  videoUrl?: string;
 }
+
+const getYoutubeEmbedUrl = (url: string) => {
+  const patterns = [
+    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/,
+    /([A-Za-z0-9_-]{11})$/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match?.[1]) return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
+  }
+
+  return null;
+};
+
+const getVideoMimeType = (url: string) => {
+  const extension = url.split("?")[0].split(".").pop()?.toLowerCase();
+  switch (extension) {
+    case "mp4":
+      return "video/mp4";
+    case "webm":
+      return "video/webm";
+    case "ogg":
+    case "ogv":
+      return "video/ogg";
+    case "mov":
+      return "video/quicktime";
+    default:
+      return "video/mp4";
+  }
+};
+
+const getOgVideoUrl = (url: string) => {
+  const embedUrl = getYoutubeEmbedUrl(url);
+  return embedUrl || url;
+};
+
+const getOgVideoType = (url: string) => {
+  return getYoutubeEmbedUrl(url) ? "text/html" : getVideoMimeType(url);
+};
 
 const setMetaTag = (attrName: string, attrValue: string, content: string): HTMLMetaElement => {
   let element = document.head.querySelector<HTMLMetaElement>(`meta[${attrName}="${attrValue}"]`);
@@ -60,6 +102,7 @@ export default function TeachingSEO({
   content,
   categoryName,
   country,
+  videoUrl,
 }: TeachingSEOProps) {
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -103,6 +146,15 @@ export default function TeachingSEO({
     setMetaTag("property", "og:image:width", "1200");
     setMetaTag("property", "og:image:height", "630");
     setMetaTag("property", "og:image:alt", title);
+
+    if (videoUrl) {
+      const ogVideoUrl = getOgVideoUrl(videoUrl);
+      setMetaTag("property", "og:video", ogVideoUrl);
+      setMetaTag("property", "og:video:secure_url", ogVideoUrl);
+      setMetaTag("property", "og:video:type", getOgVideoType(videoUrl));
+      setMetaTag("property", "og:video:width", "1280");
+      setMetaTag("property", "og:video:height", "720");
+    }
 
     // ── Twitter / X ───────────────────────────────────────────────
     setMetaTag("name", "twitter:card", "summary_large_image");
@@ -195,7 +247,7 @@ export default function TeachingSEO({
     return () => {
       articleScript.remove();
     };
-  }, [title, description, path, image, keywords, publishedDate, modifiedDate, content, categoryName, country]);
+  }, [title, description, path, image, keywords, publishedDate, modifiedDate, content, categoryName, country, videoUrl]);
 
   return null;
 }

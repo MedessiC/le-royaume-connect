@@ -9,9 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, BookOpen, Users, Search } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
 import SEO from "@/components/SEO";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 type Teaching = {
   id: string;
+  slug: string | null;
   title: string;
   excerpt: string | null;
   cover_image_url: string | null;
@@ -24,6 +26,42 @@ type Profile = {
   avatar_url: string | null;
   bio: string | null;
 };
+
+const normalizeSearchTerm = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const getSearchVariants = (value: string) => {
+  const normalized = normalizeSearchTerm(value);
+  const variants = new Set([value.toLowerCase().trim(), normalized]);
+  const aliases: Record<string, string[]> = {
+    milenium: ["millenium", "millénium", "mouvement spirituel"],
+    millenium: ["milenium", "millénium", "mouvement spirituel"],
+    millénium: ["milenium", "millenium", "mouvement spirituel"],
+    regne: ["règne", "royaume", "millénaire"],
+    royaume: ["règne", "regne", "millénaire"],
+    enseignement: ["enseignements", "prédication", "sermon"],
+    enseignements: ["enseignement", "prédication", "sermon"],
+    predication: ["prédication", "enseignement", "sermon"],
+    zoviso: ["zovizo"],
+    zovizo: ["zoviso"],
+    banikoira: ["banikoara"],
+    banikoara: ["banikoira"],
+  };
+
+  for (const [key, values] of Object.entries(aliases)) {
+    if (normalized.includes(key)) values.forEach((variant) => variants.add(variant));
+  }
+
+  return [...variants].filter((term) => term.length >= 2);
+};
+
+const escapeSearchTerm = (term: string) => term.replace(/[,%()]/g, " ").trim();
 
 const SearchResults = () => {
   const navigate = useNavigate();
@@ -46,7 +84,16 @@ const SearchResults = () => {
 
   const performSearch = async () => {
     setLoading(true);
-    const searchTerm = query.toLowerCase();
+    const searchTerms = getSearchVariants(query).map(escapeSearchTerm);
+    const teachingFilters = searchTerms.flatMap((term) => [
+      `title.ilike.%${term}%`,
+      `content.ilike.%${term}%`,
+      `excerpt.ilike.%${term}%`,
+    ]);
+    const profileFilters = searchTerms.flatMap((term) => [
+      `full_name.ilike.%${term}%`,
+      `bio.ilike.%${term}%`,
+    ]);
 
     try {
       // Search teachings
@@ -55,6 +102,7 @@ const SearchResults = () => {
         .select(
           `
           id,
+          slug,
           title,
           excerpt,
           cover_image_url,
@@ -62,16 +110,14 @@ const SearchResults = () => {
         `
         )
         .eq("published", true)
-        .or(
-          `title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,excerpt.ilike.%${searchTerm}%`
-        )
+        .or(teachingFilters.join(","))
         .limit(12);
 
       // Search profiles
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, full_name, avatar_url, bio")
-        .or(`full_name.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`)
+        .or(profileFilters.join(","))
         .limit(12);
 
       setTeachings((teachingsData || []) as Teaching[]);
@@ -97,7 +143,7 @@ const SearchResults = () => {
         title="Recherche d’enseignements et membres | MILLENIUM"
         description="Recherchez parmi les enseignements et membres de la communauté MILLENIUM. Trouvez les messages de ZOVIZO et du Règne Millénaire."
         path="/search"
-        keywords={["recherche MILLENIUM", "trouver enseignement ZOVIZO", "chercher Règne Millénaire"]}
+        keywords={["recherche MILLENIUM", "milenium", "millénium", "trouver enseignement ZOVIZO", "chercher Règne Millénaire", "prédication Bénin", "zoviso"]}
       />
       <Navbar />
 
@@ -161,7 +207,7 @@ const SearchResults = () => {
                   {teachings.map((teaching) => (
                     <Link
                       key={teaching.id}
-                      to={`/teachings/${teaching.id}`}
+                      to={getTeachingPath(teaching)}
                       className="group"
                     >
                       <Card className="border-gold/20 overflow-hidden hover:border-gold/40 transition-all">

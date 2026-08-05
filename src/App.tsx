@@ -57,6 +57,7 @@ const App = () => {
                     <Route path="/auth/reset" element={<AuthReset />} />
                     <Route path="/oauth/consent" element={<AuthCallback />} />
                     <Route path="/feed" element={<Feed />} />
+                    <Route path="/feed/category/:slug" element={<Feed />} />
                     <Route path="/teachings/:id" element={<TeachingDetail />} />
                     <Route path="/profile/:id" element={<Profile />} />
                     <Route path="/about" element={<About />} />

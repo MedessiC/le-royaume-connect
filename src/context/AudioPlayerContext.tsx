@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from "r
 
 export type AudioTrack = {
   id: string;
+  slug?: string | null;
   title: string;
   authorName?: string;
   audioUrl: string;

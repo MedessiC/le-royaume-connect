@@ -28,14 +28,14 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
 
   const canRecordAudio = accept === "audio" && typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== "undefined";
   const acceptLabel = accept === "image" ? "Image" : accept === "video" ? "Vidéo" : "Audio";
-  const maxSizeLabel = accept === "image" ? "5 Mo" : accept === "audio" ? "30 Mo" : "50 Mo";
+  const maxSizeLabel = accept === "image" ? "5 Mo" : accept === "audio" ? "30 Mo" : "Aucune limite";
 
   const handleFile = async (file: File) => {
-    const maxSize = accept === "image" ? 5 * 1024 * 1024 : accept === "audio" ? 30 * 1024 * 1024 : 200 * 1024 * 1024;
+    const maxSize = accept === "image" ? 5 * 1024 * 1024 : accept === "audio" ? 30 * 1024 * 1024 : Infinity;
     if (file.size > maxSize) {
       return toast({
         title: "Fichier trop volumineux",
-        description: `Maximum ${accept === "image" ? "5 Mo" : accept === "audio" ? "30 Mo" : "200 Mo"}`,
+        description: `Maximum ${accept === "image" ? "5 Mo" : accept === "audio" ? "30 Mo" : "Aucune limite"}`,
         variant: "destructive",
       });
     }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TeachingCard from "@/components/TeachingCard";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { BookOpen, Loader2, X, Grid, List, Filter, Calendar, MapPin, AudioLines, Video, ChevronRight, Layers, LayoutGrid, ArrowUp } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import SEO from "@/components/SEO";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 const getYoutubeEmbedUrl = (url: string) => {
   const patterns = [
@@ -28,6 +29,7 @@ type Profile = { id: string; full_name: string | null; has_gold_badge?: boolean 
 type Category = { id: string; name: string; slug: string };
 type Teaching = {
   id: string;
+  slug: string | null;
   title: string;
   excerpt: string | null;
   content: string;
@@ -69,6 +71,8 @@ const TeachingCardSkeleton = ({ viewMode }: { viewMode: "grid" | "list" }) => (
 const Feed = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug?: string }>();
+  const [searchParams] = useSearchParams();
   const [teachings, setTeachings] = useState<Teaching[]>([]);
   const [page, setPage] = useState(0);
   const pageSize = 24; // Increased page size to get enough elements for category grouping
@@ -99,10 +103,17 @@ const Feed = () => {
   // Load categories & page settings
   useEffect(() => {
     supabase.from("categories").select("id, name, slug").order("name").then(({ data: cats }) => {
-      if (cats) setCategories(cats);
+      if (cats) {
+        setCategories(cats);
+        const categoryParam = slug || searchParams.get("category");
+        if (categoryParam && categoryParam !== "all") {
+          const category = cats.find((item) => item.slug === categoryParam || item.id === categoryParam);
+          if (category) setCategoryId(category.id);
+        }
+      }
     });
     document.title = "Bibliothèque des enseignements – MILLENIUM";
-  }, []);
+  }, [searchParams, slug]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -133,7 +144,7 @@ const Feed = () => {
 
       let query = supabase
         .from("teachings")
-        .select("id, title, excerpt, content, cover_image_url, video_url, audio_url, country, category_id, author_id, created_at")
+        .select("id, slug, title, excerpt, content, cover_image_url, video_url, audio_url, country, category_id, author_id, created_at")
         .eq("published", true);
 
       if (categoryId !== "all") query = query.eq("category_id", categoryId);
@@ -718,7 +729,7 @@ const Feed = () => {
                             </div>
 
                             <h2 className="font-display text-2xl md:text-3xl font-extrabold text-foreground group-hover:text-gold transition-colors leading-tight">
-                              <Link to={`/teachings/${featuredTeaching.id}`}>{featuredTeaching.title}</Link>
+                              <Link to={getTeachingPath(featuredTeaching)}>{featuredTeaching.title}</Link>
                             </h2>
 
                             {featuredTeaching.excerpt && (
@@ -747,7 +758,7 @@ const Feed = () => {
                             </span>
                             
                             <Link
-                              to={`/teachings/${featuredTeaching.id}`}
+                              to={getTeachingPath(featuredTeaching)}
                               className="inline-flex items-center gap-1.5 text-xs font-bold text-gold hover:underline group/btn"
                             >
                               Lire l'enseignement

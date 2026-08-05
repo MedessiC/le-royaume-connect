@@ -9,6 +9,7 @@ import GoldBadge from "@/components/GoldBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, BookOpen, MapPin } from "lucide-react";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 type PublicProfile = {
   id: string;
@@ -23,6 +24,7 @@ type PublicProfile = {
 
 type Teaching = {
   id: string;
+  slug: string | null;
   title: string;
   excerpt: string | null;
   cover_image_url: string | null;
@@ -49,7 +51,7 @@ const Profile = () => {
           .maybeSingle(),
         supabase
           .from("teachings")
-          .select("id, title, excerpt, cover_image_url, created_at")
+          .select("id, slug, title, excerpt, cover_image_url, created_at")
           .eq("published", true)
           .eq("author_id", id)
           .order("created_at", { ascending: false })
@@ -205,7 +207,7 @@ const Profile = () => {
                         <span className="text-xs text-muted-foreground">{new Date(teaching.created_at).toLocaleDateString("fr-FR")}</span>
                       </div>
                       {teaching.excerpt && <p className="text-sm text-muted-foreground line-clamp-3">{teaching.excerpt}</p>}
-                      <Link to={`/teachings/${teaching.id}`} className="inline-flex items-center gap-2 text-sm text-gold hover:text-gold/90">
+                      <Link to={getTeachingPath(teaching)} className="inline-flex items-center gap-2 text-sm text-gold hover:text-gold/90">
                         Voir l'enseignement <ArrowLeft className="w-3 h-3 rotate-180" />
                       </Link>
                     </CardContent>

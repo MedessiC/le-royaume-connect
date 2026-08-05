@@ -12,11 +12,13 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { BookOpen, ArrowRight } from "lucide-react";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 type Profile = { id: string; full_name: string | null; has_gold_badge?: boolean };
 
 type Teaching = {
   id: string;
+  slug: string | null;
   title: string;
   excerpt: string | null;
   cover_image_url: string | null;
@@ -52,7 +54,7 @@ const LatestTeachingsSection = () => {
     const loadTeachings = async () => {
       const { data: teachingsData } = await supabase
         .from("teachings")
-        .select("id, title, excerpt, cover_image_url, video_url, audio_url, country, author_id, created_at")
+        .select("id, slug, title, excerpt, cover_image_url, video_url, audio_url, country, author_id, created_at")
         .eq("published", true)
         .order("created_at", { ascending: false })
         .limit(6);

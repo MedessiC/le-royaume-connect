@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Bookmark, BookOpen, Trash2 } from "lucide-react";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 type Collection = {
   id: string;
@@ -18,6 +19,7 @@ type Collection = {
 
 type TeachingSummary = {
   id: string;
+  slug: string | null;
   title: string;
   excerpt: string | null;
   cover_image_url: string | null;
@@ -91,7 +93,7 @@ const Collections = () => {
 
       const { data: teachingsData, error: teachingsError } = await supabase
         .from("teachings")
-        .select("id, title, excerpt, cover_image_url, country, author_id, category_id, created_at")
+        .select("id, slug, title, excerpt, cover_image_url, country, author_id, category_id, created_at")
         .in("id", teachingIds);
 
       if (teachingsError) {
@@ -191,7 +193,7 @@ const Collections = () => {
                       {items.map((teaching) => (
                         <div key={teaching.id} className="flex flex-col gap-4 rounded-3xl border border-border bg-background p-4 md:flex-row md:items-center md:justify-between">
                           <div className="space-y-2">
-                            <Link to={`/teachings/${teaching.id}`} className="text-lg font-semibold text-foreground hover:text-gold transition-colors">
+                            <Link to={getTeachingPath(teaching)} className="text-lg font-semibold text-foreground hover:text-gold transition-colors">
                               {teaching.title}
                             </Link>
                             {teaching.excerpt ? <p className="text-sm text-muted-foreground line-clamp-2">{teaching.excerpt}</p> : null}

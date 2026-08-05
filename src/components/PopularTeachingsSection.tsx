@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Heart, MessageSquare } from "lucide-react";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 type PopularTeaching = {
   id: string;
+  slug: string | null;
   title: string;
   excerpt: string | null;
   cover_image_url: string | null;
@@ -23,7 +25,7 @@ const PopularTeachingsSection = () => {
     const loadPopularTeachings = async () => {
       const { data: teachingsData } = await supabase
         .from("teachings")
-        .select("id, title, excerpt, cover_image_url, author_id")
+        .select("id, slug, title, excerpt, cover_image_url, author_id")
         .eq("published", true)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -101,7 +103,7 @@ const PopularTeachingsSection = () => {
           {teachings.map((teaching, index) => (
             <Link
               key={teaching.id}
-              to={`/teachings/${teaching.id}`}
+              to={getTeachingPath(teaching)}
               className="flex-shrink-0 w-[240px] sm:w-[280px] md:w-auto snap-center group"
             >
               <div className="h-full rounded-2xl overflow-hidden card-elevated flex flex-col justify-between">

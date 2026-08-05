@@ -55,7 +55,7 @@ const CategoriesSection = () => {
           {categories.map((category) => (
             <Link
               key={category.id}
-              to={`/feed?category=${category.id}`}
+              to={`/feed/category/${encodeURIComponent(category.slug)}`}
               className="group relative bg-background border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 hover:border-gold/50 transition-all hover:shadow-sm"
             >
               <div className="flex items-center justify-between">

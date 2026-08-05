@@ -20,6 +20,7 @@ import {
   Menu, LayoutGrid, Home as HomeIcon, Newspaper, BookOpen, Tags,
   Quote, Sparkles, MessageSquareText, Users as UsersIcon,
   Crown, Eye, EyeOff, Clock, TrendingUp,
+  FileText, Clock4, Hash, AlignLeft, Save, SendHorizonal, BookMarked,
 } from "lucide-react";
 import MediaUpload from "@/components/MediaUpload";
 import GoldBadge from "@/components/GoldBadge";
@@ -1053,115 +1054,245 @@ const Admin = () => {
             {/* -------------------- TEACHINGS -------------------- */}
             {activeSection === "teachings" && (
               <div className="space-y-6 animate-in fade-in duration-500">
-                <Card className="border-gold/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      {editingId ? "Modifier l'enseignement" : "Nouvel enseignement"}
+
+                {/* ── Editor card ── */}
+                <div className="rounded-2xl border border-gold/20 bg-card shadow-sm overflow-hidden">
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-gradient-to-r from-gold/5 via-background to-background px-5 py-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/15">
+                        <BookMarked className="h-4 w-4 text-gold" />
+                      </div>
+                      <div>
+                        <h2 className="font-display font-semibold text-sm">
+                          {editingId ? "Modifier l'enseignement" : "Nouvel enseignement"}
+                        </h2>
+                        <p className="text-[11px] text-muted-foreground">
+                          {editingId ? "Mettez à jour le contenu et les métadonnées" : "Rédigez et publiez un nouvel enseignement"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
                       {editingId && (
-                        <Button size="sm" variant="ghost" onClick={cancelEdit}>
-                          <X className="w-4 h-4" /> Annuler
+                        <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-8 gap-1.5">
+                          <X className="w-3.5 h-3.5" /> Annuler
                         </Button>
                       )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={submitTeaching} className="space-y-4">
-                      <div>
-                        <Label>Titre</Label>
-                        <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required maxLength={200} />
-                      </div>
-                      <div>
-                        <Label>Extrait</Label>
-                        <Input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} maxLength={300} />
-                      </div>
-                      <div>
-                        <Label>Contenu</Label>
-                        <RichTextEditor
-                          value={form.content}
-                          onChange={(content) => setForm({ ...form, content })}
-                          placeholder="Écrivez le contenu de l'enseignement ici..."
-                        />
-                      </div>
-                      <div className="rounded-3xl border border-border/70 bg-gradient-to-br from-background via-background/95 to-muted/20 p-4 md:p-5">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <h3 className="font-semibold text-foreground">Médias de la publication</h3>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              Ajoutez une couverture, une vidéo ou un audio avec un rendu plus fluide et plus moderne.
-                            </p>
+                      <Button
+                        type="button"
+                        variant="hero"
+                        size="sm"
+                        disabled={submitting}
+                        onClick={(e) => submitTeaching(e as unknown as React.FormEvent)}
+                        className="h-8 gap-1.5"
+                      >
+                        {submitting ? (
+                          <><Clock4 className="w-3.5 h-3.5 animate-spin" /> Traitement…</>
+                        ) : editingId ? (
+                          <><Save className="w-3.5 h-3.5" /> Enregistrer</>
+                        ) : (
+                          <><SendHorizonal className="w-3.5 h-3.5" /> Publier</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <form onSubmit={submitTeaching}>
+                    <div className="grid lg:grid-cols-[1fr_300px] divide-y lg:divide-y-0 lg:divide-x divide-border/60">
+
+                      {/* ── LEFT: content ── */}
+                      <div className="flex flex-col gap-5 p-5">
+
+                        {/* Title */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                              <FileText className="w-3.5 h-3.5 text-gold" /> Titre *
+                            </Label>
+                            <span className={`text-[11px] tabular-nums ${
+                              form.title.length > 180 ? "text-red-400" : "text-muted-foreground"
+                            }`}>{form.title.length}/200</span>
                           </div>
-                          <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
-                            Multi-format
+                          <input
+                            value={form.title}
+                            onChange={(e) => setForm({ ...form, title: e.target.value })}
+                            required
+                            maxLength={200}
+                            placeholder="Titre de l'enseignement…"
+                            className="w-full bg-transparent border-0 border-b border-border/60 py-2 px-0 text-xl font-display font-bold placeholder:text-muted-foreground/40 focus:outline-none focus:border-gold transition-colors"
+                          />
+                        </div>
+
+                        {/* Excerpt */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <Label className="flex items-center gap-1.5 text-sm font-medium">
+                              <AlignLeft className="w-3.5 h-3.5 text-muted-foreground" /> Extrait / Résumé
+                            </Label>
+                            <span className={`text-[11px] tabular-nums ${
+                              form.excerpt.length > 270 ? "text-amber-400" : "text-muted-foreground"
+                            }`}>{form.excerpt.length}/300</span>
+                          </div>
+                          <textarea
+                            value={form.excerpt}
+                            onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                            maxLength={300}
+                            rows={2}
+                            placeholder="Courte description affichée dans les listes et aperçus…"
+                            className="w-full resize-none rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all"
+                          />
+                        </div>
+
+                        {/* Rich text editor */}
+                        <div className="space-y-1.5">
+                          <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                            <Hash className="w-3.5 h-3.5 text-gold" /> Contenu *
+                          </Label>
+                          <RichTextEditor
+                            value={form.content}
+                            onChange={(content) => setForm({ ...form, content })}
+                            placeholder="Commencez à rédiger votre enseignement ici…"
+                          />
+                        </div>
+                      </div>
+
+                      {/* ── RIGHT: metadata sidebar ── */}
+                      <div className="flex flex-col gap-0 divide-y divide-border/40">
+
+                        {/* Status */}
+                        <div className="p-4 space-y-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Statut</p>
+                          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
+                            <div className="flex items-center gap-2">
+                              {form.published ? (
+                                <Eye className="w-4 h-4 text-gold" />
+                              ) : (
+                                <EyeOff className="w-4 h-4 text-muted-foreground" />
+                              )}
+                              <span className="text-sm font-medium">
+                                {form.published ? "Publié" : "Brouillon"}
+                              </span>
+                            </div>
+                            <Switch
+                              checked={form.published}
+                              onCheckedChange={(v) => setForm({ ...form, published: v })}
+                              id="pub-sidebar"
+                            />
                           </div>
                         </div>
 
-                        <div className="mt-4 grid gap-4 lg:grid-cols-3">
-                          <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
-                            <Label className="mb-2 block text-sm font-medium">Image de couverture</Label>
-                            <MediaUpload value={form.cover} onChange={(v) => setForm({ ...form, cover: v })} accept="image" />
-                          </div>
-                          <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
-                            <Label className="mb-2 block text-sm font-medium">Vidéo (optionnel)</Label>
-                            <MediaUpload value={form.video} onChange={(v) => setForm({ ...form, video: v })} accept="video" />
-                          </div>
-                          <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
-                            <Label className="mb-2 block text-sm font-medium">Audio (optionnel)</Label>
-                            <MediaUpload value={form.audio} onChange={(v) => setForm({ ...form, audio: v })} accept="audio" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label>Pays</Label>
-                          <CountrySelect value={form.country} onChange={(v) => setForm({ ...form, country: v })} placeholder="Sélectionner un pays..." />
-                        </div>
-                        <div>
-                          <Label>Catégorie</Label>
+                        {/* Category */}
+                        <div className="p-4 space-y-2">
+                          <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Catégorie</Label>
                           <Select value={form.catId} onValueChange={(v) => setForm({ ...form, catId: v })}>
-                            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Sans catégorie" />
+                            </SelectTrigger>
                             <SelectContent>
-                              {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                              {categories.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={form.published} onCheckedChange={(v) => setForm({ ...form, published: v })} id="pub" />
-                        <Label htmlFor="pub">Publié</Label>
-                      </div>
-                      <Button type="submit" variant="hero" disabled={submitting}>
-                        {submitting ? "Traitement en cours..." : editingId ? "Enregistrer" : "Publier"}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
 
+                        {/* Country */}
+                        <div className="p-4 space-y-2">
+                          <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Pays</Label>
+                          <CountrySelect
+                            value={form.country}
+                            onChange={(v) => setForm({ ...form, country: v })}
+                            placeholder="Sélectionner…"
+                          />
+                        </div>
+
+                        {/* Cover image */}
+                        <div className="p-4 space-y-2">
+                          <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Image de couverture</Label>
+                          <MediaUpload
+                            value={form.cover}
+                            onChange={(v) => setForm({ ...form, cover: v })}
+                            accept="image"
+                          />
+                        </div>
+
+                        {/* Video */}
+                        <div className="p-4 space-y-2">
+                          <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Vidéo (optionnel)</Label>
+                          <MediaUpload
+                            value={form.video}
+                            onChange={(v) => setForm({ ...form, video: v })}
+                            accept="video"
+                          />
+                        </div>
+
+                        {/* Audio */}
+                        <div className="p-4 space-y-2">
+                          <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Audio (optionnel)</Label>
+                          <MediaUpload
+                            value={form.audio}
+                            onChange={(v) => setForm({ ...form, audio: v })}
+                            accept="audio"
+                          />
+                        </div>
+
+                        {/* Info panel */}
+                        <div className="mt-auto p-4 bg-muted/10">
+                          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Infos</p>
+                          <div className="space-y-1.5 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3 h-3" />
+                              <span>Auteur : {user?.email?.split("@")[0]}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+
+                {/* ── Teaching list ── */}
                 <div className="space-y-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-1">
+                    Tous les enseignements ({teachings.length})
+                  </h3>
                   {teachings.map((t, i) => (
                     <Card
                       key={t.id}
-                      className={`${editingId === t.id ? "border-gold" : "border-gold/10"} hover:shadow-md hover:border-gold/25 transition-all animate-in fade-in slide-in-from-bottom-1 duration-500`}
+                      className={`${
+                        editingId === t.id ? "border-gold ring-1 ring-gold/30" : "border-gold/10"
+                      } hover:shadow-md hover:border-gold/25 transition-all animate-in fade-in slide-in-from-bottom-1 duration-500`}
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <CardContent className="p-3 md:p-4">
                         <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 md:gap-4 items-start">
                           {t.cover_image_url && (
-                            <img src={t.cover_image_url} alt="" className="w-20 h-14 object-cover rounded shrink-0 sm:order-1" />
+                            <img src={t.cover_image_url} alt="" className="w-20 h-14 object-cover rounded-lg shrink-0 sm:order-1" />
                           )}
                           <div className="flex-1 min-w-0 sm:order-2">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <h3 className="font-display font-semibold truncate text-sm">{t.title}</h3>
                               <PublishBadge published={t.published} />
                               {t.video_url && <Badge variant="outline" className="text-xs">Vidéo</Badge>}
+                              {t.audio_url && <Badge variant="outline" className="text-xs">Audio</Badge>}
                             </div>
                             <p className="text-xs text-muted-foreground truncate">{t.excerpt}</p>
+                            {commentCounts[t.id] > 0 && (
+                              <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                                {commentCounts[t.id]} commentaire{commentCounts[t.id] > 1 ? "s" : ""}
+                              </p>
+                            )}
                           </div>
                           <div className="flex items-center gap-1 shrink-0 sm:order-3">
                             <Switch checked={t.published} onCheckedChange={() => togglePublished(t)} className="scale-75" />
                             <Button size="icon" variant="ghost" onClick={() => startEdit(t)} aria-label="Modifier" className="h-8 w-8">
                               <Pencil className="w-3 h-3" />
                             </Button>
-                            <Button size="icon" variant="ghost" onClick={() => deleteTeaching(t.id)} aria-label="Supprimer" className="h-8 w-8">
+                            <Button size="icon" variant="ghost" onClick={() => loadTeachingComments(t)} aria-label="Commentaires" className="h-8 w-8">
+                              <MessageSquareText className="w-3 h-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => deleteTeaching(t.id)} aria-label="Supprimer" className="h-8 w-8 text-destructive/70 hover:text-destructive">
                               <Trash2 className="w-3 h-3" />
                             </Button>
                           </div>

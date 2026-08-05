@@ -115,6 +115,8 @@ const Index = () => {
           "ZOVIZO", "MILLENIUM", "Le Règne Millénaire", "Banikoara", "Bénin",
           "mouvement spirituel", "enseignement biblique", "foi chrétienne Afrique",
           "leregnemillenaire", "prophète Bénin", "communauté spirituelle mondiale",
+          "milenium", "millénium", "règne millénaire", "enseignement spirituel",
+          "prédication Bénin", "zoviso", "banikoira", "église Bénin",
         ]}
         withFAQ={true}
       />

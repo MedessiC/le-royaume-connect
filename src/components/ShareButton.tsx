@@ -23,7 +23,8 @@ export const ShareButton = ({
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const fullUrl = `${window.location.origin}${url}`;
+  const ogProxyUrl = import.meta.env.VITE_OG_PROXY_URL?.replace(/\/$/, "");
+  const fullUrl = ogProxyUrl ? `${ogProxyUrl}${url}` : `${window.location.origin}${url}`;
   const shareText = description || title;
 
   const shareOptions = [

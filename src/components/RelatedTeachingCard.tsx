@@ -3,11 +3,13 @@ import { MapPin, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import UserAvatar from "@/components/UserAvatar";
 import GoldBadge from "@/components/GoldBadge";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null };
 
 type RelatedTeachingProps = {
   id: string;
+  slug?: string | null;
   title: string;
   excerpt?: string | null;
   cover_image_url: string | null;
@@ -29,6 +31,7 @@ const formatDate = (dateString: string) => {
 
 export const RelatedTeachingCard = ({
   id,
+  slug,
   title,
   excerpt,
   cover_image_url,
@@ -40,7 +43,7 @@ export const RelatedTeachingCard = ({
 
   return (
     <Link
-      to={`/teachings/${id}`}
+      to={getTeachingPath({ id, slug })}
       className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col h-full"
     >
       {/* Image Container */}

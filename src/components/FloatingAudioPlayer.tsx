@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Play, Pause, X, ChevronDown, ChevronUp, Volume2, VolumeX, Music } from "lucide-react";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
+import { getTeachingPath } from "@/lib/teachingUrl";
 
 const formatTime = (seconds: number) => {
   if (isNaN(seconds) || seconds === 0) return "0:00";
@@ -115,7 +116,7 @@ const FloatingAudioPlayer = () => {
             )}
             <div className="flex-1 min-w-0">
               <Link
-                to={`/teachings/${currentTrack.id}`}
+                to={getTeachingPath(currentTrack)}
                 className="font-display font-bold text-sm text-foreground hover:text-gold transition-colors line-clamp-1 block"
               >
                 {currentTrack.title}
@@ -161,7 +162,7 @@ const FloatingAudioPlayer = () => {
             </button>
 
             <Link
-              to={`/teachings/${currentTrack.id}`}
+              to={getTeachingPath(currentTrack)}
               className="text-xs font-semibold text-gold hover:underline"
             >
               Voir
