@@ -1,27 +1,8 @@
 import { useMemo } from "react";
-import { Youtube, Calendar, ArrowUpRight, Share2, Facebook, Radio } from "lucide-react";
+import { Youtube, Calendar, ArrowUpRight, Facebook, Radio, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const extractYouTubeId = (value: string): string | null => {
-  if (!value) return null;
-  const cleanUrl = value.trim();
-  const patterns = [
-    /youtu\.be\/([A-Za-z0-9_-]{11})/i,
-    /youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/i,
-    /youtube\.com\/embed\/([A-Za-z0-9_-]{11})/i,
-    /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/i,
-    /youtube\.com\/live\/([A-Za-z0-9_-]{11})/i,
-    /youtube\.com\/v\/([A-Za-z0-9_-]{11})/i,
-    /\b([A-Za-z0-9_-]{11})\b/
-  ];
-
-  for (const pattern of patterns) {
-    const match = cleanUrl.match(pattern);
-    if (match?.[1]) return match[1];
-  }
-
-  return null;
-};
+import VideoPlayer from "@/components/VideoPlayer";
+import { getVideoSource, isPlayableVideoUrl } from "@/lib/video";
 
 type HomeSettings = {
   youtube_url: string | null;
@@ -50,9 +31,9 @@ const FeaturedVideo = ({ settings }: Props) => {
   }, [settings?.youtube_expires_at]);
 
   const isExpired = expiresAt ? expiresAt.getTime() < Date.now() : false;
-  const videoId = settings?.youtube_url ? extractYouTubeId(settings.youtube_url) : null;
+  const videoSource = settings?.youtube_url ? getVideoSource(settings.youtube_url) : null;
 
-  if (!isActive || isExpired || !videoId) {
+  if (!isActive || isExpired || !isPlayableVideoUrl(settings?.youtube_url)) {
     return null;
   }
 
@@ -72,8 +53,19 @@ const FeaturedVideo = ({ settings }: Props) => {
             <div className="space-y-3">
               {/* Eyebrow */}
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-600/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-wider">
-                  <Youtube className="w-3.5 h-3.5 fill-current" /> Vidéo à la Une
+                <span
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    videoSource === "bunny"
+                      ? "bg-gold/10 border border-gold/20 text-gold"
+                      : "bg-red-600/10 border border-red-500/20 text-red-500"
+                  }`}
+                >
+                  {videoSource === "bunny" ? (
+                    <Video className="w-3.5 h-3.5" />
+                  ) : (
+                    <Youtube className="w-3.5 h-3.5 fill-current" />
+                  )}
+                  Vidéo à la Une
                 </span>
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gold/10 border border-gold/20 text-gold text-[10px] font-bold uppercase tracking-wider">
                   <Radio className="w-3 h-3" /> Nouveau
@@ -90,15 +82,12 @@ const FeaturedVideo = ({ settings }: Props) => {
 
             {/* Video Player Frame with Glass overlay shadow */}
             <div className="relative rounded-3xl overflow-hidden border border-border/80 bg-card shadow-royal group">
-              <div className="aspect-video w-full">
-                <iframe
-                  className="h-full w-full"
-                  src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=0`}
-                  title="Enseignement vidéo à la Une"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
+              <VideoPlayer
+                src={settings.youtube_url!}
+                title="Enseignement vidéo à la Une"
+                framed={false}
+                lazy={false}
+              />
             </div>
           </div>
 
@@ -135,8 +124,18 @@ const FeaturedVideo = ({ settings }: Props) => {
                   </div>
                   <div className="flex items-center justify-between text-xs font-body">
                     <span className="text-muted-foreground">Source :</span>
-                    <span className="font-semibold text-red-500 flex items-center gap-1">
-                      YouTube Official
+                    <span
+                      className={`font-semibold flex items-center gap-1 ${
+                        videoSource === "bunny" ? "text-gold" : videoSource === "youtube" ? "text-red-500" : "text-foreground"
+                      }`}
+                    >
+                      {videoSource === "bunny" && <Video className="w-3.5 h-3.5" />}
+                      {videoSource === "youtube" && <Youtube className="w-3.5 h-3.5 fill-current" />}
+                      {videoSource === "bunny"
+                        ? "Bunny Stream"
+                        : videoSource === "youtube"
+                          ? "YouTube Official"
+                          : "Vidéo directe"}
                     </span>
                   </div>
                 </div>

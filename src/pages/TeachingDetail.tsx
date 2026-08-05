@@ -16,7 +16,8 @@ import SaveButton from "@/components/SaveButton";
 import TTSButton from "@/components/TTSButton";
 import SocialFollowCTA from "@/components/SocialFollowCTA";
 import { getTeachingPath } from "@/lib/teachingUrl";
-import { getVideoEmbedUrl } from "@/lib/video";
+import TeachingContent from "@/components/TeachingContent";
+import VideoPlayer from "@/components/VideoPlayer";
 import UserAvatar from "@/components/UserAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -55,17 +56,12 @@ type Teaching = {
   categories?: { name: string; slug: string } | null;
 };
 
-const sanitizeHtml = (html: string) =>
-  html
-    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
-    .replace(/on\w+="[^"]*"/gi, "");
-
-const renderTeachingContent = (content: string) => {
-  if (/<[a-z][\s\S]*>/i.test(content)) {
-    return <div className="break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }} />;
-  }
-  return <div className="whitespace-pre-wrap break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]">{content}</div>;
-};
+const renderTeachingContent = (content: string) => (
+  <TeachingContent
+    content={content}
+    className="break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]"
+  />
+);
 
 const TeachingDetail = () => {
   const { id: slugOrId } = useParams<{ id: string }>();
@@ -862,21 +858,13 @@ const TeachingDetail = () => {
 
           {/* ── Video ── */}
           {teaching.video_url && (
-            <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-secondary">
-              {getVideoEmbedUrl(teaching.video_url) ? (
-                <div className="aspect-video w-full">
-                  <iframe
-                    className="h-full w-full"
-                    src={getVideoEmbedUrl(teaching.video_url)!}
-                    title={teaching.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              ) : (
-                <video controls src={teaching.video_url} className="w-full" />
-              )}
-            </div>
+            <VideoPlayer
+              src={teaching.video_url}
+              title={teaching.title}
+              poster={teaching.cover_image_url}
+              showLabel
+              className="mb-8"
+            />
           )}
 
           {/* ── Article Content ── */}

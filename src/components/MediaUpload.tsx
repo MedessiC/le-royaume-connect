@@ -8,7 +8,8 @@ import {
   isBunnyStreamConfigured,
 } from "@/lib/bunny";
 import { uploadToOracleStorage, isOracleStorageConfigured } from "@/lib/oracleStorage";
-import { getVideoEmbedUrl } from "@/lib/video";
+import VideoPlayer from "@/components/VideoPlayer";
+import { isEmbedVideoUrl, isPlayableVideoUrl } from "@/lib/video";
 
 type Props = {
   value?: string | null;
@@ -31,6 +32,16 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
   const [recording, setRecording] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+
+  const clearLocalPreview = () => {
+    setLocalPreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
+  };
+
+  const hasVideoPreview = accept === "video" && Boolean(localPreviewUrl || (resolvedValue && isPlayableVideoUrl(resolvedValue)));
 
   const canRecordAudio = accept === "audio" && typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== "undefined";
   const acceptLabel = accept === "image" ? "Image" : accept === "video" ? "Vidéo" : "Audio";
@@ -72,6 +83,12 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
 
     setUploading(true);
     setUploadProgress(0);
+
+    if (accept === "video") {
+      clearLocalPreview();
+      setLocalPreviewUrl(URL.createObjectURL(file));
+    }
+
     try {
       let url: string;
 
@@ -157,8 +174,9 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
+      if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
     };
-  }, []);
+  }, [localPreviewUrl]);
 
   return (
     <div className="space-y-3">
@@ -195,7 +213,7 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
               </div>
               <div>
                 <p className="font-medium text-foreground">
-                  {value ? "Fichier prêt à être utilisé" : "Glissez-déposez ou choisissez un fichier"}
+                  {resolvedValue || localPreviewUrl ? "Fichier prêt à être utilisé" : "Glissez-déposez ou choisissez un fichier"}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Formats optimisés pour la lecture directe dans l’interface.
@@ -225,8 +243,9 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
                   {recording ? "Arrêter" : "Enregistrer"}
                 </Button>
               )}
-              {value && (
+              {(resolvedValue || localPreviewUrl) && (
                 <Button type="button" size="sm" variant="ghost" onClick={() => {
+                  clearLocalPreview();
                   onChange?.(null);
                   onUpload?.(null);
                 }} aria-label="Retirer">
@@ -242,6 +261,9 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
             value={resolvedValue ?? ""}
             onChange={(e) => {
               const nextValue = e.target.value || null;
+              if (nextValue !== resolvedValue) {
+                clearLocalPreview();
+              }
               onChange?.(nextValue);
               onUpload?.(nextValue);
             }}
@@ -268,18 +290,38 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
           <img src={resolvedValue!} alt="Aperçu" className="h-48 w-full object-cover" />
         </div>
       )}
-      {resolvedValue && accept === "video" && (
-        <div className="overflow-hidden rounded-2xl border border-border/70 bg-background/80 p-2">
-          {getVideoEmbedUrl(resolvedValue) ? (
-            <iframe
-              src={getVideoEmbedUrl(resolvedValue)!}
-              title="Aperçu vidéo"
-              className="aspect-video w-full min-h-[12rem]"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <video src={resolvedValue!} controls className="h-48 w-full rounded-xl object-cover" />
+      {hasVideoPreview && (
+        <div className="space-y-2">
+          <div className="overflow-hidden rounded-2xl border border-border/70 bg-black">
+            {localPreviewUrl ? (
+              <div className="relative w-full aspect-video min-h-[12rem]">
+                <video
+                  src={localPreviewUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="absolute inset-0 h-full w-full object-contain"
+                />
+                {uploading && (
+                  <div className="absolute inset-x-0 bottom-0 bg-black/75 px-3 py-2 text-xs font-medium text-white">
+                    Téléversement en cours…{uploadProgress > 0 ? ` ${uploadProgress}%` : ""}
+                  </div>
+                )}
+              </div>
+            ) : resolvedValue ? (
+              <VideoPlayer
+                src={resolvedValue}
+                title="Aperçu vidéo"
+                variant="compact"
+                lazy={false}
+                framed={false}
+              />
+            ) : null}
+          </div>
+          {resolvedValue && isEmbedVideoUrl(resolvedValue) && !uploading && (
+            <p className="px-1 text-xs text-muted-foreground">
+              Vidéo enregistrée sur Bunny Stream. Le lecteur en ligne peut mettre 1 à 2 minutes à être disponible après l’upload.
+            </p>
           )}
         </div>
       )}

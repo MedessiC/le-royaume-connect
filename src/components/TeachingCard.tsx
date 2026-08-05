@@ -7,7 +7,7 @@ import SaveButton from "@/components/SaveButton";
 import TTSButton from "@/components/TTSButton";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import { getTeachingPath } from "@/lib/teachingUrl";
-import { getVideoEmbedUrl } from "@/lib/video";
+import VideoPlayer from "@/components/VideoPlayer";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null; has_gold_badge?: boolean };
 
@@ -119,28 +119,13 @@ export const TeachingCard = ({
     }
 
     if (video_url) {
-      const embedUrl = getVideoEmbedUrl(video_url);
       return (
-        <div className="relative bg-black aspect-video w-full h-full flex items-center justify-center">
-          {embedUrl ? (
-            <iframe
-              className="w-full h-full pointer-events-none"
-              src={embedUrl}
-              title={title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <video src={video_url} className="w-full h-full object-cover" controls={false} />
-          )}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-12 h-12 rounded-full bg-gold/20 backdrop-blur-sm flex items-center justify-center motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-110">
-              <div className="w-9 h-9 rounded-full bg-gold flex items-center justify-center shadow-gold text-slate-950">
-                <Play className="w-4 h-4 fill-current ml-0.5" />
-              </div>
-            </div>
-          </div>
-        </div>
+        <VideoPlayer
+          src={video_url}
+          title={title}
+          poster={cover_image_url}
+          variant="preview"
+        />
       );
     }
 

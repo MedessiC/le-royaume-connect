@@ -23,6 +23,8 @@ import {
   FileText, Clock4, Hash, AlignLeft, Save, SendHorizonal, BookMarked,
 } from "lucide-react";
 import MediaUpload from "@/components/MediaUpload";
+import VideoPlayer from "@/components/VideoPlayer";
+import { isPlayableVideoUrl } from "@/lib/video";
 import GoldBadge from "@/components/GoldBadge";
 import CountrySelect from "@/components/CountrySelect";
 import TestimonialsAdmin from "@/components/admin/TestimonialsAdmin";
@@ -722,11 +724,11 @@ const Admin = () => {
                     <form onSubmit={saveHomeSettings} className="space-y-6">
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <div>
-                          <Label>URL YouTube</Label>
+                          <Label>URL vidéo (YouTube ou Bunny)</Label>
                           <Input
                             value={homeForm.youtube_url}
                             onChange={(e) => setHomeForm({ ...homeForm, youtube_url: e.target.value })}
-                            placeholder="https://youtu.be/..."
+                            placeholder="https://youtu.be/... ou https://iframe.mediadelivery.net/embed/..."
                           />
                         </div>
                         <div>
@@ -747,6 +749,17 @@ const Admin = () => {
                           <Label htmlFor="home-active">Activer la vidéo</Label>
                         </div>
                       </div>
+
+                      {isPlayableVideoUrl(homeForm.youtube_url) && (
+                        <div className="space-y-2">
+                          <Label>Aperçu de la vidéo à la Une</Label>
+                          <VideoPlayer
+                            src={homeForm.youtube_url.trim()}
+                            title="Vidéo à la Une"
+                            lazy={false}
+                          />
+                        </div>
+                      )}
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>

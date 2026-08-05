@@ -9,7 +9,7 @@ import { BookOpen, Loader2, X, Grid, List, Filter, Calendar, MapPin, AudioLines,
 import SearchBar from "@/components/SearchBar";
 import SEO from "@/components/SEO";
 import { getTeachingPath } from "@/lib/teachingUrl";
-import { getVideoEmbedUrl } from "@/lib/video";
+import VideoPlayer from "@/components/VideoPlayer";
 
 type Profile = { id: string; full_name: string | null; has_gold_badge?: boolean };
 type Category = { id: string; name: string; slug: string };
@@ -665,19 +665,14 @@ const Feed = () => {
                       <div className="flex flex-col lg:flex-row gap-6">
                         <div className="w-full lg:w-[55%] aspect-video lg:aspect-auto min-h-[300px] bg-muted relative overflow-hidden flex-shrink-0">
                           {featuredTeaching.video_url ? (
-                            <div className="relative bg-black w-full h-full flex items-center justify-center aspect-video lg:aspect-auto">
-                              {getVideoEmbedUrl(featuredTeaching.video_url) ? (
-                                <iframe
-                                  className="w-full h-full border-0"
-                                  src={getVideoEmbedUrl(featuredTeaching.video_url)!}
-                                  title={featuredTeaching.title}
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                />
-                              ) : (
-                                <video src={featuredTeaching.video_url} className="w-full h-full object-cover" controls />
-                              )}
-                            </div>
+                            <VideoPlayer
+                              src={featuredTeaching.video_url}
+                              title={featuredTeaching.title}
+                              poster={featuredTeaching.cover_image_url}
+                              framed={false}
+                              lazy={false}
+                              className="h-full w-full"
+                            />
                           ) : featuredTeaching.cover_image_url ? (
                             <img
                               src={featuredTeaching.cover_image_url}
