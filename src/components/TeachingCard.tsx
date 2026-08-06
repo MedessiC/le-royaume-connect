@@ -8,6 +8,7 @@ import TTSButton from "@/components/TTSButton";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import { getTeachingPath } from "@/lib/teachingUrl";
 import VideoPlayer from "@/components/VideoPlayer";
+import TeachingCoverFallback from "@/components/TeachingCoverFallback";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null; has_gold_badge?: boolean };
 
@@ -153,7 +154,7 @@ export const TeachingCard = ({
       );
     }
 
-    return null;
+    return <TeachingCoverFallback title={title} className="aspect-video w-full h-full" />;
   };
 
   // ── Render standard grid card ──

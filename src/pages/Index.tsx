@@ -44,7 +44,7 @@ const Index = () => {
 
   useEffect(() => {
     const loadSettings = async () => {
-      const { data, error } = await supabase.from("home_settings").select("*").limit(1).single();
+      const { data, error } = await supabase.from("home_settings").select("*").limit(1).maybeSingle();
       if (error) {
         console.error("Error loading home settings:", error.message, error.details);
       }
@@ -86,6 +86,7 @@ const Index = () => {
           settings.carousel_images = normalized;
         }
 
+        console.debug("Loaded home_settings:", settings);
         setHomeSettings(settings as HomeSettings);
       }
     };

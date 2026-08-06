@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Play } from "lucide-react";
 import { createRoot, type Root } from "react-dom/client";
 import { getVideoPosterUrl } from "@/lib/video";
+import { cn } from "@/lib/utils";
 
 const sanitizeHtml = (html: string) =>
   html
@@ -124,10 +125,8 @@ const TeachingContent = ({ content, className }: TeachingContentProps) => {
 
   if (!isHtml) {
     return (
-      <div className={className}>
-        <div className="whitespace-pre-wrap break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]">
-          {content}
-        </div>
+      <div className={cn(className, "whitespace-pre-wrap break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]")}>
+        {content}
       </div>
     );
   }
@@ -135,7 +134,7 @@ const TeachingContent = ({ content, className }: TeachingContentProps) => {
   return (
     <div
       ref={ref}
-      className={className}
+      className={cn(className, "break-words overflow-hidden [word-break:break-word] [overflow-wrap:anywhere]")}
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
     />
   );

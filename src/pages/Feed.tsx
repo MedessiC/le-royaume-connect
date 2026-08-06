@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { BookOpen, Loader2, X, Grid, List, Filter, Calendar, MapPin, AudioLines, Video, ChevronRight, Layers, LayoutGrid, ArrowUp } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import SEO from "@/components/SEO";
+import TeachingCoverFallback from "@/components/TeachingCoverFallback";
 import { getTeachingPath } from "@/lib/teachingUrl";
 import VideoPlayer from "@/components/VideoPlayer";
 
@@ -680,9 +681,10 @@ const Feed = () => {
                               className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-hero">
-                              <BookOpen className="w-16 h-16 text-gold/40" />
-                            </div>
+                            <TeachingCoverFallback
+                              title={featuredTeaching.title}
+                              className="w-full h-full"
+                            />
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none lg:hidden" />
                           <span className="absolute top-4 left-4 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gold text-slate-950 text-[10px] font-bold uppercase tracking-wider shadow-gold z-10 pointer-events-none">

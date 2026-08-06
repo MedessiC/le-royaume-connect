@@ -19,6 +19,7 @@ import { getTeachingPath } from "@/lib/teachingUrl";
 import TeachingContent from "@/components/TeachingContent";
 import VideoPlayer from "@/components/VideoPlayer";
 import UserAvatar from "@/components/UserAvatar";
+import TeachingCoverFallback from "@/components/TeachingCoverFallback";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
@@ -617,7 +618,7 @@ const TeachingDetail = () => {
 
       <main className="flex-1 pt-16">
         {/* ── HERO cover image ── */}
-        {teaching.cover_image_url && (
+        {teaching.cover_image_url ? (
           <div className="relative w-full aspect-[21/9] max-h-[520px] overflow-hidden bg-muted">
             <img
               src={teaching.cover_image_url}
@@ -627,9 +628,14 @@ const TeachingDetail = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
           </div>
+        ) : (
+          <TeachingCoverFallback
+            title={teaching.title}
+            className="w-full aspect-[21/9] max-h-[520px] overflow-hidden"
+          />
         )}
 
-        <div className={`container mx-auto px-4 max-w-3xl ${!teaching.cover_image_url ? "pt-24" : ""}`}>
+        <div className="container mx-auto px-4 max-w-3xl">
           {/* ── Back link ── */}
           <div className="flex items-center pt-6">
             <button
@@ -869,7 +875,7 @@ const TeachingDetail = () => {
 
           {/* ── Article Content ── */}
           <div className={`prose prose-lg max-w-none mb-8
-            text-foreground font-body leading-[1.9] tracking-[0.01em]
+            text-foreground font-body leading-[1.95] tracking-[0.01em]
             prose-headings:font-display prose-headings:leading-tight prose-headings:font-bold prose-headings:relative
             prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-gold/25 prose-h2:text-foreground
             prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-foreground prose-h3:pl-3 prose-h3:border-l-2 prose-h3:border-gold

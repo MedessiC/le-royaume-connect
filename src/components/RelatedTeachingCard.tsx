@@ -3,6 +3,7 @@ import { MapPin, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import UserAvatar from "@/components/UserAvatar";
 import GoldBadge from "@/components/GoldBadge";
+import TeachingCoverFallback from "@/components/TeachingCoverFallback";
 import { getTeachingPath } from "@/lib/teachingUrl";
 
 type Profile = { id: string; full_name: string | null; avatar_url?: string | null };
@@ -72,12 +73,7 @@ export const RelatedTeachingCard = ({
           )}
         </div>
       ) : (
-        <div className="aspect-video bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-gold/40 text-3xl mb-2">📖</div>
-            <p className="text-xs text-muted-foreground">Sans image</p>
-          </div>
-        </div>
+        <TeachingCoverFallback title={title} className="aspect-video w-full h-full" />
       )}
 
       {/* Content */}

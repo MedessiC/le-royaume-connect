@@ -683,15 +683,56 @@
   min-width: 0;
 }
 
-/* Liens longs dans le corps de l'enseignement */
-.teaching-prose a,
-.tiptap a,
-.tiptap p,
-.tiptap li,
+/* Texte de l'enseignement */
+.teaching-prose p,
+.tiptap p {
+  margin-bottom: 1.35rem;
+  line-height: 1.95;
+}
+
+.teaching-prose strong,
+.tiptap strong {
+  font-weight: 700;
+}
+
+.teaching-prose em,
+.tiptap em {
+  font-style: italic;
+}
+
+/* Citations */
+.teaching-prose blockquote,
 .tiptap blockquote {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  word-wrap: break-word;
+  position: relative;
+  margin: 1.75rem 0;
+  padding: 1.2rem 1.4rem 1.2rem 1.25rem;
+  border-left: 4px solid hsl(var(--gold));
+  border-radius: 0.75rem;
+  background: hsl(var(--gold) / 0.08);
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+  line-height: 1.85;
+}
+
+.teaching-prose blockquote p:first-child,
+.tiptap blockquote p:first-child {
+  margin-top: 0;
+}
+
+.teaching-prose blockquote p:last-child,
+.tiptap blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.teaching-prose blockquote::before,
+.tiptap blockquote::before {
+  content: "“";
+  position: absolute;
+  top: 0.75rem;
+  left: 0.85rem;
+  font-size: 3rem;
+  line-height: 1;
+  color: hsl(var(--gold) / 0.35);
 }
 
 /* Liens en bleu gold, toujours lisibles */
