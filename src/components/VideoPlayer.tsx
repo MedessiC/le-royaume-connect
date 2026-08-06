@@ -152,6 +152,7 @@ const NativeVideoPlayer = ({
     void video.requestFullscreen?.();
   }, []);
 
+
   return (
     <div className={cn("group absolute inset-0 bg-black", className)}>
       <video
@@ -219,16 +220,18 @@ const NativeVideoPlayer = ({
               </span>
             )}
           </div>
-          {!compact && (
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="rounded-lg p-1.5 text-white/90 transition-colors hover:bg-white/10 hover:text-white"
-              aria-label="Plein écran"
-            >
-              <Maximize className="h-4 w-4" />
-            </button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {!compact && (
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="rounded-lg p-1.5 text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Plein écran"
+              >
+                <Maximize className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -270,14 +273,16 @@ const EmbedVideoPlayer = ({
   }
 
   return (
-    <iframe
-      src={embedUrl}
-      title={title ?? "Lecteur vidéo"}
-      className="absolute inset-0 h-full w-full border-0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-      loading="lazy"
-    />
+    <div className="absolute inset-0 flex flex-col">
+      <iframe
+        src={embedUrl}
+        title={title ?? "Lecteur vidéo"}
+        className="h-full w-full flex-1 border-0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        loading="lazy"
+      />
+    </div>
   );
 };
 

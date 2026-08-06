@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import FlagIcon from "@/components/FlagIcon";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -24,6 +25,8 @@ type ContactNumber = {
 
 const contactEmail = import.meta.env.VITE_CONTACT_EMAIL ?? "contact@leregnemillenaire.com";
 const contactNumbers: ContactNumber[] = [
+  { country: "Côte d'Ivoire", number: "+225 27 337 83959", tone: "gold" },
+  { country: "Côte d'Ivoire", number: "+225 07 592 32944", tone: "gold" },
   { country: "Bénin", number: import.meta.env.VITE_BENIN_PHONE_1 ?? "", tone: "gold" },
   { country: "Bénin", number: import.meta.env.VITE_BENIN_PHONE_2 ?? "", tone: "gold" },
   { country: "Bénin", number: import.meta.env.VITE_BENIN_PHONE_3 ?? "", tone: "gold" },
@@ -31,6 +34,8 @@ const contactNumbers: ContactNumber[] = [
   { country: "Côte d'Ivoire", number: import.meta.env.VITE_CI_PHONE_2 ?? "", tone: "green" },
 ];
 const whatsappUrl = import.meta.env.VITE_WHATSAPP_URL ?? "";
+
+// FlagIcon component provides SVG flags for countries
 
 const phoneHref = (number: string) => `tel:${number.replace(/[^\d+]/g, "")}`;
 const whatsappHref = (number: string) => {
@@ -127,7 +132,7 @@ const Donate = () => {
                 <div key={`${contact.country}-${contact.number}`} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
                   <div className="flex items-center gap-4">
                     <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${contact.tone === "gold" ? "bg-gold/15 text-gold" : "bg-emerald-500/15 text-emerald-600"}`}><Phone className="h-5 w-5" /></span>
-                    <span><strong className="block text-sm text-foreground">{contact.country}</strong><span className="text-sm text-muted-foreground">{contact.number}</span></span>
+                    <span><strong className="block text-sm text-foreground"><FlagIcon country={contact.country} className="inline-block h-4 w-6 mr-2 flex-shrink-0" /></strong><span className="text-sm text-muted-foreground">{contact.number}</span></span>
                   </div>
                   <div className="flex items-center gap-1">
                     <a href={phoneHref(contact.number)} aria-label={`Appeler le ${contact.number}`} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><Phone className="h-4 w-4" /></a>
@@ -191,7 +196,7 @@ const Donate = () => {
                   href={phoneHref(contact.number)}
                   className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-emerald-500/40 hover:text-emerald-600"
                 >
-                  <span><span className="mr-2 text-xs text-muted-foreground">{contact.country}</span>{contact.number}</span>
+                  <span><FlagIcon country={contact.country} className="inline-block h-3.5 w-5 mr-2" />{contact.number}</span>
                   <Phone className="h-4 w-4" />
                 </a>
               )) : (

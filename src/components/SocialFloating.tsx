@@ -3,6 +3,7 @@ import { X, Video, MessageCircle, ArrowUpRight } from "lucide-react";
 import { IconType } from "react-icons";
 import { FaWhatsapp, FaFacebook, FaYoutube } from "react-icons/fa";
 import { SiTiktok } from "react-icons/si";
+import FlagIcon from "@/components/FlagIcon";
 
 type Props = {
   tiktok_url: string | null;
@@ -68,6 +69,18 @@ const SocialFloating = ({
     bgColor: string;
   }>;
 
+  const contactNumbers = [
+    {
+      country: "Côte d'Ivoire",
+      label: "+225 27 337 83959",
+      href: "https://wa.me/2252733783959",
+    },
+    {
+      country: "Côte d'Ivoire",
+      label: "+225 07 592 32944",
+      href: "https://wa.me/2250759232944",
+    },
+  ];
 
   return (
     <aside
@@ -112,30 +125,51 @@ const SocialFloating = ({
 
           <div className="grid gap-2">
             {visibleLinks.length > 0 ? (
-              visibleLinks.map((link) => {
-                const Icon = link.icon;
-                return (
+              <>
+                {visibleLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className={`group flex items-center justify-between rounded-2xl border p-2.5 transition-all duration-200 ${link.bgColor}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl bg-background shadow-sm border border-border/40 ${link.color}`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="text-xs font-bold text-foreground group-hover:text-gold transition-colors">
+                          {link.label}
+                        </span>
+                      </div>
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-gold group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </a>
+                  );
+                })}
+                {contactNumbers.map((contact) => (
                   <a
-                    key={link.label}
-                    href={link.href}
+                    key={contact.label}
+                    href={contact.href}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className={`group flex items-center justify-between rounded-2xl border p-2.5 transition-all duration-200 ${link.bgColor}`}
+                    className="group flex items-center justify-between rounded-2xl border border-border/60 bg-white/5 p-2.5 transition-all duration-200 hover:border-gold hover:bg-gold/10"
                   >
                     <div className="flex items-center gap-3">
-                      <span
-                        className={`flex h-9 w-9 items-center justify-center rounded-xl bg-background shadow-sm border border-border/40 ${link.color}`}
-                      >
-                        <Icon className="h-4 w-4" />
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-sm border border-emerald-500/20">
+                        <FaWhatsapp className="h-4 w-4" />
                       </span>
                       <span className="text-xs font-bold text-foreground group-hover:text-gold transition-colors">
-                        {link.label}
+                        <FlagIcon country={contact.country} className="inline-block h-4 w-6 mr-2 flex-shrink-0" />{contact.label}
                       </span>
                     </div>
                     <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-gold group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </a>
-                );
-              })
+                ))}
+              </>
             ) : (
               <div className="rounded-2xl border border-border/60 bg-muted/30 p-3 text-center text-xs text-muted-foreground">
                 Aucun réseau renseigné.

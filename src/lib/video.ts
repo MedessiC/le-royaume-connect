@@ -41,6 +41,14 @@ export const getBunnyVideoIds = (url: string | null | undefined): { libraryId: s
 
 export const getBunnyThumbnailUrl = (_libraryId: string, _videoId: string): string => FALLBACK_VIDEO_POSTER;
 
+export const getBunnyDownloadUrl = (url: string | null | undefined): string | null => {
+  const bunny = getBunnyVideoIds(url);
+  if (bunny) {
+    return `https://video.bunnycdn.com/library/${bunny.libraryId}/${bunny.videoId}`;
+  }
+  return null;
+};
+
 export const isBunnyVideoUrl = (url: string | null | undefined): boolean =>
   Boolean(getBunnyVideoIds(url));
 
@@ -66,6 +74,12 @@ export const isEmbedVideoUrl = (url: string | null | undefined): boolean =>
 
 export const isNativeVideoUrl = (url: string | null | undefined): boolean =>
   Boolean(url && !getVideoEmbedUrl(url));
+
+export const getVideoDownloadUrl = (url: string | null | undefined): string | null => {
+  const bunnyUrl = getBunnyDownloadUrl(url);
+  if (bunnyUrl) return bunnyUrl;
+  return isNativeVideoUrl(url) ? url : null;
+};
 
 export const getVideoPosterUrl = (
   url: string | null | undefined,
