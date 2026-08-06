@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, LogOut, Shield, Settings, User as UserIcon, Heart, Bell, Sun, Moon, Search as SearchIcon } from "lucide-react";
-import ReactCountryFlag from "react-country-flag";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { LogOut, Shield, User as UserIcon, Heart, Bell, Sun, Moon, Search as SearchIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/i18n";
 import LanguageSelector from "@/components/LanguageSelector";
 import useTheme from "@/hooks/useTheme";
 import BottomNav from "@/components/BottomNav";
+import NotificationBell from "@/components/NotificationBell";
 import UserAvatar from "@/components/UserAvatar";
 
 const Navbar = () => {
@@ -18,23 +16,9 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [pageLoading, setPageLoading] = useState(false);
-  const [notificationOpen, setNotificationOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [notifications, setNotifications] = useState<{
-    id: string;
-    title: string;
-    message: string;
-    createdAt: string;
-    read: boolean;
-    href?: string;
-  }[]>([]);
-  const [notifNews, setNotifNews] = useState(false);
-  const [notifReply, setNotifReply] = useState(false);
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
   const { resolvedTheme, toggle } = useTheme();
-
-  const notificationStorageKey = user ? `millenium-notifications-${user.id}` : "millenium-notifications";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 16);
@@ -42,87 +26,12 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const addNotification = (notification: { title: string; message: string; href?: string }) => {
-    setNotifications((prev) => {
-      const next = [
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          title: notification.title,
-          message: notification.message,
-          href: notification.href,
-          createdAt: new Date().toISOString(),
-          read: false,
-        },
-        ...prev,
-      ].slice(0, 16);
-      if (notificationStorageKey) {
-        try { window.localStorage.setItem(notificationStorageKey, JSON.stringify(next)); } catch {}
-      }
-      return next;
-    });
-  };
-
-  const markAllRead = () => {
-    setNotifications((prev) => {
-      const next = prev.map((n) => ({ ...n, read: true }));
-      if (notificationStorageKey) {
-        try { window.localStorage.setItem(notificationStorageKey, JSON.stringify(next)); } catch {}
-      }
-      return next;
-    });
-  };
-
   useEffect(() => {
     if (pageLoading) setPageLoading(false);
   }, [location]);
 
-  useEffect(() => {
-    if (!user) { setNotifications([]); setNotifNews(false); setNotifReply(false); return; }
-    try {
-      const stored = window.localStorage.getItem(notificationStorageKey);
-      if (stored) setNotifications(JSON.parse(stored));
-    } catch {}
-    supabase.from("profiles").select("notif_news, notif_reply").eq("id", user.id).maybeSingle().then(({ data }) => {
-      if (data) { setNotifNews(!!data.notif_news); setNotifReply(!!data.notif_reply); }
-    });
-  }, [user, notificationStorageKey]);
-
-  useEffect(() => {
-    if (!user) return;
-    const channel = supabase
-      .channel("community-notifications")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "community_messages" }, async (payload) => {
-        const message = payload.new;
-        if (!message || message.user_id === user.id) return;
-        if (message.parent_id && notifReply) {
-          const { data: parentMessage } = await supabase.from("community_messages").select("user_id, content").eq("id", message.parent_id).maybeSingle();
-          if (parentMessage?.user_id === user.id) {
-            addNotification({ title: "Nouvelle réponse", message: `${message.content.slice(0, 80)}${message.content.length > 80 ? "..." : ""}`, href: "/community" });
-            return;
-          }
-        }
-        if (notifNews) {
-          addNotification({ title: "Nouveau message", message: `${message.content.slice(0, 80)}${message.content.length > 80 ? "..." : ""}`, href: "/community" });
-        }
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel).catch(() => {}); };
-  }, [user, notifNews, notifReply]);
-
   const handleNavClick = () => setPageLoading(true);
   const handleSignOut = async () => { await signOut(); navigate("/"); };
-  const translatePage = (lang: "fr" | "en" | "es" | "zh") => {
-    setLocale(lang);
-    setLanguageOpen(false);
-    const targetLang = lang === "fr" ? "fr" : lang;
-    document.cookie = `googtrans=/fr/${targetLang}; path=/`;
-    document.cookie = `googtrans=/fr/${targetLang}; path=/; domain=${window.location.hostname}`;
-    const selectElem = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
-    if (selectElem) {
-      selectElem.value = targetLang;
-      selectElem.dispatchEvent(new Event("change"));
-    }
-  };
 
   const languages = [
     { code: "fr", name: "Français", countryCode: "FR" },
@@ -157,47 +66,6 @@ const Navbar = () => {
   const iconBtn = "inline-flex items-center justify-center h-9 w-9 rounded-xl border border-border/60 bg-card/60 text-foreground/75 transition-all duration-200 hover:border-gold/50 hover:text-gold hover:bg-gold/10";
 
   const langPicker = <LanguageSelector variant="navbar" />;
-
-  const notifPopover = (
-    <Popover onOpenChange={(open) => { setNotificationOpen(open); if (open) markAllRead(); }}>
-      <PopoverTrigger asChild>
-        <button type="button" className={`${iconBtn} relative`}>
-          <Bell className="w-4 h-4" />
-          {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-gold px-1 text-[9px] font-bold text-slate-950">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-72 sm:w-80 p-4" align="end">
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-sm font-semibold">Notifications</p>
-            <button type="button" onClick={markAllRead} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Tout lire</button>
-          </div>
-          {notifications.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">Aucune notification.</p>
-          ) : (
-            notifications.map((n) => (
-              <Link
-                key={n.id}
-                to={n.href ?? "/community"}
-                onClick={() => setNotificationOpen(false)}
-                className="block rounded-xl border border-border/70 bg-card p-3 text-sm transition-all hover:border-gold/30 hover:bg-gold/5"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-semibold text-foreground text-xs">{n.title}</p>
-                  <span className="text-[10px] text-muted-foreground">{new Date(n.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                </div>
-                <p className="mt-1 text-muted-foreground text-[0.75rem] line-clamp-2">{n.message}</p>
-              </Link>
-            ))
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
 
   return (
     <>
@@ -236,7 +104,7 @@ const Navbar = () => {
             >
               {resolvedTheme === "dark" ? <Sun className="w-4 h-4 text-gold" /> : <Moon className="w-4 h-4" />}
             </button>
-            {user && notifPopover}
+            {user && <NotificationBell />}
             {!user && (
               <Link
                 to="/auth"
@@ -273,7 +141,7 @@ const Navbar = () => {
 
             {user ? (
               <>
-                {notifPopover}
+                <NotificationBell />
                 {isAdmin && (
                   <Link to="/admin" className={`${iconBtn} text-gold border-gold/30 hover:bg-gold/15`}>
                     <Shield className="w-4 h-4" />
