@@ -19,6 +19,7 @@ type TeachingCardProps = {
   excerpt: string | null;
   cover_image_url: string | null;
   video_url: string | null;
+  video_thumbnail_url?: string | null;
   audio_url: string | null;
   country: string | null;
   author?: Profile | null;
@@ -61,6 +62,7 @@ export const TeachingCard = ({
   excerpt,
   cover_image_url,
   video_url,
+  video_thumbnail_url,
   audio_url,
   country,
   created_at,
@@ -97,6 +99,17 @@ export const TeachingCard = ({
 
   // ── Render media element ──
   const renderMedia = () => {
+    if (video_url) {
+      return (
+        <VideoPlayer
+          src={video_url}
+          title={title}
+          poster={video_thumbnail_url ?? cover_image_url ?? undefined}
+          variant="preview"
+        />
+      );
+    }
+
     if (cover_image_url) {
       return (
         <div className="relative overflow-hidden bg-muted aspect-video w-full h-full">
@@ -116,17 +129,6 @@ export const TeachingCard = ({
             </button>
           )}
         </div>
-      );
-    }
-
-    if (video_url) {
-      return (
-        <VideoPlayer
-          src={video_url}
-          title={title}
-          poster={cover_image_url}
-          variant="preview"
-        />
       );
     }
 

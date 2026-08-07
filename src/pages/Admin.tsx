@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -19,7 +19,7 @@ import {
   Trash2, Shield, ShieldOff, Pencil, X, Award,
   Menu, LayoutGrid, Home as HomeIcon, Newspaper, BookOpen, Tags,
   Quote, Sparkles, MessageSquareText, Users as UsersIcon,
-  Crown, Eye, EyeOff, Clock, TrendingUp,
+  Crown, Eye, EyeOff, Clock,
   Mail,
   FileText, Clock4, Hash, AlignLeft, Save, SendHorizonal, BookMarked,
 } from "lucide-react";
@@ -36,7 +36,7 @@ import NewsletterCampaigns from "@/components/admin/NewsletterCampaigns";
 type Category = { id: string; name: string; slug: string; description: string | null };
 type Teaching = {
   id: string; title: string; excerpt: string | null; content: string;
-  cover_image_url: string | null; video_url: string | null; audio_url: string | null; country: string | null;
+  cover_image_url: string | null; video_url: string | null; video_thumbnail_url: string | null; audio_url: string | null; country: string | null;
   category_id: string | null; published: boolean; created_at: string;
   author_id: string | null;
 };
@@ -72,7 +72,7 @@ const slugify = (s: string) =>
 
 const emptyForm = {
   title: "", excerpt: "", content: "",
-  cover: null as string | null, video: null as string | null, audio: null as string | null,
+  cover: null as string | null, video: null as string | null, videoThumbnail: null as string | null, audio: null as string | null,
   country: "", catId: "", published: true,
 };
 
@@ -99,64 +99,21 @@ const NAV: { key: SectionKey; label: string; icon: typeof LayoutGrid }[] = [
 /* ------------------------------------------------------------------ */
 /* Small presentational helpers                                       */
 /* ------------------------------------------------------------------ */
-function CrownDivider() {
-  return (
-    <div className="flex items-center gap-3 my-6 text-gold/60" role="presentation">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-gold/25 to-transparent" />
-      <Crown className="w-3.5 h-3.5" strokeWidth={1.5} />
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-gold/25 to-transparent" />
-    </div>
-  );
-}
-
-function useCountUp(target: number, active: boolean, duration = 800) {
-  const [value, setValue] = useState(0);
-  const raf = useRef<number>();
-  useEffect(() => {
-    if (!active) return;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setValue(Math.round(target * eased));
-      if (t < 1) raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-    return () => raf.current && cancelAnimationFrame(raf.current);
-  }, [active, target, duration]);
-  return value;
-}
-
 function StatCard({
-  label, value, icon: Icon, index, active, ratio,
-}: { label: string; value: number; icon: typeof LayoutGrid; index: number; active: boolean; ratio: number }) {
-  const val = useCountUp(value, active, 650 + index * 100);
-  const circumference = 2 * Math.PI * 17;
+  label, value, icon: Icon,
+}: { label: string; value: number; icon: typeof LayoutGrid }) {
   return (
-    <Card
-      className="border-gold/15 animate-in fade-in slide-in-from-bottom-2 duration-500 hover:border-gold/30 hover:-translate-y-0.5 transition-all"
-      style={{ animationDelay: `${index * 70}ms` }}
-    >
-      <CardContent className="p-4 md:p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="relative w-10 h-10">
-            <svg viewBox="0 0 40 40" className="w-10 h-10 -rotate-90">
-              <circle cx="20" cy="20" r="17" className="fill-none stroke-border" strokeWidth="2.4" />
-              <circle
-                cx="20" cy="20" r="17"
-                className="fill-none stroke-gold transition-[stroke-dashoffset] duration-1000 ease-out"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={active ? circumference - circumference * Math.min(ratio, 1) : circumference}
-              />
-            </svg>
-            <Icon className="w-4 h-4 text-gold absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+    <Card className="border-gold/15 hover:border-gold/30 transition-colors">
+      <CardContent className="p-4 md:p-5 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="font-display text-2xl md:text-[26px] leading-none tabular-nums">
+            {value.toLocaleString("fr-FR")}
           </div>
-          <TrendingUp className="w-3.5 h-3.5 text-muted-foreground/60" />
+          <div className="text-xs text-muted-foreground mt-1.5">{label}</div>
         </div>
-        <div className="font-display text-2xl md:text-[26px] leading-none">{val.toLocaleString("fr-FR")}</div>
-        <div className="text-xs text-muted-foreground mt-1.5">{label}</div>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold/10 text-gold">
+          <Icon className="w-4 h-4" />
+        </div>
       </CardContent>
     </Card>
   );
@@ -221,7 +178,7 @@ const Admin = () => {
   const [usersPerPage] = useState(10);
   const [displayedUsersCount, setDisplayedUsersCount] = useState(10);
 
-  // --- new: sidebar shell state ---
+  // --- sidebar shell state ---
   const [activeSection, setActiveSection] = useState<SectionKey>("overview");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -376,6 +333,7 @@ const Admin = () => {
       content: t.content,
       cover: t.cover_image_url,
       video: t.video_url,
+      videoThumbnail: t.video_thumbnail_url,
       audio: t.audio_url,
       country: t.country ?? "",
       catId: t.category_id ?? "",
@@ -445,6 +403,7 @@ const Admin = () => {
       content: contentTrimmed,
       cover_image_url: form.cover,
       video_url: form.video,
+      video_thumbnail_url: form.videoThumbnail,
       audio_url: form.audio,
       country: form.country.trim() || null,
       category_id: form.catId || null,
@@ -566,7 +525,6 @@ const Admin = () => {
   const publishedCount = useMemo(() => teachings.filter((t) => t.published).length, [teachings]);
   const draftCount = useMemo(() => teachings.filter((t) => !t.published).length, [teachings]);
   const totalComments = useMemo(() => Object.values(commentCounts).reduce((a, b) => a + b, 0), [commentCounts]);
-  const maxForRing = Math.max(teachings.length, users.length, totalComments, badgeIds.size, 1);
 
   if (loading || !isAdmin) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Chargement…</div>;
@@ -611,10 +569,10 @@ const Admin = () => {
                 <button
                   key={n.key}
                   onClick={() => { setActiveSection(n.key); setMobileNavOpen(false); }}
-                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-left transition-all
+                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-left transition-colors
                     ${isActive
                       ? "bg-gold/10 text-gold border border-gold/25"
-                      : "border border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:translate-x-0.5"}`}
+                      : "border border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
                 >
                   {isActive && <span className="absolute -left-4 top-1/2 -translate-y-1/2 h-4 w-[3px] rounded-full bg-gold" />}
                   <Icon className="w-4 h-4 shrink-0" />
@@ -637,7 +595,7 @@ const Admin = () => {
 
         {mobileNavOpen && (
           <div
-            className="fixed inset-0 z-30 bg-black/60 md:hidden animate-in fade-in duration-200"
+            className="fixed inset-0 z-30 bg-black/60 md:hidden"
             onClick={() => setMobileNavOpen(false)}
           />
         )}
@@ -646,14 +604,14 @@ const Admin = () => {
         <main className="flex-1 min-w-0 flex flex-col">
           <div className="sticky top-16 md:top-20 z-20 flex items-center gap-3 border-b border-border/60 bg-background/85 backdrop-blur px-4 md:px-8 py-3">
             <Button
-              variant="ghost" size="icon" className="md:hidden h-9 w-9 bg-card/60 border border-border/60 shadow-sm"
+              variant="ghost" size="icon" className="md:hidden h-9 w-9 bg-card/60 border border-border/60 shadow-sm shrink-0"
               onClick={() => setMobileNavOpen(true)} aria-label="Ouvrir le menu"
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="font-display text-lg md:text-xl font-bold text-foreground">{activeLabel}</h1>
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+            <div className="min-w-0">
+              <h1 className="font-display text-lg md:text-xl font-bold text-foreground truncate">{activeLabel}</h1>
+              <p className="hidden sm:flex text-[11px] text-muted-foreground items-center gap-1 mt-0.5">
                 <Clock className="w-3 h-3" /> Panel de gestion MILLENIUM
               </p>
             </div>
@@ -663,7 +621,7 @@ const Admin = () => {
 
             {/* -------------------- OVERVIEW -------------------- */}
             {activeSection === "overview" && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <div className="space-y-6">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <h2 className="font-display text-xl font-semibold">Vue d'ensemble</h2>
@@ -675,22 +633,19 @@ const Admin = () => {
                 </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                  <StatCard label="Enseignements publiés" value={publishedCount} icon={BookOpen} index={0} active ratio={publishedCount / maxForRing} />
-                  <StatCard label="Brouillons en attente" value={draftCount} icon={Pencil} index={1} active ratio={draftCount / maxForRing} />
-                  <StatCard label="Utilisateurs inscrits" value={users.length} icon={UsersIcon} index={2} active ratio={users.length / maxForRing} />
-                  <StatCard label="Commentaires" value={totalComments} icon={MessageSquareText} index={3} active ratio={totalComments / maxForRing} />
+                  <StatCard label="Enseignements publiés" value={publishedCount} icon={BookOpen} />
+                  <StatCard label="Brouillons en attente" value={draftCount} icon={Pencil} />
+                  <StatCard label="Utilisateurs inscrits" value={users.length} icon={UsersIcon} />
+                  <StatCard label="Commentaires" value={totalComments} icon={MessageSquareText} />
                 </div>
-
-                <CrownDivider />
 
                 <div>
                   <h3 className="font-display text-base font-semibold mb-3">Dernières publications</h3>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {teachings.slice(0, 4).map((t, i) => (
+                    {teachings.slice(0, 4).map((t) => (
                       <Card
                         key={t.id}
-                        className="border-gold/15 hover:border-gold/30 hover:-translate-y-0.5 transition-all animate-in fade-in slide-in-from-bottom-2 duration-500"
-                        style={{ animationDelay: `${i * 60}ms` }}
+                        className="border-gold/15 hover:border-gold/30 transition-colors"
                       >
                         <CardContent className="p-4 flex items-start gap-3">
                           {t.cover_image_url ? (
@@ -718,231 +673,229 @@ const Admin = () => {
 
             {/* -------------------- HOME (site homepage settings) -------------------- */}
             {activeSection === "home" && (
-              <div className="animate-in fade-in duration-500">
-                <Card className="border-gold/20">
-                  <CardHeader>
-                    <CardTitle>Contenu d'accueil</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={saveHomeSettings} className="space-y-6">
-                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <div>
-                          <Label>URL vidéo (YouTube ou Bunny)</Label>
-                          <Input
-                            value={homeForm.youtube_url}
-                            onChange={(e) => setHomeForm({ ...homeForm, youtube_url: e.target.value })}
-                            placeholder="https://youtu.be/... ou https://iframe.mediadelivery.net/embed/..."
-                          />
-                        </div>
-                        <div>
-                          <Label>Durée d'affichage (jours)</Label>
-                          <Input
-                            type="number"
-                            min={1}
-                            value={homeForm.youtube_duration_days}
-                            onChange={(e) => setHomeForm({ ...homeForm, youtube_duration_days: Number(e.target.value) || 1 })}
-                          />
-                        </div>
-                        <div className="flex items-end gap-2">
-                          <Switch
-                            checked={homeForm.active}
-                            onCheckedChange={(active) => setHomeForm({ ...homeForm, active })}
-                            id="home-active"
-                          />
-                          <Label htmlFor="home-active">Activer la vidéo</Label>
-                        </div>
+              <Card className="border-gold/20">
+                <CardHeader>
+                  <CardTitle>Contenu d'accueil</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={saveHomeSettings} className="space-y-6">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <div>
+                        <Label>URL vidéo (YouTube ou Bunny)</Label>
+                        <Input
+                          value={homeForm.youtube_url}
+                          onChange={(e) => setHomeForm({ ...homeForm, youtube_url: e.target.value })}
+                          placeholder="https://youtu.be/... ou https://iframe.mediadelivery.net/embed/..."
+                        />
+                      </div>
+                      <div>
+                        <Label>Durée d'affichage (jours)</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={homeForm.youtube_duration_days}
+                          onChange={(e) => setHomeForm({ ...homeForm, youtube_duration_days: Number(e.target.value) || 1 })}
+                        />
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <Switch
+                          checked={homeForm.active}
+                          onCheckedChange={(active) => setHomeForm({ ...homeForm, active })}
+                          id="home-active"
+                        />
+                        <Label htmlFor="home-active">Activer la vidéo</Label>
+                      </div>
+                    </div>
+
+                    {isPlayableVideoUrl(homeForm.youtube_url) && (
+                      <div className="space-y-2">
+                        <Label>Aperçu de la vidéo à la Une</Label>
+                        <VideoPlayer
+                          src={homeForm.youtube_url.trim()}
+                          title="Vidéo à la Une"
+                          lazy={false}
+                        />
+                      </div>
+                    )}
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <Label>Link TikTok</Label>
+                        <Input
+                          value={homeForm.tiktok_url}
+                          onChange={(e) => setHomeForm({ ...homeForm, tiktok_url: e.target.value })}
+                          placeholder="https://www.tiktok.com/..."
+                        />
+                      </div>
+                      <div>
+                        <Label>Link YouTube</Label>
+                        <Input
+                          value={homeForm.youtube_channel_url}
+                          onChange={(e) => setHomeForm({ ...homeForm, youtube_channel_url: e.target.value })}
+                          placeholder="https://www.youtube.com/channel/..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
+                      <div>
+                        <Label>Communiqué défilant</Label>
+                        <Textarea
+                          value={homeForm.marquee_text}
+                          onChange={(e) => setHomeForm({ ...homeForm, marquee_text: e.target.value })}
+                          placeholder="Entrez le texte qui défilera en haut de l'accueil"
+                          rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Le texte s'affichera en bandeau défilant en haut de la page d'accueil.
+                        </p>
                       </div>
 
-                      {isPlayableVideoUrl(homeForm.youtube_url) && (
-                        <div className="space-y-2">
-                          <Label>Aperçu de la vidéo à la Une</Label>
-                          <VideoPlayer
-                            src={homeForm.youtube_url.trim()}
-                            title="Vidéo à la Une"
-                            lazy={false}
-                          />
-                        </div>
-                      )}
-
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div>
-                          <Label>Link TikTok</Label>
-                          <Input
-                            value={homeForm.tiktok_url}
-                            onChange={(e) => setHomeForm({ ...homeForm, tiktok_url: e.target.value })}
-                            placeholder="https://www.tiktok.com/..."
-                          />
-                        </div>
-                        <div>
-                          <Label>Link YouTube</Label>
-                          <Input
-                            value={homeForm.youtube_channel_url}
-                            onChange={(e) => setHomeForm({ ...homeForm, youtube_channel_url: e.target.value })}
-                            placeholder="https://www.youtube.com/channel/..."
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
-                        <div>
-                          <Label>Communiqué défilant</Label>
-                          <Textarea
-                            value={homeForm.marquee_text}
-                            onChange={(e) => setHomeForm({ ...homeForm, marquee_text: e.target.value })}
-                            placeholder="Entrez le texte qui défilera en haut de l'accueil"
-                            rows={3}
-                          />
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Le texte s'affichera en bandeau défilant en haut de la page d'accueil.
-                          </p>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="marquee-speed">Vitesse de défilement</Label>
-                          <div className="space-y-3 mt-2">
-                            <div className="flex items-center gap-3">
-                              <Input
-                                id="marquee-speed"
-                                type="number"
-                                min={8}
-                                max={60}
-                                step={1}
-                                value={homeForm.marquee_speed}
-                                onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
-                                placeholder="45"
-                                className="w-20"
-                              />
-                              <span className="text-sm text-muted-foreground">secondes</span>
-                            </div>
-                            <input
-                              type="range"
-                              id="marquee-range"
+                      <div>
+                        <Label htmlFor="marquee-speed">Vitesse de défilement</Label>
+                        <div className="space-y-3 mt-2">
+                          <div className="flex items-center gap-3">
+                            <Input
+                              id="marquee-speed"
+                              type="number"
                               min={8}
                               max={60}
                               step={1}
                               value={homeForm.marquee_speed}
                               onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
-                              className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-gold"
+                              placeholder="45"
+                              className="w-20"
                             />
-                            <p className="text-xs text-muted-foreground">
-                              Plus bas = plus rapide. 8-30 sec recommandé.
-                            </p>
+                            <span className="text-sm text-muted-foreground">secondes</span>
                           </div>
+                          <input
+                            type="range"
+                            id="marquee-range"
+                            min={8}
+                            max={60}
+                            step={1}
+                            value={homeForm.marquee_speed}
+                            onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
+                            className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-gold"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Plus bas = plus rapide. 8-30 sec recommandé.
+                          </p>
                         </div>
                       </div>
+                    </div>
 
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Link WhatsApp</Label>
+                        <Input
+                          value={homeForm.whatsapp_url}
+                          onChange={(e) => setHomeForm({ ...homeForm, whatsapp_url: e.target.value })}
+                          placeholder="https://wa.me/..."
+                        />
+                      </div>
+                      <div>
+                        <Label>Link Facebook</Label>
+                        <Input
+                          value={homeForm.facebook_url}
+                          onChange={(e) => setHomeForm({ ...homeForm, facebook_url: e.target.value })}
+                          placeholder="https://www.facebook.com/..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border pt-6">
+                      <h3 className="font-semibold text-foreground mb-4">Bouton « En direct »</h3>
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <Label>Link WhatsApp</Label>
-                          <Input
-                            value={homeForm.whatsapp_url}
-                            onChange={(e) => setHomeForm({ ...homeForm, whatsapp_url: e.target.value })}
-                            placeholder="https://wa.me/..."
+                        <div className="flex items-end gap-2">
+                          <Switch
+                            checked={homeForm.live_enabled}
+                            onCheckedChange={(live_enabled) => setHomeForm({ ...homeForm, live_enabled })}
+                            id="live-enabled"
                           />
+                          <Label htmlFor="live-enabled">Activer le bouton en direct</Label>
                         </div>
                         <div>
-                          <Label>Link Facebook</Label>
+                          <Label>URL du direct (YouTube, TikTok, etc.)</Label>
                           <Input
-                            value={homeForm.facebook_url}
-                            onChange={(e) => setHomeForm({ ...homeForm, facebook_url: e.target.value })}
-                            placeholder="https://www.facebook.com/..."
+                            value={homeForm.live_url}
+                            onChange={(e) => setHomeForm({ ...homeForm, live_url: e.target.value })}
+                            placeholder="https://www.youtube.com/watch?v=... ou https://www.tiktok.com/@..."
+                            disabled={!homeForm.live_enabled}
                           />
                         </div>
                       </div>
+                    </div>
 
-                      <div className="border-t border-border pt-6">
-                        <h3 className="font-semibold text-foreground mb-4">Bouton « En direct »</h3>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="flex items-end gap-2">
-                            <Switch
-                              checked={homeForm.live_enabled}
-                              onCheckedChange={(live_enabled) => setHomeForm({ ...homeForm, live_enabled })}
-                              id="live-enabled"
-                            />
-                            <Label htmlFor="live-enabled">Activer le bouton en direct</Label>
-                          </div>
-                          <div>
-                            <Label>URL du direct (YouTube, TikTok, etc.)</Label>
-                            <Input
-                              value={homeForm.live_url}
-                              onChange={(e) => setHomeForm({ ...homeForm, live_url: e.target.value })}
-                              placeholder="https://www.youtube.com/watch?v=... ou https://www.tiktok.com/@..."
-                              disabled={!homeForm.live_enabled}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                    <div className="border-t border-border pt-6">
+                      <h3 className="font-semibold text-foreground mb-4">Carrousel d'images</h3>
+                      <div className="space-y-4">
+                        {homeForm.carousel_images.map((image, index) => (
+                          <div key={index} className="p-3 border rounded-lg grid gap-4 md:grid-cols-[1fr,auto] items-start">
+                            <div>
+                              <Label>Image {index + 1}</Label>
+                              <MediaUpload
+                                value={image}
+                                onChange={(url) => {
+                                  setCarouselImage(index, url);
+                                  setCarouselSlideField(index, 'image_url', url);
+                                }}
+                                accept="image"
+                              />
 
-                      <div className="border-t border-border pt-6">
-                        <h3 className="font-semibold text-foreground mb-4">Carrousel d'images</h3>
-                        <div className="space-y-4">
-                          {homeForm.carousel_images.map((image, index) => (
-                            <div key={index} className="p-3 border rounded-lg grid gap-4 md:grid-cols-[1fr,auto] items-start">
-                              <div>
-                                <Label>Image {index + 1}</Label>
-                                <MediaUpload
-                                  value={image}
-                                  onChange={(url) => {
-                                    setCarouselImage(index, url);
-                                    setCarouselSlideField(index, 'image_url', url);
-                                  }}
-                                  accept="image"
-                                />
-
-                                <div className="mt-3 grid gap-2">
-                                  <div>
-                                    <Label>Pré-titre</Label>
-                                    <Input
-                                      value={homeForm.carousel_slides?.[index]?.pretitle || ''}
-                                      onChange={(e) => setCarouselSlideField(index, 'pretitle', e.target.value)}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>Titre</Label>
-                                    <Input
-                                      value={homeForm.carousel_slides?.[index]?.title || ''}
-                                      onChange={(e) => setCarouselSlideField(index, 'title', e.target.value)}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>Description</Label>
-                                    <Textarea
-                                      rows={2}
-                                      value={homeForm.carousel_slides?.[index]?.description || ''}
-                                      onChange={(e) => setCarouselSlideField(index, 'description', e.target.value)}
-                                    />
-                                  </div>
+                              <div className="mt-3 grid gap-2">
+                                <div>
+                                  <Label>Pré-titre</Label>
+                                  <Input
+                                    value={homeForm.carousel_slides?.[index]?.pretitle || ''}
+                                    onChange={(e) => setCarouselSlideField(index, 'pretitle', e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Titre</Label>
+                                  <Input
+                                    value={homeForm.carousel_slides?.[index]?.title || ''}
+                                    onChange={(e) => setCarouselSlideField(index, 'title', e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Description</Label>
+                                  <Textarea
+                                    rows={2}
+                                    value={homeForm.carousel_slides?.[index]?.description || ''}
+                                    onChange={(e) => setCarouselSlideField(index, 'description', e.target.value)}
+                                  />
                                 </div>
                               </div>
-
-                              <div className="flex flex-col items-end gap-2">
-                                <Button type="button" variant="destructive" size="sm" onClick={() => removeCarouselImage(index)} className="h-fit">
-                                  <Trash2 className="w-4 h-4" /> Supprimer
-                                </Button>
-                              </div>
                             </div>
-                          ))}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={addCarouselImage}
-                            disabled={homeForm.carousel_images.length >= 5}
-                          >
-                            Ajouter une image
-                          </Button>
-                        </div>
-                      </div>
 
-                      <Button type="submit" variant="hero">Enregistrer l'accueil</Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
+                            <div className="flex md:flex-col items-end gap-2">
+                              <Button type="button" variant="destructive" size="sm" onClick={() => removeCarouselImage(index)} className="h-fit">
+                                <Trash2 className="w-4 h-4" /> Supprimer
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={addCarouselImage}
+                          disabled={homeForm.carousel_images.length >= 5}
+                        >
+                          Ajouter une image
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Button type="submit" variant="hero">Enregistrer l'accueil</Button>
+                  </form>
+                </CardContent>
+              </Card>
             )}
 
             {/* -------------------- PUBLICATIONS -------------------- */}
             {activeSection === "publications" && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <div className="space-y-6">
                 <Card className="border-gold/20">
                   <CardHeader>
                     <CardTitle>Gestion des publications</CardTitle>
@@ -1004,11 +957,10 @@ const Admin = () => {
                       </CardContent>
                     </Card>
                   ) : (
-                    filteredPublications.map((t, i) => (
+                    filteredPublications.map((t) => (
                       <Card
                         key={t.id}
-                        className="border-gold/10 hover:border-gold/25 transition-colors animate-in fade-in slide-in-from-bottom-1 duration-500"
-                        style={{ animationDelay: `${i * 40}ms` }}
+                        className="border-gold/10 hover:border-gold/25 transition-colors"
                       >
                         <CardContent className="space-y-4 p-4">
                           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -1049,7 +1001,7 @@ const Admin = () => {
                 </div>
 
                 {selectedTeaching && (
-                  <Card className="border-gold/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <Card className="border-gold/20">
                     <CardHeader>
                       <CardTitle>Commentaires de la publication</CardTitle>
                       <p className="text-sm text-muted-foreground">{selectedTeaching.title}</p>
@@ -1073,7 +1025,7 @@ const Admin = () => {
                           {selectedTeachingComments.map((comment) => {
                             const author = users.find((u) => u.id === comment.user_id)?.full_name || "Membre";
                             return (
-                              <div key={comment.id} className="rounded-3xl border border-border p-4">
+                              <div key={comment.id} className="rounded-2xl border border-border p-4">
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
                                     <p className="font-semibold">{author}</p>
@@ -1098,18 +1050,18 @@ const Admin = () => {
 
             {/* -------------------- TEACHINGS -------------------- */}
             {activeSection === "teachings" && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <div className="space-y-6">
 
                 {/* ── Editor card ── */}
                 <div className="rounded-2xl border border-gold/20 bg-card shadow-sm overflow-hidden">
 
                   {/* Header */}
-                  <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-gradient-to-r from-gold/5 via-background to-background px-5 py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 bg-gradient-to-r from-gold/5 via-background to-background px-5 py-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/15">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/15 shrink-0">
                         <BookMarked className="h-4 w-4 text-gold" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h2 className="font-display font-semibold text-sm">
                           {editingId ? "Modifier l'enseignement" : "Nouvel enseignement"}
                         </h2>
@@ -1118,7 +1070,7 @@ const Admin = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       {editingId && (
                         <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-8 gap-1.5">
                           <X className="w-3.5 h-3.5" /> Annuler
@@ -1272,6 +1224,17 @@ const Admin = () => {
                           />
                         </div>
 
+                        {/* Video thumbnail */}
+                        <div className="p-4 space-y-2">
+                          <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Miniature vidéo (optionnel)</Label>
+                          <MediaUpload
+                            value={form.videoThumbnail}
+                            onChange={(v) => setForm({ ...form, videoThumbnail: v })}
+                            accept="image"
+                            label="Image de rendu pour l’aperçu de la vidéo"
+                          />
+                        </div>
+
                         {/* Audio */}
                         <div className="p-4 space-y-2">
                           <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Audio (optionnel)</Label>
@@ -1282,14 +1245,11 @@ const Admin = () => {
                           />
                         </div>
 
-                        {/* Info panel */}
+                        {/* Author info */}
                         <div className="mt-auto p-4 bg-muted/10">
-                          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Infos</p>
-                          <div className="space-y-1.5 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                              <Clock className="w-3 h-3" />
-                              <span>Auteur : {user?.email?.split("@")[0]}</span>
-                            </div>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Clock className="w-3 h-3" />
+                            <span>Auteur : {user?.email?.split("@")[0]}</span>
                           </div>
                         </div>
                       </div>
@@ -1302,13 +1262,12 @@ const Admin = () => {
                   <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-1">
                     Tous les enseignements ({teachings.length})
                   </h3>
-                  {teachings.map((t, i) => (
+                  {teachings.map((t) => (
                     <Card
                       key={t.id}
                       className={`${
                         editingId === t.id ? "border-gold ring-1 ring-gold/30" : "border-gold/10"
-                      } hover:shadow-md hover:border-gold/25 transition-all animate-in fade-in slide-in-from-bottom-1 duration-500`}
-                      style={{ animationDelay: `${i * 40}ms` }}
+                      } hover:border-gold/25 transition-colors`}
                     >
                       <CardContent className="p-3 md:p-4">
                         <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 md:gap-4 items-start">
@@ -1351,7 +1310,7 @@ const Admin = () => {
 
             {/* -------------------- CATEGORIES -------------------- */}
             {activeSection === "categories" && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <div className="space-y-6">
                 <Card className="border-gold/20">
                   <CardHeader><CardTitle>Nouvelle catégorie</CardTitle></CardHeader>
                   <CardContent>
@@ -1364,11 +1323,10 @@ const Admin = () => {
                 </Card>
 
                 <div className="space-y-3">
-                  {categories.map((c, i) => (
+                  {categories.map((c) => (
                     <Card
                       key={c.id}
-                      className="border-gold/10 hover:border-gold/25 transition-colors animate-in fade-in slide-in-from-bottom-1 duration-500"
-                      style={{ animationDelay: `${i * 40}ms` }}
+                      className="border-gold/10 hover:border-gold/25 transition-colors"
                     >
                       <CardContent className="p-3 md:p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
@@ -1392,7 +1350,7 @@ const Admin = () => {
 
             {/* -------------------- USERS -------------------- */}
             {activeSection === "users" && (
-              <div className="space-y-4 animate-in fade-in duration-500">
+              <div className="space-y-4">
                 <Card className="border-gold/20">
                   <CardHeader>
                     <CardTitle className="text-lg md:text-2xl">Utilisateurs inscrits</CardTitle>
@@ -1438,7 +1396,7 @@ const Admin = () => {
                 </Card>
 
                 {selectedUser && (
-                  <Card className="border-gold/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <Card className="border-gold/20">
                     <CardHeader>
                       <CardTitle>Utilisateur sélectionné</CardTitle>
                     </CardHeader>
@@ -1480,14 +1438,13 @@ const Admin = () => {
                     </Card>
                   ) : (
                     <>
-                      {filteredUsers.slice(0, displayedUsersCount).map((u, i) => {
+                      {filteredUsers.slice(0, displayedUsersCount).map((u) => {
                         const isUserAdmin = adminIds.has(u.id);
                         const hasGoldBadge = badgeIds.has(u.id);
                         return (
                           <Card
                             key={u.id}
-                            className={`${selectedUserId === u.id ? "border-gold" : "border-gold/10"} hover:shadow-md hover:border-gold/25 transition-all animate-in fade-in slide-in-from-bottom-1 duration-500`}
-                            style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}
+                            className={`${selectedUserId === u.id ? "border-gold" : "border-gold/10"} hover:border-gold/25 transition-colors`}
                           >
                             <CardContent className="p-3 md:p-4">
                               <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 md:gap-4">
@@ -1578,17 +1535,9 @@ const Admin = () => {
               </div>
             )}
 
-            {activeSection === "testimonials" && (
-              <div className="animate-in fade-in duration-500"><TestimonialsAdmin /></div>
-            )}
-
-            {activeSection === "stories" && (
-              <div className="animate-in fade-in duration-500"><StoriesAdmin /></div>
-            )}
-
-            {activeSection === "popups" && (
-              <div className="animate-in fade-in duration-500"><PopupsAdmin /></div>
-            )}
+            {activeSection === "testimonials" && <TestimonialsAdmin />}
+            {activeSection === "stories" && <StoriesAdmin />}
+            {activeSection === "popups" && <PopupsAdmin />}
           </div>
         </main>
       </div>

@@ -3,6 +3,7 @@ import { Maximize, Pause, Play, Video, Volume2, VolumeX } from "lucide-react";
 import {
   formatVideoTime,
   getVideoEmbedUrl,
+  getVideoPosterCandidates,
   getVideoPosterUrl,
   isEmbedVideoUrl,
 } from "@/lib/video";
@@ -52,20 +53,35 @@ const GoldPlayButton = ({
   );
 };
 
+// Nombre de tentatives sur la vraie miniature avant d'abandonner sur le fallback.
+// Utile juste après un upload : Bunny met parfois quelques secondes à générer thumbnail.jpg.
+const THUMBNAIL_MAX_RETRIES = 4;
+const THUMBNAIL_RETRY_DELAY_MS = 2500;
+
 const VideoPoster = ({
   poster,
   title,
   overlay = "medium",
+  posterCandidates,
 }: {
   poster: string | null;
   title?: string;
   overlay?: "light" | "medium" | "dark";
+  posterCandidates?: string[];
 }) => {
-  const [resolvedPoster, setResolvedPoster] = useState<string | null>(poster);
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const [cacheBust, setCacheBust] = useState(0);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const candidates = posterCandidates ?? (poster ? [poster] : []);
 
   useEffect(() => {
-    setResolvedPoster(poster);
-  }, [poster]);
+    setCandidateIndex(0);
+    setRetryCount(0);
+    setCacheBust(0);
+    return () => clearTimeout(retryTimeoutRef.current);
+  }, [poster, posterCandidates]);
 
   const overlayClass = {
     light: "bg-black/20",
@@ -73,15 +89,43 @@ const VideoPoster = ({
     dark: "bg-black/50",
   }[overlay];
 
-  if (resolvedPoster) {
+  const currentBase = candidates[candidateIndex] ?? null;
+  // Les data URIs (fallback SVG) n'ont pas besoin/ne supportent pas de cache-busting.
+  const currentSrc =
+    currentBase && cacheBust > 0 && !currentBase.startsWith("data:")
+      ? `${currentBase}${currentBase.includes("?") ? "&" : "?"}retry=${cacheBust}`
+      : currentBase;
+
+  const handleError = () => {
+    const isLastCandidate = candidateIndex >= candidates.length - 1;
+
+    if (!isLastCandidate) {
+      // On a d'autres candidats (ex: fallback SVG) : on passe au suivant.
+      // Mais si c'est le tout premier (la vraie miniature Bunny), on retente d'abord.
+      if (candidateIndex === 0 && retryCount < THUMBNAIL_MAX_RETRIES) {
+        retryTimeoutRef.current = setTimeout(() => {
+          setRetryCount((c) => c + 1);
+          setCacheBust((c) => c + 1);
+        }, THUMBNAIL_RETRY_DELAY_MS);
+        return;
+      }
+      setCandidateIndex((i) => i + 1);
+      return;
+    }
+
+    // Dernier candidat déjà en échec : plus rien à essayer.
+  };
+
+  if (currentSrc) {
     return (
       <>
         <img
-          src={resolvedPoster}
+          key={currentSrc}
+          src={currentSrc}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
-          onError={() => setResolvedPoster(null)}
+          onError={handleError}
         />
         <div className={cn("absolute inset-0", overlayClass)} aria-hidden="true" />
       </>
@@ -151,7 +195,6 @@ const NativeVideoPlayer = ({
     }
     void video.requestFullscreen?.();
   }, []);
-
 
   return (
     <div className={cn("group absolute inset-0 bg-black", className)}>
@@ -244,12 +287,14 @@ const EmbedVideoPlayer = ({
   poster,
   lazy,
   playButtonSize = "lg",
+  posterCandidates,
 }: {
   embedUrl: string;
   title?: string;
   poster: string | null;
   lazy: boolean;
   playButtonSize?: "sm" | "md" | "lg";
+  posterCandidates?: string[];
 }) => {
   const [active, setActive] = useState(!lazy);
 
@@ -261,7 +306,7 @@ const EmbedVideoPlayer = ({
         onClick={() => setActive(true)}
         aria-label={title ? `Lire ${title}` : "Lire la vidéo"}
       >
-        <VideoPoster poster={poster} title={title} />
+        <VideoPoster poster={poster} title={title} posterCandidates={posterCandidates} />
         <div className="absolute inset-0 flex items-center justify-center">
           <GoldPlayButton
             size={playButtonSize}
@@ -298,13 +343,14 @@ const VideoPlayer = ({
 }: VideoPlayerProps) => {
   const embedUrl = getVideoEmbedUrl(src);
   const isEmbed = isEmbedVideoUrl(src);
-  const resolvedPoster = getVideoPosterUrl(src, poster);
+  const posterCandidates = getVideoPosterCandidates(src, poster);
+  const resolvedPoster = posterCandidates[0] ?? null;
 
   const player = (() => {
     if (variant === "preview") {
       return (
         <div className="absolute inset-0 overflow-hidden bg-black">
-          <VideoPoster poster={resolvedPoster} title={title} overlay="light" />
+          <VideoPoster poster={resolvedPoster} title={title} overlay="light" posterCandidates={posterCandidates} />
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <GoldPlayButton size="md" className="motion-safe:group-hover:scale-110 transition-transform duration-300" />
           </div>
@@ -320,6 +366,7 @@ const VideoPlayer = ({
           poster={resolvedPoster}
           lazy={lazy}
           playButtonSize={variant === "compact" ? "md" : "lg"}
+          posterCandidates={posterCandidates}
         />
       );
     }

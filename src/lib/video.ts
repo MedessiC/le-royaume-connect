@@ -1,5 +1,11 @@
 const FALLBACK_VIDEO_POSTER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675' viewBox='0 0 1200 675'%3E%3Crect width='1200' height='675' fill='%230f172a'/%3E%3Crect x='0' y='0' width='1200' height='675' fill='url(%23a)' opacity='0.55'/%3E%3Cpath d='M520 225c0-32 26-58 58-58h44c32 0 58 26 58 58v225c0 32-26 58-58 58h-44c-32 0-58-26-58-58z' fill='%23d4af37'/%3E%3Cpath d='M620 337l96-54v162l-96-54z' fill='%230f172a'/%3E%3C/svg%3E";
 
+// Hostname de la pull zone CDN Bunny Stream (PAS video.bunnycdn.com, qui est l'API de gestion
+// et nécessite une AccessKey — inaccessible en <img src> public, d'où les 404).
+// À récupérer dans : Bunny Dashboard → Stream → ta bibliothèque → onglet "API" → "CDN Hostname"
+// ex: "vz-a1b2c3d4-e5f.b-cdn.net"
+const BUNNY_CDN_HOSTNAME = import.meta.env.VITE_PUBLIC_BUNNY_CDN_HOSTNAME ?? "";
+
 const YOUTUBE_ID_PATTERNS = [
   /(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/live\/|youtube\.com\/embed\/|youtube\.com\/watch\?v=)([A-Za-z0-9_-]{11})/i,
   /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?[^#\s]*v=([A-Za-z0-9_-]{11})/i,
@@ -39,8 +45,16 @@ export const getBunnyVideoIds = (url: string | null | undefined): { libraryId: s
   return { libraryId: match[1], videoId: match[2] };
 };
 
-export const getBunnyThumbnailUrl = (_libraryId: string, _videoId: string): string => FALLBACK_VIDEO_POSTER;
+// Thumbnail public servi par la pull zone CDN — nécessite BUNNY_CDN_HOSTNAME configuré.
+// libraryId n'est pas utilisé dans l'URL car la pull zone est déjà spécifique à une bibliothèque,
+// mais on le garde en paramètre pour la lisibilité de l'appelant et une éventuelle évolution multi-lib.
+export const getBunnyThumbnailUrl = (libraryId: string, videoId: string): string | null => {
+  if (!BUNNY_CDN_HOSTNAME) return null;
+  return `https://${BUNNY_CDN_HOSTNAME}/${videoId}/thumbnail.jpg`;
+};
 
+// Endpoint de l'API de gestion Bunny — utile uniquement pour des appels serveur authentifiés
+// (jamais pour un <img src> côté client, contrairement à getBunnyThumbnailUrl).
 export const getBunnyDownloadUrl = (url: string | null | undefined): string | null => {
   const bunny = getBunnyVideoIds(url);
   if (bunny) {
@@ -81,23 +95,34 @@ export const getVideoDownloadUrl = (url: string | null | undefined): string | nu
   return isNativeVideoUrl(url) ? url : null;
 };
 
-export const getVideoPosterUrl = (
+export const getVideoPosterCandidates = (
   url: string | null | undefined,
   poster?: string | null,
-): string | null => {
-  if (poster) return poster;
+): string[] => {
+  if (poster) return [poster];
 
   const youtubeId = getYouTubeVideoId(url);
   if (youtubeId) {
-    return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+    return [`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`];
   }
 
   const bunny = getBunnyVideoIds(url);
   if (bunny) {
-    return getBunnyThumbnailUrl(bunny.libraryId, bunny.videoId);
+    const thumbnailUrl = getBunnyThumbnailUrl(bunny.libraryId, bunny.videoId);
+    // Si BUNNY_CDN_HOSTNAME n'est pas configuré, thumbnailUrl est null :
+    // on évite de générer une requête vouée au 404 et on part direct sur le fallback.
+    return thumbnailUrl ? [thumbnailUrl, FALLBACK_VIDEO_POSTER] : [FALLBACK_VIDEO_POSTER];
   }
 
-  return null;
+  return [];
+};
+
+export const getVideoPosterUrl = (
+  url: string | null | undefined,
+  poster?: string | null,
+): string | null => {
+  const candidates = getVideoPosterCandidates(url, poster);
+  return candidates[0] ?? null;
 };
 
 const getVideoMimeType = (url: string) => {

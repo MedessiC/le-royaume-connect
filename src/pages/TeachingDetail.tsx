@@ -48,6 +48,7 @@ type Teaching = {
   content: string;
   cover_image_url: string | null;
   video_url: string | null;
+  video_thumbnail_url: string | null;
   audio_url: string | null;
   country: string | null;
   author_id: string | null;
@@ -103,7 +104,7 @@ const TeachingDetail = () => {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
     let query = supabase
       .from("teachings")
-      .select("id, slug, title, excerpt, content, cover_image_url, video_url, audio_url, country, author_id, created_at, category_id");
+      .select("id, slug, title, excerpt, content, cover_image_url, video_url, video_thumbnail_url, audio_url, country, author_id, created_at, category_id");
 
     if (isUuid) {
       query = query.or(`id.eq.${slugOrId},slug.eq.${slugOrId}`);
@@ -867,7 +868,7 @@ const TeachingDetail = () => {
             <VideoPlayer
               src={teaching.video_url}
               title={teaching.title}
-              poster={teaching.cover_image_url}
+              poster={teaching.video_thumbnail_url ?? undefined}
               showLabel
               className="mb-8"
             />

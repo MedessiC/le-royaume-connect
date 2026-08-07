@@ -110,6 +110,7 @@ export type Database = {
           title: string
           updated_at: string
           video_url: string | null
+          video_thumbnail_url: string | null
           audio_url: string | null
         }
         Insert: {
@@ -126,6 +127,7 @@ export type Database = {
           title: string
           updated_at?: string
           video_url?: string | null
+          video_thumbnail_url?: string | null
           audio_url?: string | null
         }
         Update: {
@@ -142,6 +144,7 @@ export type Database = {
           title?: string
           updated_at?: string
           video_url?: string | null
+          video_thumbnail_url?: string | null
           audio_url?: string | null
         }
         Relationships: [

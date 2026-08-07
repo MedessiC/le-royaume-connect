@@ -22,6 +22,7 @@ type Teaching = {
   content: string;
   cover_image_url: string | null;
   video_url: string | null;
+  video_thumbnail_url: string | null;
   audio_url: string | null;
   country: string | null;
   category_id: string | null;
@@ -131,7 +132,7 @@ const Feed = () => {
 
       let query = supabase
         .from("teachings")
-        .select("id, slug, title, excerpt, content, cover_image_url, video_url, audio_url, country, category_id, author_id, created_at")
+        .select("id, slug, title, excerpt, content, cover_image_url, video_url, video_thumbnail_url, audio_url, country, category_id, author_id, created_at")
         .eq("published", true);
 
       if (categoryId !== "all") query = query.eq("category_id", categoryId);
@@ -669,7 +670,7 @@ const Feed = () => {
                             <VideoPlayer
                               src={featuredTeaching.video_url}
                               title={featuredTeaching.title}
-                              poster={featuredTeaching.cover_image_url}
+                              poster={featuredTeaching.video_thumbnail_url ?? undefined}
                               framed={false}
                               lazy={false}
                               className="h-full w-full"
@@ -767,6 +768,7 @@ const Feed = () => {
                         excerpt={t.excerpt}
                         cover_image_url={t.cover_image_url}
                         video_url={t.video_url}
+                        video_thumbnail_url={t.video_thumbnail_url}
                         audio_url={t.audio_url}
                         country={t.country}
                         author={t.author}

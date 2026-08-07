@@ -126,7 +126,7 @@ const Index = () => {
       />
       <Navbar />
       {homeSettings?.marquee_text ? (
-        <section className="overflow-hidden border-b border-gold/20 bg-gold/10">
+        <section className="overflow-hidden border-b border-gold/20 bg-gold/10 mt-12 sm:mt-14 relative z-20">
           <div className="marquee py-3 text-sm md:text-base text-midnight">
             <div
               className="marquee-content inline-flex items-center gap-6"
