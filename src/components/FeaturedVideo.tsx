@@ -3,6 +3,7 @@ import { Youtube, Calendar, ArrowUpRight, Facebook, Radio, Video } from "lucide-
 import { Button } from "@/components/ui/button";
 import VideoPlayer from "@/components/VideoPlayer";
 import { getVideoSource, isPlayableVideoUrl } from "@/lib/video";
+import { normalizeExternalUrl } from "@/lib/url";
 
 type HomeSettings = {
   youtube_url: string | null;
@@ -148,7 +149,7 @@ const FeaturedVideo = ({ settings }: Props) => {
                     Abonnez-vous à notre chaîne officielle pour ne rater aucun message du Règne Millénaire.
                   </p>
                   <a
-                    href={settings.youtube_channel_url}
+                    href={normalizeExternalUrl(settings.youtube_channel_url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block"
@@ -170,7 +171,7 @@ const FeaturedVideo = ({ settings }: Props) => {
                 <div className="flex flex-col gap-2">
                   {settings.facebook_url && (
                     <a
-                      href={settings.facebook_url}
+                      href={normalizeExternalUrl(settings.facebook_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-between p-2.5 rounded-xl bg-background border border-border/40 hover:border-gold/30 hover:bg-secondary/40 transition-all text-xs font-semibold text-foreground group"
@@ -184,7 +185,7 @@ const FeaturedVideo = ({ settings }: Props) => {
                   )}
                   {settings.live_enabled && settings.live_url && (
                     <a
-                      href={settings.live_url}
+                      href={normalizeExternalUrl(settings.live_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-between p-2.5 rounded-xl bg-background border border-border/40 hover:border-gold/30 hover:bg-secondary/40 transition-all text-xs font-semibold text-foreground group"

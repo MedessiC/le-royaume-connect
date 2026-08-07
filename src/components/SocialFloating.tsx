@@ -4,6 +4,7 @@ import { IconType } from "react-icons";
 import { FaWhatsapp, FaFacebook, FaYoutube } from "react-icons/fa";
 import { SiTiktok } from "react-icons/si";
 import FlagIcon from "@/components/FlagIcon";
+import { normalizeExternalUrl } from "@/lib/url";
 
 type Props = {
   tiktok_url: string | null;
@@ -33,7 +34,7 @@ const SocialFloating = ({
   }> = [
     {
       label: "YouTube",
-      href: youtube_channel_url,
+      href: normalizeExternalUrl(youtube_channel_url),
       icon: FaYoutube,
       color: "text-red-500",
       bgColor: "bg-red-500/10 border-red-500/20 hover:bg-red-500/15",

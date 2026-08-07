@@ -759,7 +759,7 @@ const Admin = () => {
                               id="marquee-speed"
                               type="number"
                               min={8}
-                              max={60}
+                              max={300}
                               step={1}
                               value={homeForm.marquee_speed}
                               onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}
@@ -772,7 +772,7 @@ const Admin = () => {
                             type="range"
                             id="marquee-range"
                             min={8}
-                            max={60}
+                            max={300}
                             step={1}
                             value={homeForm.marquee_speed}
                             onChange={(e) => setHomeForm({ ...homeForm, marquee_speed: Number(e.target.value) || 45 })}

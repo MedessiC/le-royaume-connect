@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FaYoutube, FaWhatsapp, FaFacebook, FaTiktok } from "react-icons/fa";
 import { ArrowUpRight, Users } from "lucide-react";
+import { normalizeExternalUrl } from "@/lib/url";
 
 type HomeSettings = {
   youtube_channel_url: string | null;
@@ -26,7 +27,7 @@ const SocialFollowCTA = () => {
   const socialPlatforms = [
     {
       name: "YouTube",
-      href: settings?.youtube_channel_url || "https://youtube.com",
+      href: normalizeExternalUrl(settings?.youtube_channel_url) || "https://youtube.com",
       icon: FaYoutube,
       color: "text-red-500",
       bgHover: "hover:bg-red-500/10 hover:border-red-500/30",
@@ -35,7 +36,7 @@ const SocialFollowCTA = () => {
     },
     {
       name: "WhatsApp",
-      href: settings?.whatsapp_url || "https://whatsapp.com",
+      href: normalizeExternalUrl(settings?.whatsapp_url) || "https://whatsapp.com",
       icon: FaWhatsapp,
       color: "text-emerald-500",
       bgHover: "hover:bg-emerald-500/10 hover:border-emerald-500/30",
@@ -44,7 +45,7 @@ const SocialFollowCTA = () => {
     },
     {
       name: "Facebook",
-      href: settings?.facebook_url || "https://facebook.com",
+      href: normalizeExternalUrl(settings?.facebook_url) || "https://facebook.com",
       icon: FaFacebook,
       color: "text-blue-500",
       bgHover: "hover:bg-blue-500/10 hover:border-blue-500/30",
@@ -53,7 +54,7 @@ const SocialFollowCTA = () => {
     },
     {
       name: "TikTok",
-      href: settings?.tiktok_url || "https://tiktok.com",
+      href: normalizeExternalUrl(settings?.tiktok_url) || "https://tiktok.com",
       icon: FaTiktok,
       color: "text-foreground",
       bgHover: "hover:bg-foreground/10 hover:border-foreground/30",
