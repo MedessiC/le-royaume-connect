@@ -661,7 +661,7 @@ const Community = () => {
             </div>
 
             <div className="rounded-lg border border-gold/30 bg-gold/5 px-3 py-3">
-              <p className="text-sm font-semibold text-foreground">#général</p>
+              <p className="text-sm font-semibold text-foreground">#Ouvert</p>
               <p className="text-xs text-muted-foreground">Discussion ouverte</p>
             </div>
 
