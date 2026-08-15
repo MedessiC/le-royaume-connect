@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Upload, Trash2, Loader2 } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
 import { useToast } from "@/hooks/use-toast";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import { uploadToOracleStorage, isOracleStorageConfigured } from "@/lib/oracleStorage";
 
 interface AvatarUploadProps {
@@ -54,18 +55,19 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       return;
     }
 
-    if (!isOracleStorageConfigured) {
-      return toast({
-        title: "Configuration manquante",
-        description: "Ajoutez la configuration de téléversement pour les photos de profil.",
-        variant: "destructive",
-      });
-    }
-
     setIsLoading(true);
 
     try {
-      const url = await uploadToOracleStorage(file, `le-royaume/avatars/${userId}`);
+      let url: string;
+      try {
+        url = await uploadToCloudinary(file, `le-royaume/avatars/${userId}`);
+      } catch (err: any) {
+        if (isOracleStorageConfigured) {
+          url = await uploadToOracleStorage(file, `le-royaume/avatars/${userId}`);
+        } else {
+          throw err;
+        }
+      }
 
       if (onAvatarChange) {
         onAvatarChange(url);

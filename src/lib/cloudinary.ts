@@ -4,8 +4,8 @@ type CloudinaryUploadResult = {
   resource_type: string;
 };
 
-const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
-const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
+const cloudName = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined) || "ngayzyyz";
+const uploadPreset = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined) || "lrm-zovizo";
 
 export const isCloudinaryConfigured = Boolean(cloudName && uploadPreset);
 

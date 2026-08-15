@@ -25,7 +25,7 @@ type ContactNumber = {
 
 const contactEmail = import.meta.env.VITE_CONTACT_EMAIL ?? "contact@leregnemillenaire.com";
 const contactNumbers: ContactNumber[] = [
-  { country: "Côte d'Ivoire", number: "+225 27 337 83959", tone: "gold" },
+  { country: "Côte d'Ivoire", number: "+225 27 24 46 68 06", tone: "gold" },
   { country: "Côte d'Ivoire", number: "+225 07 592 32944", tone: "gold" },
   { country: "Bénin", number: import.meta.env.VITE_BENIN_PHONE_1 ?? "", tone: "gold" },
   { country: "Bénin", number: import.meta.env.VITE_BENIN_PHONE_2 ?? "", tone: "gold" },

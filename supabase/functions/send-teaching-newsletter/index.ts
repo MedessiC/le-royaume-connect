@@ -42,8 +42,10 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const payload = await req.json();
-    const teachingId = payload.teaching_id;
+    const payload = await req.json().catch(() => null);
+    const teachingId = payload?.teaching_id;
+
+    console.log("Newsletter Function request payload:", { teachingId });
 
     if (!teachingId) {
       return json({ error: "teaching_id is required" }, 400);
@@ -54,10 +56,17 @@ serve(async (req) => {
       .from("teachings")
       .select("id, title, excerpt, content, cover_image_url, slug")
       .eq("id", teachingId)
-      .single();
+      .maybeSingle();
 
-    if (teachingError || !teaching) {
-      return json({ error: "Teaching not found" }, 404);
+    console.log("Newsletter Function teaching query result:", { teaching, teachingError });
+
+    if (teachingError) {
+      console.error("Newsletter Function teaching fetch error:", teachingError);
+      return json({ error: "Failed to fetch teaching", details: teachingError.message }, 500);
+    }
+
+    if (!teaching) {
+      return json({ error: "Teaching not found", teaching_id: teachingId }, 404);
     }
 
     // 2. Fetch subscribers

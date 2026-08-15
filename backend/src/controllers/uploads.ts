@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { uploadToOracleStorage, isOracleStorageConfigured } from '../services/oracleStorage.js';
+import { uploadToOracleStorage, isOracleConfigured } from '../services/oracleStorage.js';
 
 export async function uploadFile(req: Request, res: Response) {
   try {
@@ -11,7 +11,7 @@ export async function uploadFile(req: Request, res: Response) {
       return res.status(400).json({ error: 'Missing folder or fileName query parameters.' });
     }
 
-    if (!isOracleStorageConfigured) {
+    if (!isOracleConfigured) {
       return res.status(500).json({ error: 'Upload storage is not configured on the server.' });
     }
 

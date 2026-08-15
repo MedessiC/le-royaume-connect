@@ -127,6 +127,40 @@ app.get("*", (req, res) => {
   res.redirect(302, FRONTEND_URL);
 });
 
+// Simple image proxy to avoid CORS / redirect issues when loading external
+// thumbnails (YouTube, CDNs, etc). Usage: /proxy?url=<encodeURIComponent(url)>
+app.get("/proxy", async (req, res) => {
+  const target = req.query.url;
+  if (!target) return res.status(400).send("Missing url query parameter");
+
+  const raw = Array.isArray(target) ? target[0] : String(target);
+  let url;
+  try {
+    url = decodeURIComponent(raw);
+  } catch (e) {
+    url = raw;
+  }
+
+  try {
+    const upstream = await fetch(url, { redirect: "follow" });
+    if (!upstream.ok) {
+      return res.status(502).send(`Upstream returned ${upstream.status}`);
+    }
+
+    const contentType = upstream.headers.get("content-type") || "application/octet-stream";
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Length", String(buffer.length));
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=86400");
+    return res.status(200).send(buffer);
+  } catch (err) {
+    console.error("OG Proxy /proxy error:", err);
+    return res.status(500).send("Proxy fetch failed");
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`✨ Render OG Proxy Server listening on port ${PORT}`);
   console.log(`📡 Target Frontend URL: ${FRONTEND_URL}`);

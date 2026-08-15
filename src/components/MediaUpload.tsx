@@ -7,6 +7,7 @@ import {
   uploadToBunnyStream,
   isBunnyStreamConfigured,
 } from "@/lib/bunny";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import { uploadToOracleStorage, isOracleStorageConfigured } from "@/lib/oracleStorage";
 import VideoPlayer from "@/components/VideoPlayer";
 import { isEmbedVideoUrl, isPlayableVideoUrl } from "@/lib/video";
@@ -96,7 +97,15 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
         const result = await uploadToBunnyStream(file, (percent) => setUploadProgress(percent));
         url = result.embedUrl;
       } else {
-        url = await uploadToOracleStorage(file, `le-royaume/${accept}s`);
+        try {
+          url = await uploadToCloudinary(file, `le-royaume/${accept}s`);
+        } catch (err: any) {
+          if (isOracleStorageConfigured) {
+            url = await uploadToOracleStorage(file, `le-royaume/${accept}s`);
+          } else {
+            throw err;
+          }
+        }
       }
 
       onChange?.(url);
