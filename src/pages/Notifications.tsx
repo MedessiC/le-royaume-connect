@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Bell, Trash2, CheckCircle2, Check,
-  MessageSquare, Heart, UserPlus, BookOpen, Reply, Sparkles, Filter
+  MessageSquare, Heart, UserPlus, BookOpen, Reply, Filter
 } from "lucide-react";
 
 type NotificationItem = {
@@ -113,7 +113,7 @@ const NotificationsPage = () => {
       case "reply":
         return { label: "Réponse", icon: Reply, class: "bg-indigo-500/10 text-indigo-500 border-indigo-500/30" };
       default:
-        return { label: "Alerte", icon: Sparkles, class: "bg-muted text-muted-foreground border-border" };
+        return { label: "Alerte", icon: Bell, class: "bg-muted text-muted-foreground border-border" };
     }
   };
 

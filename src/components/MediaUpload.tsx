@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X, Loader2, Mic, CircleStop } from "lucide-react";
+import { Upload, X, Loader2, Mic, CircleStop, Check } from "lucide-react";
 import {
   uploadToBunnyStream,
   isBunnyStreamConfigured,
@@ -43,33 +43,13 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
   };
 
   const hasVideoPreview = accept === "video" && Boolean(localPreviewUrl || (resolvedValue && isPlayableVideoUrl(resolvedValue)));
-
   const canRecordAudio = accept === "audio" && typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== "undefined";
-  const acceptLabel = accept === "image" ? "Image" : accept === "video" ? "Vidéo" : "Audio";
-  const maxSizeLabel = accept === "image" ? "5 Mo" : accept === "audio" ? "30 Mo" : "Aucune limite";
 
   const handleFile = async (file: File) => {
-    const maxSize = accept === "image" ? 5 * 1024 * 1024 : accept === "audio" ? 30 * 1024 * 1024 : Infinity;
-    if (file.size > maxSize) {
-      return toast({
-        title: "Fichier trop volumineux",
-        description: `Maximum ${accept === "image" ? "5 Mo" : accept === "audio" ? "30 Mo" : "Aucune limite"}`,
-        variant: "destructive",
-      });
-    }
-
-    if (!isOracleStorageConfigured && accept !== "video") {
-      return toast({
-        title: "Configuration manquante",
-        description: "Ajoutez la configuration de téléversement pour les fichiers.",
-        variant: "destructive",
-      });
-    }
-
     if (accept === "video" && !isBunnyStreamConfigured) {
       return toast({
-        title: "Configuration vidéo manquante",
-        description: "Ajoutez la configuration Bunny Stream pour téléverser des vidéos.",
+        title: "Configuration vidéo requise",
+        description: "Le service de téléversement vidéo doit être configuré.",
         variant: "destructive",
       });
     }
@@ -77,8 +57,8 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
     const isLargeVideo = accept === "video" && file.size > 100 * 1024 * 1024;
     if (isLargeVideo) {
       toast({
-        title: "Vidéo volumineuse détectée",
-        description: "Le fichier sera téléversé via Bunny Stream.",
+        title: "Fichier volumineux",
+        description: "Le traitement de la vidéo est en cours...",
       });
     }
 
@@ -110,7 +90,7 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
 
       onChange?.(url);
       onUpload?.(url);
-      toast({ title: "Fichier téléversé" });
+      toast({ title: "Fichier téléversé ✓" });
     } catch (error: any) {
       toast({ title: "Erreur d'upload", description: error.message, variant: "destructive" });
     } finally {
@@ -153,7 +133,7 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
       recorder.start();
       setRecording(true);
     } catch (error) {
-      toast({ title: "Erreur d'enregistrement", description: "Impossible d'accéder au microphone.", variant: "destructive" });
+      toast({ title: "Erreur d'enregistrement", description: "Accès au microphone refusé.", variant: "destructive" });
     }
   };
 
@@ -180,6 +160,12 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
     }
   };
 
+  const triggerFileSelect = () => {
+    if (!uploading && !recording) {
+      inputRef.current?.click();
+    }
+  };
+
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -188,84 +174,153 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
   }, [localPreviewUrl]);
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-2xl border border-border/70 bg-gradient-to-br from-background via-background/95 to-muted/30 p-3 shadow-sm transition-all">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-primary">
-                {acceptLabel}
+    <div className="w-full min-w-0 space-y-2">
+      {/* Cadre de téléversement entièrement cliquable */}
+      <div
+        onClick={triggerFileSelect}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`group relative flex flex-col justify-between w-full min-h-[140px] cursor-pointer rounded-2xl border-2 border-dashed p-4 transition-all duration-200 ${
+          dragActive
+            ? "border-gold bg-gold/10 shadow-lg scale-[1.01]"
+            : resolvedValue
+            ? "border-emerald-500/40 bg-card/80 hover:border-gold/50 hover:bg-card/90"
+            : "border-border/80 bg-card/50 hover:border-gold/50 hover:bg-card/80"
+        }`}
+      >
+        {/* En-tête statut */}
+        <div className="flex items-center justify-between gap-2 mb-2 w-full">
+          <span className="text-xs font-bold text-foreground truncate">
+            {label ?? "Téléverser un fichier"}
+          </span>
+          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+            {uploading ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2.5 py-0.5 text-[10px] font-extrabold text-gold border border-gold/30">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {uploadProgress > 0 ? `${uploadProgress}%` : "En cours..."}
               </span>
-              <span className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                Max {maxSizeLabel}
+            ) : recording ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-red-400 border border-red-500/30 animate-pulse">
+                <CircleStop className="h-3 w-3" /> Enregistrement...
               </span>
+            ) : resolvedValue ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-400 border border-emerald-500/30">
+                <Check className="h-3 w-3" /> Prêt
+              </span>
+            ) : (
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {accept}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Zone centrale & Aperçu */}
+        {resolvedValue && accept === "image" ? (
+          <div className="relative my-1 overflow-hidden rounded-xl border border-border/80 group/img">
+            <img src={resolvedValue} alt="Aperçu" className="h-28 w-full object-cover rounded-xl" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                clearLocalPreview();
+                onChange?.(null);
+                onUpload?.(null);
+              }}
+              className="absolute top-1.5 right-1.5 rounded-full bg-black/70 p-1.5 text-white hover:bg-red-600 transition-colors shadow-md"
+              aria-label="Supprimer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : hasVideoPreview ? (
+          <div className="relative my-1 overflow-hidden rounded-xl border border-border/80 bg-black" onClick={(e) => e.stopPropagation()}>
+            {localPreviewUrl ? (
+              <div className="relative w-full aspect-video min-h-[7rem]">
+                <video src={localPreviewUrl} controls playsInline className="h-full w-full object-contain" />
+              </div>
+            ) : resolvedValue ? (
+              <VideoPlayer src={resolvedValue} title="Aperçu vidéo" variant="compact" lazy={false} framed={false} />
+            ) : null}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                clearLocalPreview();
+                onChange?.(null);
+                onUpload?.(null);
+              }}
+              className="absolute top-1.5 right-1.5 z-10 rounded-full bg-black/70 p-1.5 text-white hover:bg-red-600 transition-colors shadow-md"
+              aria-label="Supprimer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : resolvedValue && accept === "audio" ? (
+          <div className="relative my-1 p-2 rounded-xl border border-border/80 bg-background/80 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <audio controls src={resolvedValue} className="w-full h-8" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                clearLocalPreview();
+                onChange?.(null);
+                onUpload?.(null);
+              }}
+              className="rounded-full p-1.5 text-muted-foreground hover:text-red-400 transition-colors shrink-0"
+              aria-label="Supprimer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          /* Emplacement vierge d'upload */
+          <div className="flex flex-col items-center justify-center my-2 text-center py-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold group-hover:scale-110 group-hover:bg-gold/20 transition-all mb-2 border border-gold/20">
+              {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {label ?? "Ajoutez un fichier ou collez une URL directe"}
+            <p className="text-xs font-bold text-foreground">
+              {uploading ? "Téléversement en cours..." : "Cliquez ou glissez un fichier ici"}
             </p>
           </div>
-          <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-            {uploading ? `Chargement${uploadProgress ? ` • ${uploadProgress}%` : "…"}` : recording ? "Enregistrement…" : "Prêt"}
-          </div>
+        )}
+
+        {/* Boutons d'actions bien positionnés dans le cadre */}
+        <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={triggerFileSelect}
+            disabled={uploading || recording}
+            className="h-8 text-xs font-bold gap-1.5 flex-1 border-gold/30 hover:bg-gold/15 hover:border-gold/50"
+          >
+            {uploading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-gold" />
+            ) : (
+              <Upload className="h-3.5 w-3.5 text-gold" />
+            )}
+            <span>{uploading ? "Téléversement..." : resolvedValue ? "Changer le fichier" : "Choisir un fichier"}</span>
+          </Button>
+
+          {accept === "audio" && canRecordAudio && (
+            <Button
+              type="button"
+              variant={recording ? "destructive" : "outline"}
+              size="sm"
+              onClick={recording ? stopRecording : startRecording}
+              disabled={uploading}
+              className="h-8 text-xs font-bold gap-1.5 shrink-0"
+            >
+              {recording ? <CircleStop className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5 text-gold" />}
+              <span>{recording ? "Arrêter" : "Enregistrer"}</span>
+            </Button>
+          )}
         </div>
 
-        <div
-          className={`mt-3 rounded-2xl border border-dashed p-3 transition-all ${dragActive ? "border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(99,102,241,0.12)]" : "border-border/70 bg-background/80"}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
-              </div>
-              <div>
-                <p className="font-medium text-foreground">
-                  {resolvedValue || localPreviewUrl ? "Fichier prêt à être utilisé" : "Glissez-déposez ou choisissez un fichier"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Formats optimisés pour la lecture directe dans l’interface.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => inputRef.current?.click()}
-                disabled={uploading || recording}
-              >
-                {uploading ? "Téléversement…" : "Téléverser"}
-              </Button>
-              {accept === "audio" && canRecordAudio && (
-                <Button
-                  type="button"
-                  variant={recording ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={recording ? stopRecording : startRecording}
-                  disabled={uploading}
-                >
-                  {recording ? <CircleStop className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                  {recording ? "Arrêter" : "Enregistrer"}
-                </Button>
-              )}
-              {(resolvedValue || localPreviewUrl) && (
-                <Button type="button" size="sm" variant="ghost" onClick={() => {
-                  clearLocalPreview();
-                  onChange?.(null);
-                  onUpload?.(null);
-                }} aria-label="Retirer">
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3">
+        {/* Input d'URL directe */}
+        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
           <Input
             value={resolvedValue ?? ""}
             onChange={(e) => {
@@ -276,8 +331,8 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
               onChange?.(nextValue);
               onUpload?.(nextValue);
             }}
-            placeholder={label ?? "URL ou téléverser"}
-            className="h-10 rounded-xl border-border/70 bg-background/80"
+            placeholder="Ou coller une URL directe (https://...)"
+            className="h-7 text-[11px] rounded-lg border-border/60 bg-background/70"
           />
         </div>
       </div>
@@ -293,52 +348,6 @@ const MediaUpload = ({ value, onChange, onUpload, currentUrl, accept = "image", 
           e.target.value = "";
         }}
       />
-
-      {resolvedValue && accept === "image" && (
-        <div className="overflow-hidden rounded-2xl border border-border/70 bg-background/80">
-          <img src={resolvedValue!} alt="Aperçu" className="h-48 w-full object-cover" />
-        </div>
-      )}
-      {hasVideoPreview && (
-        <div className="space-y-2">
-          <div className="overflow-hidden rounded-2xl border border-border/70 bg-black">
-            {localPreviewUrl ? (
-              <div className="relative w-full aspect-video min-h-[12rem]">
-                <video
-                  src={localPreviewUrl}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="absolute inset-0 h-full w-full object-contain"
-                />
-                {uploading && (
-                  <div className="absolute inset-x-0 bottom-0 bg-black/75 px-3 py-2 text-xs font-medium text-white">
-                    Téléversement en cours…{uploadProgress > 0 ? ` ${uploadProgress}%` : ""}
-                  </div>
-                )}
-              </div>
-            ) : resolvedValue ? (
-              <VideoPlayer
-                src={resolvedValue}
-                title="Aperçu vidéo"
-                variant="compact"
-                lazy={false}
-                framed={false}
-              />
-            ) : null}
-          </div>
-          {resolvedValue && isEmbedVideoUrl(resolvedValue) && !uploading && (
-            <p className="px-1 text-xs text-muted-foreground">
-              Vidéo enregistrée sur Bunny Stream. Le lecteur en ligne peut mettre 1 à 2 minutes à être disponible après l’upload.
-            </p>
-          )}
-        </div>
-      )}
-      {resolvedValue && accept === "audio" && (
-        <div className="rounded-2xl border border-border/70 bg-background/80 p-3">
-          <audio controls src={resolvedValue!} className="w-full" />
-        </div>
-      )}
     </div>
   );
 };

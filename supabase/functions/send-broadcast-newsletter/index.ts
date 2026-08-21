@@ -32,11 +32,15 @@ serve(async (req) => {
   const zohoPass = Deno.env.get("ZOHO_SMTP_PASSWORD");
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    return json({ error: "Server configuration missing" }, 500);
+    return json({ success: false, error: "Configuration serveur Supabase manquante." }, 200);
   }
 
   if (!zohoPass) {
-    return json({ error: "ZOHO_SMTP_PASSWORD environment variable is not configured" }, 500);
+    return json({
+      success: false,
+      error: "Mot de passe Zoho Mail non configuré (ZOHO_SMTP_PASSWORD).",
+      details: "Ajoutez la clé ZOHO_SMTP_PASSWORD dans le Dashboard Supabase (Settings > Edge Functions > Secrets).",
+    }, 200);
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -57,17 +61,16 @@ serve(async (req) => {
       .select("email")
       .eq("is_active", true);
 
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("email")
-      .not("email", "is", null);
+    const subscriberEmails = (subscribers || [])
+      .map((s: { email?: string | null }) => s.email)
+      .filter((e): e is string => Boolean(e));
 
-    const emails = Array.from(
-      new Set([
-        ...(subscribers || []).map((s: { email?: string | null }) => s.email).filter(Boolean) as string[],
-        ...(profiles || []).map((p: { email?: string | null }) => p.email).filter(Boolean) as string[],
-      ])
-    );
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const userEmails = (authUsers?.users || [])
+      .map((u) => u.email)
+      .filter((e): e is string => Boolean(e));
+
+    const emails = Array.from(new Set([...subscriberEmails, ...userEmails]));
 
     if (emails.length === 0) {
       return json({ message: "No subscribers found to send email to", count: 0 });

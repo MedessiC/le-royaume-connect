@@ -32,11 +32,15 @@ serve(async (req) => {
   const zohoPass = Deno.env.get("ZOHO_SMTP_PASSWORD");
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    return json({ error: "Server configuration missing" }, 500);
+    return json({ success: false, error: "Configuration serveur Supabase manquante." }, 200);
   }
 
   if (!zohoPass) {
-    return json({ error: "ZOHO_SMTP_PASSWORD environment variable is not configured" }, 500);
+    return json({
+      success: false,
+      error: "Mot de passe Zoho Mail non configuré (ZOHO_SMTP_PASSWORD).",
+      details: "Ajoutez la clé ZOHO_SMTP_PASSWORD dans le Dashboard Supabase (Settings > Edge Functions > Secrets).",
+    }, 200);
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -69,26 +73,22 @@ serve(async (req) => {
       return json({ error: "Teaching not found", teaching_id: teachingId }, 404);
     }
 
-    // 2. Fetch subscribers
+    // 2. Fetch subscribers & registered user emails
     const { data: subscribers } = await supabase
       .from("newsletter_subscribers")
       .select("email")
       .eq("is_active", true);
 
-    const subscriberEmails = (subscribers || []).map((s) => s.email);
+    const subscriberEmails = (subscribers || []).map((s) => s.email).filter((e): e is string => Boolean(e));
 
-    // Also fetch registered user emails from profiles
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("email")
-      .not("email", "is", null);
-
-    const profileEmails = (profiles || [])
-      .map((p) => p.email)
+    // Fetch registered auth users via Supabase Admin API
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const userEmails = (authUsers?.users || [])
+      .map((u) => u.email)
       .filter((e): e is string => Boolean(e));
 
     // Combine & deduplicate emails
-    const allEmails = Array.from(new Set([...subscriberEmails, ...profileEmails]));
+    const allEmails = Array.from(new Set([...subscriberEmails, ...userEmails]));
 
     if (allEmails.length === 0) {
       return json({ message: "No subscribers found to send email to", count: 0 });

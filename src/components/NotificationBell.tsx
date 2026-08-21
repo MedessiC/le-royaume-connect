@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
   Bell, ArrowRight, CheckCheck, MessageSquare, Heart,
-  UserPlus, BookOpen, Reply, Sparkles, X, Check
+  UserPlus, BookOpen, Reply, X, Check
 } from "lucide-react";
 
 type NotificationItem = {
@@ -161,7 +161,7 @@ const NotificationBell = () => {
       case "follow": return <UserPlus className="w-3.5 h-3.5 text-emerald-500" />;
       case "teaching": return <BookOpen className="w-3.5 h-3.5 text-gold" />;
       case "reply": return <Reply className="w-3.5 h-3.5 text-indigo-500" />;
-      default: return <Sparkles className="w-3.5 h-3.5 text-gold" />;
+      default: return <Bell className="w-3.5 h-3.5 text-gold" />;
     }
   };
 

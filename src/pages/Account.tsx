@@ -18,7 +18,7 @@ import {
   User, Lock, Shield, LogOut, MailCheck, MailWarning,
   Calendar, Globe, Phone, Bookmark, HelpCircle,
   ChevronRight, Loader2, Mail, ArrowUpRight, Copy, Check,
-  Sparkles, ShieldCheck, KeyRound, AlertTriangle, Trash2, Smartphone, Monitor
+  ShieldCheck, KeyRound, AlertTriangle, Trash2, Smartphone, Monitor
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter

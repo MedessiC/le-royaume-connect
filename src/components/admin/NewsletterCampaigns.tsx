@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { buildNewsletterEmailContent, type NewsletterFormat } from "@/lib/newsletter";
-import { AlertCircle, CheckCircle2, Mail, SendHorizonal, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle2, Mail, SendHorizonal } from "lucide-react";
 
 const NewsletterCampaigns = () => {
   const { toast } = useToast();
@@ -24,11 +24,12 @@ const NewsletterCampaigns = () => {
     const loadRecipients = async () => {
       const [{ data: subscribers }, { data: profiles }] = await Promise.all([
         supabase.from("newsletter_subscribers").select("email").eq("is_active", true),
-        supabase.from("profiles").select("email").not("email", "is", null),
+        supabase.from("profiles").select("id"),
       ]);
 
-      const emails = Array.from(new Set([...(subscribers || []).map((s: { email?: string | null }) => s.email).filter(Boolean) as string[], ...(profiles || []).map((p: { email?: string | null }) => p.email).filter(Boolean) as string[]]));
-      setRecipientCount(emails.length);
+      const subEmails = (subscribers || []).map((s: { email?: string | null }) => s.email).filter(Boolean) as string[];
+      const totalCount = subEmails.length + (profiles?.length || 0);
+      setRecipientCount(totalCount);
     };
 
     loadRecipients();
@@ -88,8 +89,8 @@ const NewsletterCampaigns = () => {
               </div>
             </div>
             <div className="rounded-2xl border border-gold/20 bg-background/70 px-3 py-2 text-sm">
-              <div className="flex items-center gap-2 text-gold">
-                <Sparkles className="h-4 w-4" />
+              <div className="flex items-center gap-2 text-gold font-medium">
+                <Mail className="h-4 w-4" />
                 <span>{recipientCount} destinataire{recipientCount > 1 ? "s" : ""}</span>
               </div>
             </div>
